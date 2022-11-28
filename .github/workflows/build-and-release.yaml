@@ -1,0 +1,43 @@
+name: Compile LaTeX and deploy thesis
+on:
+  push:
+    branches: ['main']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    name: Compile LaTeX sources
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build report
+        uses: xu-cheng/latex-action@v2
+        with:
+          root_file: master-thesis.tex
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode -shell-escape
+
+      - name: Create tag for the current release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: DanySK/semver-autotag-action@0.1.0
+
+      - name: Release report
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -z ${GITHUB_TOKEN} ]]; then
+            echo "No token found... unable to deploy"
+            false
+          else
+            TAG=$(git describe --tags --exact-match HEAD)
+            hub release create -m "$(git tag -l --format='%(contents)' "$TAG")" "$TAG" || true
+            for file in `ls *.pdf`
+            do
+              echo "Release of $file"
+              gh release upload "$TAG" $file --clobber
+            done
+          fi
