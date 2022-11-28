@@ -1,0 +1,59 @@
+% !TeX root = thesis-main.tex
+\newcommand{\thesislang}{italian}
+\usepackage[\thesislang]{babel}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{amsthm}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{ifthen}
+\usepackage[\thesislang]{todonotes}
+\usepackage{hyperref}
+\usepackage[\thesislang]{cleveref}
+
+% Italian listing name
+\renewcommand{\lstlistingname}{Listato}
+\renewcommand{\lstlistlistingname}{Elenco dei listati}
+\crefname{lstlisting}{listing}{listato}
+\Crefname{lstlisting}{Listing}{\lstlistingname}
+
+% Colors for code highlighting
+\definecolor{code-teal}{RGB}{100,140,138}
+\definecolor{code-blue}{RGB}{44,35,245}
+\definecolor{code-green}{RGB}{65,145,55}
+\definecolor{code-pink}{RGB}{165,48,246}
+\definecolor{code-red}{RGB}{165,37,70}
+\definecolor{code-gray}{RGB}{110,110,110}
+
+% Listing configurations
+\lstset{
+	showstringspaces=false,
+	basicstyle={\ttfamily},
+	identifierstyle=\color{black},
+	stringstyle={\color{code-teal}},
+	keywordstyle=[1]{\color{code-pink}},
+	keywordstyle=[2]{\color{code-green}},
+	keywordstyle=[3]{\color{code-gray}},
+	keywordstyle=[4]{\color{code-red}\bfseries},
+	commentstyle={\color{code-teal}},
+	emphstyle={},
+	breaklines=true,
+	tabsize=2,
+	extendedchars=true,
+}
+
+\lstdefinelanguage{haskell}{
+	sensitive=true,
+	string=[b]",
+	comment=[l]{--},
+	morecomment=[n]{\{-}{-\}},
+	morekeywords=[1]{->, =, <-},
+	morekeywords=[2]{data, class, instance, where, let, in, do, if, then, else, case, of, type, deriving, newtype},
+	morekeywords=[3]{<*>,<$>,$,>>=,<=,>=,<,>,*,+,/,-,::},
+	morekeywords=[4]{Int, String, Double, Monad, Applicative, Functor, Text},
+	otherkeywords={<*>,<$>,$,>>=,<=,>=,<,>,*,+,/,-,::,=,->,<-},
+}
