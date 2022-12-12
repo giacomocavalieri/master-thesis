@@ -1,19 +1,32 @@
 % !TeX root = thesis-main.tex
 \newcommand{\thesislang}{italian}
 \usepackage[\thesislang]{babel}
-\usepackage{microtype}
+\usepackage[utf8]{inputenc}
 \usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{amssymb}
-\usepackage{amsmath}
-\usepackage{latexsym}
-\usepackage{amsthm}
-\usepackage{geometry}
 \usepackage{listings}
-\usepackage{ifthen}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage{svg}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{latexsym}
+\usepackage{geometry}
+\usepackage[backend=biber, sorting=none, style=numeric-comp, defernumbers=true]{biblatex}
 \usepackage[\thesislang]{todonotes}
 \usepackage{hyperref}
 \usepackage[\thesislang]{cleveref}
+
+% Set directory for images
+\graphicspath{{./images/}}
+
+% Set bibliography source
+\addbibresource{bibliography.bib}
 
 % Italian listing name
 \renewcommand{\lstlistingname}{Listato}
