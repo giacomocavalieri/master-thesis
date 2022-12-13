@@ -1,6 +1,9 @@
 ## Output directory
 out/
 
+## .vscode directory
+.vscode/
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
