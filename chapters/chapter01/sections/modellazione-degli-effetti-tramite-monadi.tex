@@ -1,0 +1,255 @@
+\section{Modellazione degli effetti tramite monadi}
+Osservando le soluzioni adottate nella Sezione precedente si può osservare come a queste sottende un meccanismo comune. Infatti in entrambi i casi è stata definita una funzione \lstinline{andThen} per permettere di combinare in sequenza più operazioni con side effect. Il risultato ottenuto è una descrizione dichiarativa della sequenza di operazioni da svolgere; il particolare meccanismo con cui le operazioni vengono concatenate -- gestione del fallimento prematuro, o passaggio implicito dello stato ad ogni passaggio -- viene delegato alla funzione \lstinline{andThen}.
+
+Questo meccanismo può essere catturato dall'astrazione delle monadi.
+
+\subsection{Cos'è una monade?}
+\label{cos-e-una-monade}
+Il concetto di monade, nato nell'ambito della teoria delle categorie~\cite{cit:categories-for-the-working-mathematician}, venne utilizzato da Eugenio Moggi come mezzo per strutturare la semantica denotazionale di aspetti di un programma come lo stato mutabile, la gestione delle eccezioni e delle continuazioni~\cite{cit:an-abstract-view-of-programming-languages}.
+Fu poi Philip Wadler, ispirato dal lavoro di Moggi e Michael Spivey~\cite{cit:a-functional-theory-of-exceptions}, a intuire che questa stessa tecnica potesse essere sfruttata direttamente per \emph{strutturare} un programma funzionale -- non solo per descriverne la semantica come fatto da Moggi~\cite{cit:comprehending-monads,cit:the-essence-of-functional-programming}.
+
+Una monade è una tripla \lstinline{(M, return, >>=)} dove:
+\begin{itemize}
+  \item \lstinline{M} è un costruttore di tipi; ovvero prende in input un tipo \lstinline{a} e restituisce un tipo \lstinline{M a}. Un valore di tipo \lstinline{M a} può essere interpretato come una computazione che restituisce un valore di tipo \lstinline{a} e può avere un qualche side effect
+  \item \lstinline{return} è una funzione polimorfa con tipo \lstinline{a -> M a}\footnote{\lstinline{return} è spesso anche indicato come \lstinline{pure}.}
+  \item \lstinline{>>=} è una funzione polimorfa con tipo \lstinline{M a -> (a -> M b) -> M b}\footnote{\lstinline{>>=} è anche indicato come \lstinline{bind} o \lstinline{flatMap}. Nella sua versione \lstinline{>>=} viene generalmente utilizzato come operatore binario infisso: vale a dire che \lstinline{m >>= f} è equivalente a indicare \lstinline{bind m f}.}; rappresenta la combinazione in sequenza di due computazioni che possono presentare side effect
+\end{itemize}
+Inoltre è richiesto che valgano le seguenti \emph{leggi monadiche}:
+\begin{itemize}
+  \item (Identità sinistra) \lstinline{return a >>= f = f a}\footnote{Per le seguenti definizioni è stata adottata una sintassi in pseudo-linguaggio simile a quella di Haskell. L'applicazione di funzione è indicata semplicemente come il nome della funzione seguito dai suoi argomenti separati da spazi. In questo caso \lstinline{f a} denota l'applicazione della funzione \lstinline{f} ad un valore chiamato \lstinline{a}. Inoltre, per ridurre il numero di parentesi si considera l'applicazione di funzione avere priorità massima (anche rispetto all'applicazione di una funzione binaria infissa come \lstinline{>>=}), quindi \lstinline{return a >>= f} equivale a \lstinline{(return a) >>= f}.}
+  \item (Identità destra) \lstinline{m >>= return = m}
+  \item (Associatività) \lstinline{(m >>= f) >>= g = m >>= (\x -> f x >>= g)}\footnote{\lstinline{\\x -> f x >>= g} denota una funzione anonima che prende in input un valore \lstinline{x} e che restituisce \lstinline{f x >>= g}.}
+\end{itemize}
+Le prime due leggi servono a garantire che \lstinline{return} sia l'elemento neutro per l'operazione di concatenazione \lstinline{>>=}: \lstinline{return} può essere quindi visto come l'operazione che trasforma un valore di tipo \lstinline{a} in un valore di tipo \lstinline{M a} senza compiere alcun side effect.
+La terza legge, garantisce che \lstinline{>>=} sia associativa, dunque scrivere \lstinline{m >>= f >>= g} è equivalente a scrivere \lstinline{(m >>= f) >>= g} o \lstinline{m >>= (\x -> f x >>= g)}.
+
+\subsection{Encoding di una monade}
+È possibile esprimere le soluzioni ad hoc adottate alla \Cref{svantaggi-della-modellazione-esplicita} in termini del concetto di monade, garantendo un'interfaccia uniforme per diversi side effect.
+Tuttavia, prima di poter generalizzare gli esempi precedenti è necessario capire come il concetto di monade possa essere implementato in un linguaggio di programmazione.
+
+\subsubsection{Encoding in Haskell}
+Come descritto in precedenza una monade è composta da tre elementi fondamentali: un costruttore di tipo e due funzioni \lstinline{return} e \lstinline{>>=}. In Haskell è possibile esprimere direttamente tale concetto tramite l'uso di una \emph{type class}, un meccanismo utilizzato per supportare il \emph{polimorfismo ad hoc}~\cite{cit:type-classes-in-haskell}:
+\begin{lstlisting}[language=haskell]
+class Monad m where
+  return :: a -> m a
+  (>>=)  :: m a -> (a -> m b) -> m b
+\end{lstlisting}
+
+La dichiarazione di una \emph{type class} può essere interpretata come un predicato su un tipo o, come in questo caso, su un costruttore di tipi.
+Quindi, la precedente definizione può essere letta come: \emph{``Un generico costruttore di tipi \lstinline{m} è una monade se esistono due funzioni \lstinline{return} con tipo \lstinline{a -> m a} e \lstinline{>>=} con tipo \lstinline{m a -> (a -> m b)   -> m b}''}.
+Dato un concreto costruttore di tipi si può istanziare la \emph{type class} \lstinline{Monad} fornendo l'implementazione delle funzioni che questa dichiara:
+\begin{lstlisting}[language=haskell]
+instance Monad Maybe where
+  return = Just
+  Nothing >>= f = Nothing
+  Just x  >>= f = f x
+\end{lstlisting}
+
+Interpretando la \emph{type class} come un predicato, definire un'istanza consiste nel provare che lo specifico tipo -- in questo caso \lstinline{Maybe} -- soddisfa tale predicato e viene fornita come dimostrazione l'implementazione delle funzioni \lstinline{return} e \lstinline{>>=}.
+ 
+\subsubsection{Encoding in Scala}
+In Scala è possibile codificare una \emph{type class} sfruttando il passaggio implicito di parametri~\cite{cit:type-classes-as-objects-and-implicits}. La definizione di una \emph{type class} si riduce quindi a indicare un'interfaccia:
+\begin{lstlisting}[language=scala3]
+trait Monad[M[_]]:
+	def pure[A](a: A): M[A]
+	extension [A](m: M[A])
+    def flatMap[B](f: A => M[B]): M[B]
+\end{lstlisting}
+
+Potrà essere istanziata per uno specifico costruttore di tipi fornendo un'implementazione come istanza implicita~\cite{cit:scala-book-type-classes}:
+\begin{lstlisting}[language=scala3]
+given Monad[Option] with
+	def pure[A](a: A): Option[A] = Some(a)
+	extension [A](m: Option[A]) 
+		def flatMap[B](f: A => Option[B]): Option[B] =
+			m match
+        case None    => None
+				case Some(a) => f(a)
+\end{lstlisting}
+
+\subsection{Esempi di monadi}
+Gli esempi mostrati alla \Cref{svantaggi-della-modellazione-esplicita} presentano una struttura comune: si definisce una struttura dati che descrive il risultato di un'operazione con il possibile side effect e si definisce poi una funzione -- negli esempi chiamata \lstinline{andThen} -- che permette di combinare in sequenza passaggi intermedi.
+
+Si può osservare come in entrambi i casi la funzione \lstinline{andThen} abbia la stessa firma descritta per \lstinline{flatMap}: infatti, i casi mostrati in precedenza non sono altro che esempi di monadi. In seguito viene formalizzata la definizione di monade per entrambi gli esempi riportando in aggiunta l'implementazione di \lstinline{pure}.
+
+\subsubsection{La monade Option}
+\label{la-monade-optional}
+Per gestire il fallimento prematuro di una funzione era stato sfruttato il costruttore di tipi \lstinline{Option} e la funzione \lstinline{andThen} per concatenare in sequenza passaggi intermedi e propagare il fallimento.
+Si può mostrare come \lstinline{Option} sia una monade implementando l'operazione \lstinline{>>=} come \lstinline{andThen}:
+\begin{lstlisting}[language=scala3]
+enum Option[+A]:
+  case Some(a: A)
+  case None
+
+given Monad[Option] with
+	def pure[A](a: A): Option[A] = Some(a)
+	extension [A](m: Option[A]) 
+		def flatMap[B](f: A => Option[B]): Option[B] =
+			m match
+        case None    => None
+				case Some(a) => f(a)
+\end{lstlisting}
+
+\begin{itemize}
+  \item \lstinline{Option} è il costruttore di tipi: preso un tipo \lstinline{A} restituisce un tipo \lstinline{Option[A]} che rappresenta una computazione che può fallire o produrre un valore di tipo \lstinline{A}
+  \item \lstinline{pure} permette di trasformare un valore di tipo  \lstinline{A} in uno di tipo \lstinline{Option[A]} senza avere side effect. In questo caso il side effect sarebbe fallire restituendo \lstinline{None}; quindi \lstinline{pure(a)} restituisce \lstinline{Some(a)}
+  \item \lstinline{flatMap} permette di concatenare in sequenza passaggi intermedi propagando il fallimento 
+\end{itemize}
+
+Come descritto in precedenza, perché \lstinline{Option} sia effettivamente una monade deve rispettare le tre leggi monadiche; una dimostrazione è riportata all'\Cref{dimostrazione-per-la-monade-optional}.
+
+\subsubsection{La monade State}
+\label{la-monade-state}
+
+È possibile definire un'istanza di monade anche per l'esempio dello stato globale mutabile mostrato alla \Cref{gestione-della-lettura-e-modifica-di-uno-stato-globale}; per fare ciò può tornare utile definire prima un'apposita struttura che incapsula una funzione che prende in input lo stato e restituisce il risultato e lo stato aggiornato:
+\begin{lstlisting}[language=scala3]
+final case class State[S, A](runState: S => (A, S))
+\end{lstlisting}
+
+Un problema nel definire l'istanza di monade per \lstinline{State} sta nel fatto che questo è un costruttore di tipi che accetta in input \emph{due tipi} \lstinline{S} e \lstinline{A} -- quello dello stato manipolato e quello del risultato -- e restituisce un tipo \lstinline{State[S, A]}. Per poter essere un costruttore valido secondo la definizione di monade deve prendere in input un solo tipo; per ovviare a tale problema si può fissare uno dei due tipi e lasciare l'altro libero: in questo caso si è scelto di fissare il tipo dello stato \lstinline{S} e lasciare libero di variare il tipo del risultato\footnote{In Scala 3 si può ottenere questa applicazione parziale del costruttore di tipi utilizzando il meccanismo delle \emph{type lambda}~\cite{cit:scala-reference-type-lambdas}; quindi per fissare il tipo \lstinline{S} e lasciare libero \lstinline{A} in \lstinline{State} si può utilizzare la seguente sintassi: \lstinline{[A] =>> State[S, A]}. Nel codice riportato nell'esempio viene utilizzata una sintassi abbreviata che utilizza il carattere \lstinline{_} come segnaposto nella lambda a livello di tipi in maniera analoga a come viene utilizzato per le lambda a livello di termini~\cite{cit:scala-reference-wildcard-arguments-in-types}. Tale sintassi non è ancora stata adottata come default in Scala 3 ma verrà introdotta in futuro, al momento è disponibile utilizzando l'estensione del compilatore \lstinline{"-Ykind-projector:underscores"}~\cite{cit:scala-reference-kind-projector-migration}.}:
+\begin{lstlisting}[language=scala3]
+given [S]: Monad[State[S, _]] with
+	def pure[A](a: A): State[S, A] = State(s => (a, s))
+	extension [A](m: State[S, A])
+		def flatMap[B](f: A => State[S, B]): State[S, B] = 
+			State(state0 =>
+				val (result1, state1) = m.runState(state0)
+				f(result1).runState(state1))
+\end{lstlisting}
+
+\begin{itemize}
+  \item \lstinline{State[S, _]} è il costruttore di tipi: preso un tipo \lstinline{A} restituisce un tipo \lstinline{State[S, A]} che rappresenta una computazione che può modificare uno stato globale di tipo \lstinline{S} e restituisce un valore di tipo \lstinline{A}
+  \item \lstinline{pure} permette di trasformare un valore di tipo  \lstinline{A} in uno di tipo \lstinline{State[S, A]} senza avere side effect. Il side effect sarebbe modificare lo stato globale, quindi in questo caso lo stato globale viene restituito inalterato e il risultato è il valore passato in input
+  \item \lstinline{flatMap} permette di concatenare in sequenza operazioni che operano su uno stato globale mutabile di tipo \lstinline{S} e passa in automatico la sua versione aggiornata da un una chiamata alla successiva
+\end{itemize}
+
+Come mostrato nell'\Cref{dimostrazione-per-la-monade-state} l'istanza di monade per \lstinline{State} rispetta le tre leggi monadiche.
+
+Nel caso della monade \lstinline{State} alcune operazioni di base sono quelle che permettono di leggere o modificare il valore dello stato mutabile:
+\begin{lstlisting}[language=scala3]
+def get[S]: State[S, S] = State(s => (s, s))  
+def set[S](s: S): State[S, Unit] = State(_ => ((), s))
+\end{lstlisting}
+Queste funzioni possono essere utilizzate come base per ottenere operazioni più complesse. Un esempio più articolato che combina queste operazioni è dato dalla seguente funzione \lstinline{incrementCounter}: questa ha come tipo \lstinline{State[Int, String]} dunque può accedere a uno stato mutabile di tipo \lstinline{Int} e produce come risultato una stringa:
+\begin{lstlisting}[language=scala3]
+def incrementCounter: State[Int, String] =
+	get.flatMap(counter => 
+		set(counter + 1).flatMap(_ =>
+			get.flatMap(newCounter => 
+				summon[Monad[State[Int, _]]]
+          .pure(f"counter is: $newCounter"))))
+\end{lstlisting}
+Come prima azione accede allo stato globale con \lstinline{get}, ne aumenta il valore con \lstinline{set} e infine legge nuovamente il valore dopo averlo modificato con un'ultimo \lstinline{get}. Il risultato è una stringa contenente il nuovo valore appena letto.
+Si noti come, per mettere in sequenza le operazioni di lettura e scrittura sia necessario utilizzare \lstinline{flatMap}. Per poter eseguire la computazione con uno specifico stato iniziale sarà sufficiente utilizzare il metodo \lstinline{runState}:
+\begin{lstlisting}[language=scala3]
+incrementCounter.runState(0) // -> ("counter is: 1", 1)
+incrementCounter.runState(2) // -> ("counter is: 3", 3)
+\end{lstlisting}
+
+\subsection{Zucchero sintattico per codice monadico}
+Osservando l'esempio precedente è possibile notare come la messa in sequenza delle operazioni tramite l'uso di \lstinline{flatMap} può rendere il codice più complesso da leggere: infatti, ad ogni concatenazione successiva aumenta il livello di annidamento del codice portando alla cosiddetta \emph{pyramid of doom}.
+Scrivere codice di questo genere diventerebbe impraticabile molto rapidamente anche per brevi sequenze di funzioni concatenate con \lstinline{flatMap}.
+
+Per questo motivo, linguaggi come Haskell e Scala forniscono dello zucchero sintattico che permette di scrivere codice monadico in modo più leggibile e con un aspetto più ``imperativo''.
+
+\subsubsection{\emph{For comprehension} in Scala}
+Per risolvere questo problema, Scala fornisce la \emph{for comprehension}~\cite{cit:scala-book-control-structures}; per esempio la funzione \lstinline{incrementCounter} mostrata in precedenza può essere scritta in modo equivalente come segue:
+\begin{lstlisting}[language=scala3]
+def incrementCounter: State[Int, String] =
+  for
+    counter <- get
+    _ <- set(counter + 1)
+    newCounter <- get
+  yield f"counter is: $newCounter"
+\end{lstlisting}
+
+Il codice appare come una sequenza di operazioni imperative. In realtà, il compilatore Scala traduce il codice in una sequenza di chiamate a \lstinline{flatMap} e \lstinline{pure}.
+Le regole adottate per il \emph{desugaring} possono essere descritte ricorsivamente come segue\footnote{In realtà nella \emph{for comprehension} sarebbe possibile utilizzare anche altre espressioni che non siano nella forma \lstinline{name <- expr} ma, per semplicità, non verranno considerate in questa sezione.}: 
+
+\begin{lstlisting}
+for {name <- expr} yield res = expr.map(name => res)
+
+for {name <- expr; exprs} yield res =
+  expr.flatMap(name => for {exprs} yield res)
+\end{lstlisting}
+
+La funzione \lstinline{map} utilizzata nel \emph{desugaring} di una singola espressione è semanticamente equivalente, per una monade, alla seguente composizione di di \lstinline{flatMap} e \lstinline{pure}: \lstinline{m.map(f) = m.flatMap(x => pure(f(x)))}.
+
+\subsubsection{\emph{Do notation} in Haskell}
+Haskell adotta una soluzione analoga fornendo la cosiddetta \emph{do notation}; il precedente codice Scala preso ad esempio potrebbe essere implementato analogamente in Haskell come segue:
+\begin{lstlisting}[language=haskell]
+incrementCounter = do
+  counter <- get
+  set (counter + 1)
+  newCounter <- get
+  return ("counter is:" ++ show newCounter)
+\end{lstlisting}
+Anche in questo caso, il compilatore traduce il codice in una serie di chiamate a \lstinline{>>=} e \lstinline{return}. In particolare, le regole per la traduzione sono le seguenti:
+\begin{lstlisting}
+do { expr } = expr
+
+do { name <- expr; exprs } =
+  expr >>= \name -> do { exprs }
+
+do { expr; exprs } = expr >>= \_ -> do { exprs }
+\end{lstlisting}
+
+Quindi, la forma senza zucchero sintattico di \lstinline{incrementCounter} sarebbe:
+\begin{lstlisting}[language=haskell]
+incrementCounter =
+  get >>= (\counter ->
+    set (counter + 1) >>= (\_ ->
+      get >>= (\newCounter ->
+        return ("counter is:" ++ show newCounter))))
+\end{lstlisting}
+
+
+\subsection{Vantaggi nell'uso delle monadi}
+\subsubsection{Separazione del codice impuro dal codice puro}
+Un primo importante vantaggio sta nella possibilità di esprimere a livello di \emph{type system} quali funzioni presentano side effect e quali no. Questo è un aiuto fondamentale per il programmatore: infatti, per capire se una funzione è pura è sufficiente analizzarne il tipo, senza dover cercare di capirlo dal suo nome -- che potrebbe non rispecchiare l'effettivo comportamento della funzione -- o ispezionandone il corpo.
+Consideriamo come esempio le seguenti funzioni:
+\begin{lstlisting}[language=scala3]
+def incrementCounter: State[Int, ()] = ...
+def first[A](xs: List[A]): Option[A] = ...
+def double(n: Int): Int = ...
+\end{lstlisting}
+Senza bisogno di conoscerne le implementazioni si può capire che la prima funzione può modificare uno stato mutabile di tipo intero e che la seconda funzione può fallire non producendo alcun valore. Inoltre è possibile capire che la terza funzione non ha side effect: non potrà fallire, modificare uno stato globale o effettuare operazioni di input o output; il suo output sarà determinato unicamente dal valore dei suoi parametri\footnote{In realtà, dato che in Scala è comunque possibile scrivere codice impuro la funzione \lstinline{double} potrebbe avere side effect; quanto detto vale sotto l'assunzione che il programmatore stia modellando esplicitamente i side effect tramite l'approccio descritto. In altri linguaggi come Haskell, invece, è il compilatore stesso a fare in modo che questa regola venga rispettata rendendo impossibile lo scrivere funzioni che non siano pure. Perciò, si avrebbe la certezza che una funzione come \lstinline{double} non possa avere side effect.}.
+
+\subsubsection{Side effect come cittadini di prima classe del linguaggio}
+Utilizzare il concetto di monade come astrazione unificante delle diverse tipologie di side effect ha un ulteriore vantaggio: le azioni con side effect sono valori di prima classe che possono essere combinati in maniera modulare e astraendo dallo specifico tipo di effetti.
+
+È possibile definire l'equivalente di strutture di controllo imperative tramite funzioni generiche; per poter ripetere più volte gli effetti di un'azione è possibile implementare una funzione come segue\footnote{L'\emph{extension method} \lstinline{>>} viene utilizzato nell'implementazione per mettere in sequenza due azioni con side effect ignorando il valore di ritorno della prima (che quindi verrà eseguita unicamente per i propri side effect). Può essere definito in termini di \lstinline{flatMap} come segue: \lstinline{m1 >> m2 = m1.flatMap(_ => m2)}}:
+\begin{lstlisting}[language=scala3]
+def repeat[M[_]: Monad, A]
+  (times: Int)
+  (action: M[A]): M[Unit] =
+	times match
+		case 0 => pure(())
+		case n => action >> repeat(n-1)(action)
+\end{lstlisting}
+
+Se invece si volesse implementare una versione del ciclo \lstinline{for} che permetta di ripetere un qualunque side effect per tutti gli elementi di una lista si potrebbe implementare la seguente funzione:
+\begin{lstlisting}[language=scala3]
+def forLoop[A, M[_]: Monad]
+  (as: List[A])
+  (f: A => M[Unit]): M[Unit] = 
+	as match 
+	  case Nil     => pure(())	
+    case a :: as => f(a) >> forLoop(as)(f)
+		
+\end{lstlisting}
+\lstinline{forLoop} prende in input una lista e una funzione che, dato un elemento della lista, determina l'azione da intraprendere; il risultato sarà un'unica computazione che esegue tutti i side effect dati dall'applicazione della funzione a ciascun elemento della lista. Poiché la funzione è generica sul tipo della monade è possibile utilizzarla per qualsiasi tipo di side effect!
+Questa è una tecnica molto potente che lascia al programmatore la libertà di inventare le proprie strutture di controllo senza essere doversi limitare a quelle predefinite dal linguaggio~\cite{cit:tackling-the-awkward-squad}.
+
+%\newpage
+%\todo[inline]{
+%  Continuare con:
+%    - (citare being lazy with class fra le altre cose e imperative functional programming)(sottosezione con IO) è stato volutamente omesso nelle sottosezioni precedenti perché è un caso a particolare che necessita un supporto esplicito del compilatore
+%      - Impossibile mescolare inavvertitamente codice puro e impuro (fireMissiles)
+%      - possibile accenno alla storia di Haskell (?) e come è nato questo approccio (?)
+%      - Il programma è una grande espressione di tipo IO quindi in definitiva è una struttura dati che DESCRIVE quali dovranno essere le operazioni intraprese dal programma e sarà poi il RTS a eseguirle producendo gli effetti desiderati ma una espressione di tipo IO Char non mette in atto il side effect di leggere un carattere e restituirlo è una struttura dati immutabile al pari di "Option" o "List" quindi è referenzialmente trasparente
+%      - citazione haskell come più bel programma imperativo del mondo
+%}
+
+
+

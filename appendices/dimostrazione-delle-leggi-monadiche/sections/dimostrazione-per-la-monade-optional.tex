@@ -1,0 +1,73 @@
+\section{Dimostrazione per la monade Optional}
+\label{dimostrazione-per-la-monade-optional}
+
+Alla \Cref{la-monade-optional} è stata data una definizione di monade per \lstinline{Option}. In seguito è riportata una dimostrazione del rispetto delle leggi monadiche elencate nella \Cref{cos-e-una-monade} per la definizione fornita\footnote{Nei passaggi della dimostrazione, così come in quelle successive, sono utilizzati i nomi canonici utilizzati per l'implementazione Scala; quindi, si utilizza \lstinline{flatMap} anziché \lstinline{>>=} e \lstinline{pure} anziché \lstinline{return}}.
+
+Dimostrazione dell'identità sinistra, ovvero che \lstinline{pure(a).flatMap(f) = f(a)}:
+
+\begin{tabularx}{\textwidth}{ll}
+\lstinline{pure(a).flatMap(f) =} & \emph{Definizione di \lstinline{pure}}\\
+\\
+\lstinline{Some(a).flatMap(f) =} & \emph{Definizione di \lstinline{flatMap}}\\
+\\
+\lstinline{f(a)}$\qed$ &
+\end{tabularx}
+
+Dimostrazione dell'identità destra, ovvero che \lstinline{m.flatMap(pure) = m}:
+
+\begin{tabularx}{\textwidth}{ll}
+  Procedo per casi su \lstinline{m}: & \\
+  & \\
+  \emph{Se \lstinline{m = None}} & \\
+  \\
+  \lstinline{\ \ m.flatMap(pure) =} & \emph{Per ipotesi \lstinline{m = None}}\\
+  \\
+  \lstinline{\ \ None.flatMap(pure) =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ None = m} & \emph{Per ipotesi \lstinline{None = m}} \\
+  \\
+  \emph{Se \lstinline{m = Some(a)}} & \\
+  \\
+  \lstinline{\ \ m.flatMap(pure) =} & \emph{Per ipotesi \lstinline{m = Some(a)}}\\
+  \\
+  \lstinline{\ \ Some(a).flatMap(pure) =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ pure(a) =} & \emph{Definizione di \lstinline{pure}}\\
+  \\
+  \lstinline{\ \ Some(a) = m}$\qed$ & \emph{Per ipotesi \lstinline{Some(a) = m}}
+\end{tabularx}
+
+Dimostrazione dell'associatività, ovvero che \lstinline{(m.flatMap(f)).flatMap(g) = m.flatMap(x => f(x).flatMap(g))}:
+
+\begin{tabularx}{\textwidth}{ll}
+  Procedo per casi su \lstinline{m}: & \\
+  & \\
+  \emph{Se \lstinline{m = None}} & \\
+  \\
+  \lstinline{\ \ (m.flatMap(f)).flatMap(g) =} & \emph{Per ipotesi \lstinline{m = None}}\\
+  \\
+  \lstinline{\ \ (None.flatMap(f)).flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ None.flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ None =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ None.flatMap(x => f(x).flatMap(g)) =} & \emph{Per ipotesi \lstinline{None = m}}\\
+  \\
+  \lstinline{\ \ m.flatMap(x => f(x).flatMap(g))} &  \\
+  \\
+  \emph{Se \lstinline{m = Some(a)}} & \\
+  \\
+  \lstinline{\ \ (m.flatMap(f)).flatMap(g) =} & \emph{Per ipotesi \lstinline{m = Some(a)}}\\
+  \\
+  \lstinline{\ \ (Some(a).flatMap(f)).flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}}\\
+  \\
+  \lstinline{\ \ f(a).flatMap(g) =} & \emph{Applicazione di funzione}\\
+  \\
+  \lstinline{\ \ (x => f(x).flatMap(g))(a) =} & \emph{Definizione di \lstinline{flatMap}} \\
+  \\
+  \lstinline{\ \ Some(a).flatMap(x => f(x).flatMap(g)) =} & \emph{Per ipotesi \lstinline{Some(a) = m}} \\
+  \\
+  \lstinline{\ \ m.flatMap(x => f(x).flatMap(g))}$\qed$ & 
+\end{tabularx}
+

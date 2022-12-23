@@ -1,0 +1,119 @@
+\section{Dimostrazione per la monade State}
+\label{dimostrazione-per-la-monade-state}
+
+Alla \Cref{la-monade-state} è stata data una definizione di monade per \lstinline{State}. In seguito è riportata una dimostrazione del rispetto delle leggi monadiche per la definizione fornita.
+
+Dimostrazione dell'identità sinistra, ovvero che \lstinline{pure(a).flatMap(f) = f(a)}:
+
+\begin{tabularx}{\textwidth}{ll}
+\lstinline{pure(a).flatMap(f) =}               & \emph{Definizione di \lstinline{pure}}\\
+\\
+\lstinline{State(s => (a, s)).flatMap(f) =}    & \emph{Sia \lstinline{m = State(s => (a, s))}}\\
+\\
+\lstinline{m.flatMap(f) =}                     & \emph{Definizione di 
+\lstinline{flatMap}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)}\\
+\lstinline{\ \ f(res1).runState(s1)) =}      & \emph{Definizione di \lstinline{runState}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = (s => (a, s))(s0)}\\
+\lstinline{\ \ f(res1).runState(s1)) =}      & \emph{Applicazione di funzione}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = (a, s0)}\\
+\lstinline{\ \ f(res1).runState(s1)) =}      & \emph{Pattern matching su una tupla}\\
+\\
+\lstinline{State(s0 => f(a).runState(s0)) =} & \emph{Sia \lstinline{f(a) = State(g)}}\\
+\\
+\lstinline{State(s0 => State(g).runState(s0)) =} & \emph{Definizione di \lstinline{runState}}\\
+\\
+\lstinline{State(s0 => g(s0)) =}                   & \emph{$\eta$-riduzione}\\
+\\
+\lstinline{State(g) =}                             & \emph{Per definizione di \lstinline{f(a)}}\\
+\\
+\lstinline{f(a)}$\qed$ &
+\end{tabularx}
+
+Dimostrazione dell'identità destra, ovvero che \lstinline{m.flatMap(pure) = m}:
+
+\begin{tabularx}{\textwidth}{ll}
+\lstinline{m.flatMap(pure) =} & \emph{Definizione di \lstinline{flatMap}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)}\\
+\lstinline{\ \ pure(res1).runState(s1)) =} & \emph{Definizione di \lstinline{pure}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)}\\
+\lstinline{\ \ State(s => (res1, s))} \\
+\lstinline{\ \ \ \ .runState(s1)) =}& \emph{Definizione di \lstinline{runState}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)}\\
+\lstinline{\ \ (s => (res1, s))(s1)) =} & \emph{Applicazione di funzione}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)}\\
+\lstinline{\ \ (res1, s1)) =} & \emph{Eliminazione pattern matching}\\
+\\
+\lstinline{State(s0 => m.runState(s0)) =} & \emph{Sia \lstinline{m = State(g)}} \\
+\\
+\lstinline{State(s0 => State(g).runState(s0)) =} & \emph{Definizione di \lstinline{runState}} \\
+\\
+\lstinline{State(s0 => g(s0)) =} & \emph{$\eta$-riduzione} \\
+\\
+\lstinline{State(g) =} & \emph{Per definizione di \lstinline{m}} \\
+\\
+\lstinline{m} $\qed$ 
+\end{tabularx}
+
+Dimostrazione dell'associatività, ovvero che \lstinline{(m.flatMap(f)).flatMap(g) = m.flatMap(x => f(x).flatMap(g))}:
+
+\begin{tabularx}{\textwidth}{ll}
+\lstinline{(m.flatMap(f)).flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res2, s2) =}\\
+\lstinline{\ \ \ \ (m.flatMap(f)).runState(s0)} \\
+\lstinline{\ \ g(res2).runState(s2)) =} & \emph{Definizione di \lstinline{flatMap}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res2, s2) = (State(s =>} \\
+\lstinline{\ \ \ \ val (res1, s1) = m.runState(s)}\\
+\lstinline{\ \ \ \ f(res1).runState(s1)}\\
+\lstinline{\ \ \ \ .runState(s0)} \\
+\lstinline{\ \ g(res2).runState(s2)) =} & \emph{Definizione di \lstinline{runState}}\\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res2, s2) =} \\
+\lstinline{\ \ \ \ val (res1, s1) = m.runState(s0)} \\
+\lstinline{\ \ \ \ f(res1).runState(s1)))} \\
+\lstinline{\ \ g(res2).runState(s2)) =} & \emph{Estrazione dichiarazioni locali} \\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)} \\
+\lstinline{\ \ val (res2, s2) = f(res1).runState(s1)} \\
+\lstinline{\ \ g(res2).runState(s2)) =} & \emph{Definizione di \lstinline{State}} \\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)} \\
+\lstinline{\ \ State(s =>} \\
+\lstinline{\ \ \ \ val (res2, s2) = f(res1).runState(s)} \\
+\lstinline{\ \ \ \ g(res2).runState(s2))} \\
+\lstinline{\ \ \ \ .runState(s1)) =} & \emph{Definizione di \lstinline{flatMap}} \\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)} \\
+\lstinline{\ \ (f(res1).flatMap(g))} \\
+\lstinline{\ \ \ \ .runState(s1)) =} & \emph{Applicazione di funzione} \\
+\\
+\lstinline{State(s0 =>} \\
+\lstinline{\ \ val (res1, s1) = m.runState(s0)} \\
+\lstinline{\ \ (x => f(x).flatMap(g))(res1)} \\
+\lstinline{\ \ \ \ .runState(s1)) =} & \emph{Definizione di \lstinline{flatMap}} \\
+\\
+\lstinline{m.flatMap(x => f(x).flatMap(g))} $\qed$\\
+\end{tabularx}
+

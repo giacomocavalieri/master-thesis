@@ -1,0 +1,19 @@
+\begin{table}[!ht]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \lstinline|test1|                & \lstinline|test2|                \\
+    \midrule
+    \lstinline|oldCounter = counter| &                                  \\
+                                     & \lstinline|oldCounter = counter| \\
+    \lstinline|counter = 0|          &                                  \\
+                                     & \lstinline|counter = 1|          \\
+    \lstinline|f(1) shouldBe 2|      &                                  \\
+    \lstinline|counter = oldCounter| &                                  \\
+                                     & \lstinline|f(1) shouldBe 3|      \\
+                                     & \lstinline|counter = oldCounter| \\
+    \bottomrule
+  \end{tabular}
+  \caption{Esempio di interleaving delle operazioni dei test \lstinline|test1| e \lstinline|test2| che porterebbe al fallimento dell'asserzione fatta da \lstinline|test1|.}
+  \label{table:test-f-interleaving-fail}
+\end{table}
