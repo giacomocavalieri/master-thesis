@@ -1,6 +1,12 @@
 ## Output directory
 out/
 
+## MacOS files
+.DS_Store
+
+## Metals
+.metals/
+
 ## .vscode directory
 .vscode/
 
