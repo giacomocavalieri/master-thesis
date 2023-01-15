@@ -10,20 +10,20 @@ def f(x: Int): Int =
   counter = counter + 1
   x + counter
 \end{lstlisting}
-In questo caso \lstinline{2 * f(1) = 4} ma \lstinline{f(1) + f(1) = 5}. 
+In questo caso \lstinline{2 * f(1) = 4} ma \lstinline{f(1) + f(1) = 5}.
 Infatti \lstinline{f} legge e modifica una variabile globale dalla quale dipende il suo valore di ritorno; per via di questo side effect ogni chiamata successiva alla funzione, a parità di argomento, produrrà un valore differente.
 Dall'esempio è possibile intuire come, in presenza di side effect, sia più difficile ragionare sul comportamento delle funzioni: per poterlo comprendere non è sufficiente osservare il corpo della funzione in analisi ma è necessario conoscere il contesto nel quale questa viene invocata.
 
 \subsection{Complessità del refactoring}
 \label{subsection:complessita-del-refactoring}
 \emph{L'ordine} e il \emph{numero delle invocazioni} di funzioni con side effect ha importanza nel determinare il comportamento complessivo di un programma e -- come mostrato nell'esempio della funzione \lstinline{f} -- modificare uno di questi due fattori può comportarne uno stravolgimento.
-Questa mancanza di trasparenza referenziale porta il codice ad avere una maggiore resistenza al cambiamento: è più difficile per il programmatore -- così come per strumenti automatici -- effettuare del refactoring avendo la certezza di mantenere inalterata la semantica del programma originale~\cite{cit:towards-purity-guided-refactoring-in-java}. 
+Questa mancanza di trasparenza referenziale porta il codice ad avere una maggiore resistenza al cambiamento: è più difficile per il programmatore -- così come per strumenti automatici -- effettuare del refactoring avendo la certezza di mantenere inalterata la semantica del programma originale~\cite{cit:towards-purity-guided-refactoring-in-java}.
 Per utilizzare le efficaci parole di Robert Martin ``I side effect sono bugie. La tua funzione promette di fare una cosa, ma in realtà fa anche qualcos'altro \emph{di nascosto}. [...] Sono falsità che spesso risultano in strani accoppiamenti temporali e comportano dipendenze nell'ordine delle funzioni''\footnote{Traduzione dal testo originale: ``Side effects are lies. Your function promises to do one thing, but it also does other \emph{hidden} things. [...] They are [...] mistruths that often result in strange temporal couplings and order dependencies''~\cite[p.~44]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.}.
 
 \subsection{Difficoltà nel testare funzioni impure}
 \label{subsection:difficolta-nel-testare-funzioni-impure}
 Le stesse motivazioni che rendono difficile ragionare e compiere refactoring di codice con side effect ne complicano anche la fase di \emph{unit testing.}
-Per testare una funzione impura in isolamento è necessario che vengano effettuate apposite operazioni prima e dopo lo svolgimento di ciascun test per garantire che il risultato non possa cambiare a seconda del loro ordine di esecuzione. 
+Per testare una funzione impura in isolamento è necessario che vengano effettuate apposite operazioni prima e dopo lo svolgimento di ciascun test per garantire che il risultato non possa cambiare a seconda del loro ordine di esecuzione.
 
 Immaginando di dover testare il comportamento di \lstinline{f}:
 \begin{lstlisting}[language=scala3]

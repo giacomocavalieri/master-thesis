@@ -11,12 +11,12 @@ Queste nascono nel contesto dei linguaggi funzionali puri, perciò è necessario
 Un linguaggio funzionale si dice \emph{puro} se le sue funzioni sono referenzialmente trasparenti.
 Questa totale assenza di side effect sembra in netto contrasto con la possibilità di scrivere codice di una qualche utilità: come può un programma puro interagire con il mondo esterno, leggere il valore di uno stato globale o lanciare eccezioni?
 
-La soluzione consiste nella possibilità di ``simulare'' la presenza di side effect tramite opportune modifiche ai tipi delle funzioni mantenendole pure. 
-In seguito sono riportati alcuni esempi di questo approccio in Scala\footnote{Sebbene Scala sia un linguaggio impuro può essere utilizzato come se fosse un linguaggio puro evitando di ricorrere ai meccanismi che fornisce per produrre side effects.}. 
+La soluzione consiste nella possibilità di ``simulare'' la presenza di side effect tramite opportune modifiche ai tipi delle funzioni mantenendole pure.
+In seguito sono riportati alcuni esempi di questo approccio in Scala\footnote{Sebbene Scala sia un linguaggio impuro può essere utilizzato come se fosse un linguaggio puro evitando di ricorrere ai meccanismi che fornisce per produrre side effects.}.
 
 \subsubsection{Eccezioni}
 \label{eccezioni}
-Le eccezioni sono un meccanismo di controllo del flusso che permette di interrompere l'esecuzione di una funzione e di ritornare il controllo al chiamante. 
+Le eccezioni sono un meccanismo di controllo del flusso che permette di interrompere l'esecuzione di una funzione e di ritornare il controllo al chiamante.
 Tuttavia, una funzione che ne fa uso non avrà trasparenza referenziale:
 \begin{lstlisting}[language=scala3]
 def h(n: Int): Int =
@@ -27,8 +27,8 @@ def h(n: Int): Int =
 \lstinline|h| non può essere assimilata a una funzione $h : \mathbb{Z} \rightarrow \mathbb{Z}$ in termini matematici; infatti, per certi input -- in questo caso \lstinline|0| -- la funzione non restituisce un valore appartenente al proprio codominio ma lancia un'eccezione.
 
 Per rendere esplicito il fatto che la funzione possa terminare in maniera anomala per determinati input si può estenderne il codominio: ritornando all'analogia matematica si può pensare ad \lstinline{h} come a una funzione $h : \mathbb{Z} \rightarrow \mathbb{Z} \cup \{ \texttt{Error} \}$.
-L'equivalente implementazione Scala sarebbe:
-\begin{lstlisting}[language=scala3]
+  L'equivalente implementazione Scala sarebbe:
+  \begin{lstlisting}[language=scala3]
 enum Result:
   case Ok(value: Int)
   case Error
@@ -38,10 +38,10 @@ def betterH(n: Int): Result =
     case 0 => Error
     case _ => Ok(n * 2)
 \end{lstlisting}
-In questo caso è evidente dal tipo di ritorno di \lstinline|betterH| che questa può fallire restituendo un valore di tipo \lstinline{Result.Error}. 
-La funzione non nasconde questo comportamento tramite il meccanismo delle eccezioni, lo rende invece evidente nel proprio tipo \lstinline{Int => Result}. 
-Il grande vantaggio di rendere esplicita la possibilità di fallimento nel tipo di ritorno sta nel fatto che il programmatore dovrà obbligatoriamente gestire anche il caso in cui la computazione fallisca o il compilatore solleverà un errore a tempo di compilazione:
-\begin{lstlisting}[language=scala3]
+  In questo caso è evidente dal tipo di ritorno di \lstinline|betterH| che questa può fallire restituendo un valore di tipo \lstinline{Result.Error}.
+  La funzione non nasconde questo comportamento tramite il meccanismo delle eccezioni, lo rende invece evidente nel proprio tipo \lstinline{Int => Result}.
+  Il grande vantaggio di rendere esplicita la possibilità di fallimento nel tipo di ritorno sta nel fatto che il programmatore dovrà obbligatoriamente gestire anche il caso in cui la computazione fallisca o il compilatore solleverà un errore a tempo di compilazione:
+  \begin{lstlisting}[language=scala3]
 def useBetterH(n: Int): Int =
   // betterH(n) + betterH(n + 1) darebbe un errore
   // a tempo di compilazione dato che betterH(x)
@@ -53,41 +53,41 @@ def useBetterH(n: Int): Int =
       case Ok(value2) => value1 + value2
 \end{lstlisting}
 
-\subsubsection{Lettura e modifica di uno stato globale}
-\label{lettura-e-modifica-di-uno-stato-globale}
+  \subsubsection{Lettura e modifica di uno stato globale}
+  \label{lettura-e-modifica-di-uno-stato-globale}
 
-Dal momento in cui una funzione legge una variabile globale perde la propria trasparenza referenziale: il suo risultato non dipende più dai soli valori passati in input ma da un nuovo input \emph{nascosto}, lo stato a cui accede. 
-La soluzione per rendere esplicita questa dipendenza è passare come parametri di tutti gli elementi necessari al funzionamento della funzione, senza affidarsi alla definizione in uno scope esterno di variabili globali a cui accedere implicitamente.
+  Dal momento in cui una funzione legge una variabile globale perde la propria trasparenza referenziale: il suo risultato non dipende più dai soli valori passati in input ma da un nuovo input \emph{nascosto}, lo stato a cui accede.
+  La soluzione per rendere esplicita questa dipendenza è passare come parametri di tutti gli elementi necessari al funzionamento della funzione, senza affidarsi alla definizione in uno scope esterno di variabili globali a cui accedere implicitamente.
 
-Questa semplice trasformazione permette di rimuovere il side effect che consiste nella lettura di uno stato globale. 
-Sfortunatamente, non è sufficiente per modellare anche la \emph{modifica} di una variabile globale. In questo caso può essere utile tornare all'analogia con le funzioni matematiche.
-Prendiamo come esempio la funzione \lstinline{f} definita in precedenza:
-\begin{lstlisting}[language=scala3]
+  Questa semplice trasformazione permette di rimuovere il side effect che consiste nella lettura di uno stato globale.
+  Sfortunatamente, non è sufficiente per modellare anche la \emph{modifica} di una variabile globale. In questo caso può essere utile tornare all'analogia con le funzioni matematiche.
+  Prendiamo come esempio la funzione \lstinline{f} definita in precedenza:
+  \begin{lstlisting}[language=scala3]
 var counter = 0
 def f(x: Int): Int =
   counter = counter + 1 
   x + counter
 \end{lstlisting}
-Questa prende in input un numero, ha il side effect di incrementare un contatore globale e poi ne legge il valore per aggiungerlo all'input. Sebbene il tipo di \lstinline{f} sia \lstinline{Int => Int}, a causa dei suoi side effect questa funzione non può essere modellata come una funzione matematica $f: \mathbb{Z} \rightarrow \mathbb{Z}$: a parità di input non darà sempre lo stesso output.
+  Questa prende in input un numero, ha il side effect di incrementare un contatore globale e poi ne legge il valore per aggiungerlo all'input. Sebbene il tipo di \lstinline{f} sia \lstinline{Int => Int}, a causa dei suoi side effect questa funzione non può essere modellata come una funzione matematica $f: \mathbb{Z} \rightarrow \mathbb{Z}$: a parità di input non darà sempre lo stesso output.
 
-Dato che la funzione necessita di leggere una variabile definita esternamente, questa dovrà essergli passata in come input esplicitamente:
-\begin{lstlisting}[language=scala3]
+  Dato che la funzione necessita di leggere una variabile definita esternamente, questa dovrà essergli passata in come input esplicitamente:
+  \begin{lstlisting}[language=scala3]
 def wrongF(x: Int, counter: Int): Int =
   // Come modificare lo stato di current?
   val newCounterState = counter + 1
   x + newCounterState
 \end{lstlisting}
-Rimane il problema di come poter modellare la modifica dello stato globale in modo che tale effetto si ripercuota anche su chiamate successive. Infatti, il side effect di aumentare il valore del contatore fa parte della logica applicativa di \lstinline{f} e rimuoverlo comporterebbe un cambiamento nella sua semantica.
+  Rimane il problema di come poter modellare la modifica dello stato globale in modo che tale effetto si ripercuota anche su chiamate successive. Infatti, il side effect di aumentare il valore del contatore fa parte della logica applicativa di \lstinline{f} e rimuoverlo comporterebbe un cambiamento nella sua semantica.
 
-La soluzione consiste nel trasformare la funzione in modo tale che restituisca il valore del nuovo stato così che possa essere utilizzato per chiamate successive:
-\begin{lstlisting}[language=scala3]
+  La soluzione consiste nel trasformare la funzione in modo tale che restituisca il valore del nuovo stato così che possa essere utilizzato per chiamate successive:
+  \begin{lstlisting}[language=scala3]
 def betterF(x: Int, counter: Int): (Int, Int) =
   val newCounter = counter + 1
   val result = x + newCounter
   (result, newCounter)
 \end{lstlisting}
-Quindi lo stato dovrà essere passato in maniera esplicita da una chiamata a funzione alla successiva:
-\begin{lstlisting}[language=scala3, label=lst:use-better-f]
+  Quindi lo stato dovrà essere passato in maniera esplicita da una chiamata a funzione alla successiva:
+  \begin{lstlisting}[language=scala3, label=lst:use-better-f]
 def useBetterF: (Int, Int) =
   val startingCounter = 1
   val (result1, counter1) = betterF(1, startingCounter)
@@ -99,7 +99,7 @@ def useBetterF: (Int, Int) =
   val (result3, finalCounter) = betterF(1, counter2)
   (result1 + result2 + result3, finalCounter)
 \end{lstlisting}
-La funzione non solo prende in input lo stato a cui deve accedere ma restituisce in output la nuova versione dello stato modificato\footnote{In un linguaggio con strutture dati mutabili come Scala la funzione potrebbe anche non restituire la nuova versione dello stato ma modificare lo stato ricevuto come argomento per riferimento. Tuttavia, come descritto in precedenza anche la modifica degli argomenti è un side effect; questo approccio non risolverebbe il problema del poter tracciare esplicitamente gli effetti di una funzione.}, a questo punto è nuovamente possibile modellarla come una funzione matematica $f : \mathbb{Z}\times\mathbb{Z} \rightarrow \mathbb{Z}\times\mathbb{Z}$ che, per ogni coppia di valori ricevuti in input, darà sempre lo stesso risultato.
+  La funzione non solo prende in input lo stato a cui deve accedere ma restituisce in output la nuova versione dello stato modificato\footnote{In un linguaggio con strutture dati mutabili come Scala la funzione potrebbe anche non restituire la nuova versione dello stato ma modificare lo stato ricevuto come argomento per riferimento. Tuttavia, come descritto in precedenza anche la modifica degli argomenti è un side effect; questo approccio non risolverebbe il problema del poter tracciare esplicitamente gli effetti di una funzione.}, a questo punto è nuovamente possibile modellarla come una funzione matematica $f : \mathbb{Z}\times\mathbb{Z} \rightarrow \mathbb{Z}\times\mathbb{Z}$ che, per ogni coppia di valori ricevuti in input, darà sempre lo stesso risultato.
 
 In questo modo diventa più facile testare il comportamento della funzione:
 \begin{lstlisting}[language=scala3]
@@ -115,7 +115,7 @@ Il test è completamente autonomo, non sono più necessarie operazioni prelimina
 \label{svantaggi-della-modellazione-esplicita}
 Con le trasformazioni elencate in precedenza è possibile mantenere la trasparenza referenziale delle funzioni modellandone i side effect in maniera esplicita. Questo ha il vantaggio di aiutare il programmatore nella composizione delle funzioni rendendo chiaro, a tempo di compilazione, quale potrebbe essere il loro comportamento.
 
-Nonostante ciò, come forse si è già potuto intuire da alcuni degli esempi riportati, questo approccio rende necessario lo scrivere codice spesso molto più verboso. 
+Nonostante ciò, come forse si è già potuto intuire da alcuni degli esempi riportati, questo approccio rende necessario lo scrivere codice spesso molto più verboso.
 In seguito sono riportati due esempi di questo problema e delle soluzioni ad hoc che possono essere adottate per porvi rimedio.
 
 \subsubsection{Gestione del fallimento di una funzione}
@@ -146,11 +146,10 @@ extension [A](a: Option[A])
 			case None         => None
 			case Some(result) => f(result)
 \end{lstlisting}
-che permetterà di scrivere la funzione \lstinline{eighth} in maniera molto più chiara:\todo{2. Sarebbe meglio utilizzare la sintassi "classica" OOP oppure sfruttare lo zucchero sintattico di Scala e scrivere il codice come nel commento?}
+che permetterà di scrivere la funzione \lstinline{eighth} in maniera molto più chiara:
 \begin{lstlisting}[language=scala3]
 def eighth(n: Int): Option[Int] =
   halve(n).andThen(halve).andThen(halve)
-  // halve(n) andThen halve andThen halve
 \end{lstlisting}
 La funzione è solo interessata dalla logica applicativa: dividere tre volte il valore in input. La gestione del fallimento è delegata ad \lstinline{andThen}\footnote{In Scala è già definito per \lstinline{Option} il metodo \lstinline{flatMap} con lo stesso comportamento di \lstinline{andThen} mostrato nell'esempio. Per questi esempi si preferisce utilizzare \lstinline{andThen} in quanto rende più chiaro il ruolo della funzione.} che, in caso di fallimento, restituisce immediatamente \lstinline{None}.
 
@@ -191,4 +190,4 @@ statefulFunction1
   .apply(initialState)
 ...
 \end{lstlisting}
-La gestione del \emph{threading} dello stato fra una chiamata e la successiva è delegato ad \lstinline{andThen}; in questo modo è possibile indicare la sequenza di operazioni che si vogliono compiere e lasciare che il boilerplate relativo al passaggio dello stato fra una chiamata e la successiva venga gestito automaticamente. 
+La gestione del \emph{threading} dello stato fra una chiamata e la successiva è delegato ad \lstinline{andThen}; in questo modo è possibile indicare la sequenza di operazioni che si vogliono compiere e lasciare che il boilerplate relativo al passaggio dello stato fra una chiamata e la successiva venga gestito automaticamente.
