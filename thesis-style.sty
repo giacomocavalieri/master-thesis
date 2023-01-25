@@ -4,6 +4,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{catchfile}
+\usepackage{lstautogobble}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
@@ -22,6 +24,25 @@
 \usepackage[\thesislang]{todonotes}
 \usepackage{hyperref}
 \usepackage[\thesislang]{cleveref}
+
+% Command to import code from a file and autogobble it
+% #0 = language
+% #1 = start-line (1-based)
+% #2 = end-line (inclusive)
+% #3 = file (relative to the root of the project)
+\newcommand{\codeFromFile}[4]{%
+% Take the required lines from the given file and write them to a temporary file
+%\immediate\write18{sed -n '#2,#3p;#3q' #4 > out/code.txt}%
+% Remove excess indentation from specified lines based on indentation of first line
+%\immediate\write18{awk 'NR==1 && match($0, /^ */) {p=RLENGTH+1};
+%  {print(substr($0,p))}' out/code.txt > out/code-indent.txt}%
+% Include the temporary file in the document
+\immediate\write18{./getCode.sh "#4" #2 #3}
+\lstinputlisting[language=#1]{out/getCode/temp.txt}%
+}
+
+\newcommand{\scalaFromFile}[3]{\codeFromFile{scala3}{#1}{#2}{master-thesis-code-examples/src/main/scala/#3}}
+\newcommand{\haskellFromFile}[3]{\codeFromFile{haskell}{#1}{#2}{#3}}
 
 % Set directory for images
 \graphicspath{{./images/}}
@@ -49,8 +70,10 @@
 % Listing configurations
 \lstdefinestyle{inline}{
 	captionpos=b,
+	% frame=leftline,
+	% rulecolor=\color{code-gray},
 	showstringspaces=false,
-	basicstyle={\ttfamily},
+	basicstyle={\footnotesize\ttfamily},
 	identifierstyle=\color{black},
 	stringstyle={\color{code-teal}},
 	keywordstyle=[1]{\color{code-pink}},
@@ -66,30 +89,12 @@
 	keepspaces=true,
 }
 
-\lstdefinestyle{full}{
-	frame=single,
-	framerule=0pt,
-	captionpos=b,
-	showstringspaces=false,
-	basicstyle={\ttfamily},
-	backgroundcolor=\color{code-background},
-	identifierstyle=\color{black},
-	stringstyle={\color{code-teal}},
-	keywordstyle=[1]{\color{code-pink}},
-	keywordstyle=[2]{\color{code-green}},
-	keywordstyle=[3]{\color{code-gray}},
-	keywordstyle=[4]{\color{code-red}\bfseries},
-	commentstyle={\color{code-teal}},
-	numbers=left,
-	numberstyle={\tiny\color{code-gray}},
-	escapechar={^},
-	emphstyle={},
-	breaklines=true,
-	tabsize=2,
-	extendedchars=true
+\lstset{
+	style=inline, 
+	autogobble=true 
+	% automatically removes whitespace at the beginnning
+	% of the lines of code inside listings
 }
-
-\lstset{style=inline}
 
 \lstdefinelanguage{haskell}{
 	sensitive=true,
@@ -108,8 +113,8 @@
 	string=[b]",
 	comment=[l]{//},
 	morekeywords=[1]{=, =>},
-	morekeywords=[2]{@main, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
+	morekeywords=[2]{@main, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
 	morekeywords=[3]{*},
-	morekeywords=[4]{Unit, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
+	morekeywords=[4]{MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
 	otherkeywords={*, =, =>}
 }
