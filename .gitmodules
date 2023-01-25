@@ -1,0 +1,3 @@
+[submodule "master-thesis-code-examples"]
+	path = master-thesis-code-examples
+	url = git@github.com:giacomocavalieri/master-thesis-code-examples.git
