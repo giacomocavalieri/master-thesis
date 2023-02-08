@@ -1,0 +1,39 @@
+\section{Dimostrazione per la monade identità}
+\label{dimostrazione-per-la-monade-identita}
+
+Alla \Cref{la-monade-identita} è stata data una definizione di monade per \lstinline{Identity}. In seguito è riportata una dimostrazione del rispetto delle leggi monadiche elencate nella \Cref{cos-e-una-monade} per la definizione fornita\footnote{Nei passaggi della dimostrazione, così come in quelle successive, sono utilizzati i nomi canonici utilizzati per l'implementazione Scala; quindi, si utilizza \lstinline{flatMap} anziché \lstinline{>>=} e \lstinline{pure} anziché \lstinline{return}}.
+
+Dimostrazione dell'identità sinistra, ovvero che \lstinline{pure(a).flatMap(f) = f(a)}:
+
+\begin{tabularx}{\textwidth}{ll}
+  \lstinline{pure(a).flatMap(f) =} & \emph{Definizione di \lstinline{pure}} \\
+  \\
+  \lstinline{a.flatMap(f) =} & \emph{Definizione di \lstinline{flatMap}}    \\
+  \\
+  \lstinline{f(a)}$\qed$ &
+\end{tabularx}
+
+Dimostrazione dell'identità destra, ovvero che \lstinline{m.flatMap(pure) = m}:
+
+\begin{tabularx}{\textwidth}{ll}
+  \lstinline{m.flatMap(pure) =} & \emph{Definizione di \lstinline{flatMap}} \\
+  \\
+  \lstinline{pure(m) = m}$\qed$ & \emph{Definizione di \lstinline{pure}}    \\
+\end{tabularx}
+
+Dimostrazione dell'associatività, ovvero che \lstinline{(m.flatMap(f)).flatMap(g) = m.flatMap(x => f(x).flatMap(g))}:
+
+\begin{tabularx}{\textwidth}{ll}
+  \lstinline{(m.flatMap(f)).flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}} \\
+  \\
+  \lstinline{f(m).flatMap(g) =} & \emph{Definizione di \lstinline{flatMap}}           \\
+  \\
+  \lstinline{g(f(m)) =} & \emph{Composizione di funzione}                             \\
+  \\
+  \lstinline{(x => g(f(x)))(m)} & \emph{Definizione di \lstinline{flatMap}}           \\
+  \\
+  \lstinline{m.flatMap(x => g(f(x))) =} & \emph{Definizione di \lstinline{flatMap}}   \\
+  \\
+  \lstinline{m.flatMap(x => f(x).flatMap(g))}$\qed$ &
+\end{tabularx}
+

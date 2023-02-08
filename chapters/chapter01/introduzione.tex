@@ -8,7 +8,7 @@ def appendToFile(file: File, line: String): Unit =
   try writer.write(f"$line\n")
   finally writer.close
 \end{lstlisting}
-Lo scopo di funzioni come \lstinline{appendToFile}, \lstinline{write} e \lstinline{println} non è quello di produrre un risultato -- il loro valore di ritorno è sempre \lstinline{Unit} -- ma di mettere in atto dei \emph{side effect}. 
+Lo scopo di funzioni come \lstinline{appendToFile}, \lstinline{write} e \lstinline{println} non è quello di produrre un risultato -- il loro valore di ritorno è sempre \lstinline{Unit} -- ma di mettere in atto dei \emph{side effect}.
 
 Più in generale, con side effect si intende una qualunque interazione della funzione con un ambiente diverso da quello locale.
 Possono essere quindi considerati side effect il modificare una variabile globale o un parametro passato per riferimento, lanciare un'eccezione, l'effettuare operazioni di input e output -- come mostrato precedentemente in \lstinline{appendToFile} -- o il chiamare una funzione che a sua volta presenta dei side effect~\cite{cit:on-the-prevalence-of-function-side-effects-in-general-purpose-open-source-software-systems}.
