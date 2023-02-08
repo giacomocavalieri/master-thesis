@@ -14,6 +14,8 @@ In questo caso \lstinline{2 * f(1) = 4} ma \lstinline{f(1) + f(1) = 5}.
 Infatti \lstinline{f} legge e modifica una variabile globale dalla quale dipende il suo valore di ritorno; per via di questo side effect ogni chiamata successiva alla funzione, a parità di argomento, produrrà un valore differente.
 Dall'esempio è possibile intuire come, in presenza di side effect, sia più difficile ragionare sul comportamento delle funzioni: per poterlo comprendere non è sufficiente osservare il corpo della funzione in analisi ma è necessario conoscere il contesto nel quale questa viene invocata.
 
+Al contrario, quando si ha a che fare con una funzione pura è possibile manipolarla ed effettuare refactoring del codice in maniera \emph{equazionale}: è sempre possibile sostituire alla chiamata di funzione il suo valore di ritorno senza il rischio di alterare la semantica del programma. Se \lstinline{f} è una funzione pura allora \lstinline{f(1) + f(1) = 2 * f(1)}.
+
 \subsection{Complessità del refactoring}
 \label{subsection:complessita-del-refactoring}
 \emph{L'ordine} e il \emph{numero delle invocazioni} di funzioni con side effect ha importanza nel determinare il comportamento complessivo di un programma e -- come mostrato nell'esempio della funzione \lstinline{f} -- modificare uno di questi due fattori può comportarne uno stravolgimento.

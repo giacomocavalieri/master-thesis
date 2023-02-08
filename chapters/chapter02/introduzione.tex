@@ -1,1 +1,5 @@
-Nel capitolo precedente si è mostrato come le monadi possano essere utilizzate per modellare la presenza di diversi side effect. In tutti gli esempi mostrati viene sempre gestita una sola tipologia di side effect per volta: la presenza di uno stato mutabile con \lstinline{State}, la possibilità di fallimento con \lstinline{Option} e la capacità di effettuare input e output con \lstinline{IO}. Tuttavia come dovrebbe essere strutturato il codice per poter gestire contemporaneamente più side effect contemporaneamente? Quale dovrebbe essere il tipo di una funzione per rendere esplicito il fatto che può sia fallire che effettuare operazioni di input e output?
+Nel capitolo precedente si è mostrato come sia possibile implementare semplici monadi per poter modellare la presenza di diversi side effect.
+Tuttavia, seguendo tale approccio non è evidente come sia possibile gestire contemporaneamente più side effect. Infatti ogni monade descritta permette di modellare un singolo side effect per volta: uno stato mutabile per \lstinline{State}, la possibilità di fallimenti con \lstinline{Option} e la capacità di effettuare input e output con \lstinline{IO}.
+
+In questo capitolo verrà introdotto il concetto di \emph{monad transformer}: un meccanismo che permette di unire monadi elementari combinandone le caratteristiche.
+

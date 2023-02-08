@@ -1,0 +1,132 @@
+\section{Monad transformer}
+
+Un \emph{monad transformer} è una coppia (\lstinline{t}, \lstinline{lift}) dove:
+\begin{itemize}
+  \item \lstinline{t} è un costruttore di tipi che prende in input un costruttore di tipi \lstinline{m}, un tipo \lstinline{a} e restituisce un tipo \lstinline{t m a}
+  \item Se \lstinline{m} è una monade, allora \lstinline{t m} è una monade
+  \item \lstinline{lift} è una funzione polimorfa con tipo \lstinline{m a -> t m a} (dove \lstinline{m} è una monade). Questa funzione serve a portare nella monade \lstinline{t m} valori che si trovano nella monade \lstinline{m}
+\end{itemize}
+
+Inoltre è richiesto che valgano alcune leggi\footnote{Per chiarezza vengono riportate a pedice le indicazioni su quale monade appartengano le operazioni \lstinline{return} e \lstinline{>>=}: \lstinline{m} a pedice indica che l'operazione appartiene alla monade \lstinline{m}, mentre \lstinline{tm} a pedice indica che l'operazione fa riferimento alla monade \lstinline{t m}.}:
+\begin{itemize}
+  \item \lstinline{lift (return}$_\text{\lstinline{m}}$ \lstinline{x) = return}$_\text{\lstinline{tm}}$ \lstinline{x}
+  \item \lstinline{lift (m >>=}$_\text{\lstinline{m}}$ \lstinline{f) = lift m >>=}$_\text{\lstinline{tm}}$ \lstinline{(\x -> lift (f x))}
+\end{itemize}
+
+La prima legge serve a garantire che \lstinline{lift} sia l'operazione neutra: un valore senza side effect nella monade \lstinline{m} -- indicato come \lstinline{return}$_\text{\lstinline{m}}$\lstinline{ x} -- non avrà alcun side effect se portato nella monade \lstinline{t m} tramite l'operazione di \emph{lifting}. La seconda legge indica che effettuare il \emph{lifting} di una sequenza di operazioni -- vale a dire \lstinline{lift (m >>=}$_\text{\lstinline{m}}$ \lstinline{f)} -- è equivalente a effettuare il lifting delle singole operazioni e poi metterle in sequenza all'interno della monade \lstinline{t m}.
+
+È possibile interpretare un monad transformer \lstinline{t} come una monade di ordine superiore: ovvero una monade parametrizzata su una generica monade \lstinline{m}. L'idea alla base di un transformer è che questo permette di arricchire la monade parametro aggiungendovi ulteriori effetti~\cite{cit:monad-transformers-and-modular-interpreters}.
+
+\subsection{Encoding di un monad transformer}
+L'encoding di un transformer può essere effettuato in maniera analoga a quanto mostrato per le monadi: è sufficiente definire un costruttore di tipi \lstinline{t} che prenda in input un costruttore di tipi \lstinline{m} e un tipo \lstinline{a}. Inoltre è possibile definire tramite il meccanismo delle \emph{type class} la funzione \lstinline{lift} che ha tipo \lstinline{m a -> t m a}.
+
+\subsubsection{Encoding in Haskell}
+Secondo la definizione fornita un monad transformer deve possedere una funzione in grado di portare un valore da una generica monade \lstinline{m} alla monade composta \lstinline{t m}. Questo vincolo può essere espresso in Haskell tramite la seguente definizione:
+\begin{lstlisting}[language=haskell]
+class MonadTransformer t where
+  lift :: Monad m => m a -> t m a
+\end{lstlisting}
+Il \emph{constraint} \lstinline{Monad m =>} indica la necessità che \lstinline{m} sia una monade perché la definizione sia valida.
+
+Per poter istanziare un transformer sarà sufficiente definire un'implementazione per la funzione \lstinline{lift} e per l'interfaccia di monade:
+\begin{lstlisting}[language=haskell]
+data T = ...
+
+instance MonadTransformer T where
+  lift = ...
+
+instance Monad m => Monad (T m) where
+  return = ...
+  (>>=) = ...
+\end{lstlisting}
+Sfruttando l'interpretazione delle type class come predicati, la seconda istanza equivale a provare che \lstinline{T m} è una monade fornendo come dimostrazione le definizioni delle funzioni \lstinline{return} e \lstinline{>>=}. La differenza rispetto a quanto visto per le monadi è che per poter effettuare questa dimostrazione (e poter implementare i metodi richiesti) si assume che il generico tipo \lstinline{m} sia una monade. Questo vincolo è espresso tramite il \emph{constraint} \lstinline{Monad m =>} nella definizione dell'istanza.
+
+Imporre tale limitazione non è in contrasto con la definizione fornita precedentemente di monad transformer: infatti, si è specificato che \lstinline{t m} deve essere una monade qualora anche \lstinline{m} lo sia.
+
+\subsubsection{Encoding in Scala}
+L'encoding in scala è analogo a quello in Haskell:
+\scalaFromFile{6}{7}{monads/transformers/Transformer.scala}
+
+L'istanza per uno specifico tipo \lstinline{T} sarà definita fornendo delle \emph{given instance} per le \emph{type class} di monade e transformer:
+\scalaFromFile{10}{18}{monads/transformers/Transformer.scala}
+
+Inoltre, per comodità, è possibile definire \lstinline{lift} come \emph{extension method} applicabile su una qualunque monade; questa definizione verrà riutilizzata spesso nei prossimi esempi:
+\begin{lstlisting}[language=scala3]
+extension [A, M[_]: Monad](m: M[A])
+  def lift[T[_[_], _]: MonadTransformer]: T[M, A] =
+    summon[MonadTransformer[T]].lift(m)
+\end{lstlisting}
+
+\subsection{Esempi di monad transformer}
+\subsubsection{Il transformer \lstinline{OptionT}}
+È possibile definire un transformer che permette di arricchire una monade con il side effect del fallimento prematuro della computazione:
+\scalaFromFile{7}{7}{monads/transformers/OptionT.scala}
+\lstinline{OptionT} inserisce all'interno della monade \lstinline{M} un valore di tipo \lstinline{Option[A]}: graficamente l'applicazione del transformer può essere visualizzata come mostrato in \Cref{fig:optionT}.
+
+\input{chapters/chapter02/figures/optionT}
+
+È possibile implementare un'istanza di monad transformer per \lstinline{OptionT}:
+\scalaFromFile{24}{26}{monads/transformers/OptionT.scala}
+Per rispettare le leggi dei monad transformer la funzione \lstinline{lift} non aggiunge alcun side effect limitandosi a inserire il valore contenuto nella monade \lstinline{M} all'interno di \lstinline{Some}; questo non comporterà il fallimento con \emph{short circuiting} della computazione risultante.
+
+Inoltre, se \lstinline{M} è una monade, allora \lstinline{OptionT[M, _]} è una monade:
+\scalaFromFile{10}{22}{monads/transformers/OptionT.scala}
+\begin{itemize}
+  \item \lstinline{pure} inserisce un valore \lstinline{a} nella monade \lstinline{OptionT} senza alcun side effect: innanzitutto il valore \lstinline{a} viene inserito all'interno di \lstinline{Some} -- l'elemento che non comporta il side effect del fallimento. In seguito viene sfruttato il fatto che \lstinline{M} sia una monade e si inserisce \lstinline{Some(a)} al suo interno senza side effect utilizzando la funzione \lstinline{pure}
+  \item \lstinline{flatMap} permette di mettere in sequenza computazioni che possono fallire prematuramente mantenendo anche gli effetti della monade parametro \lstinline{M}: in caso di fallimento questo viene propagato all'interno della monade \lstinline{M}
+\end{itemize}
+
+Grazie a \lstinline{OptionT} è possibile arricchire una qualunque monade preesistente con il side effect del fallimento prematuro della computazione. Per esempio una computazione che effettua input e output e che può fallire prematuramente può essere espressa come:
+\scalaFromFile{28}{29}{monads/transformers/OptionT.scala}
+\scalaFromFile{34}{39}{monads/transformers/OptionT.scala}
+
+Da questo semplice esempio è possibile notare alcuni aspetti fondamentali: semplicemente leggendo il tipo del valore \lstinline{failAndIO} è possibile comprendere come questo modelli una computazione che può sia fallire che effettuare operazioni di input e output. Inoltre, per poter eseguire gli effetti della monade più interna -- in questo caso la monade \lstinline{IO} -- è necessario effettuarne il \emph{lifting} all'interno della monade \lstinline{OptionT} sfruttandone le proprietà di monad transformer. Poiché \lstinline{lift} rispetta le leggi dei monad transformer il comportamento è quello atteso: una computazione trasformata con \lstinline{lift} mantiene i side effect della monade sottostante senza aggiungerne di nuovi.
+
+Per poter eseguire concretamente la computazione ed estrarre un valore dalla monade \lstinline{OptionT} è sufficiente sfruttare \lstinline{runOptionT} che permetterà di accedere direttamente a una computazione eseguibile nella monade \lstinline{IO}:
+\begin{lstlisting}[language=scala3]
+@main def main: Unit = failAndIO.runOptionT.unsafeRun()
+// -> "Hello, world!"
+\end{lstlisting}
+
+\subsubsection{Il transformer \lstinline{StateT}}
+È possibile definire un transformer il cui compito è quello di aggiungere ad una qualsiasi monade la possibilità di simulare la presenza di uno stato mutabile in maniera simile a quanto fatto dalla monade \lstinline{State}:
+\scalaFromFile{7}{7}{monads/transformers/StateT.scala}
+La struttura di \lstinline{StateT} è analoga a quella di \lstinline{State} con la differenza che il valore di ritorno ottenuto dalla computazione è contenuto all'interno di un generico \lstinline{M}. Graficamente l'applicazione del transformer può essere visualizzata come mostrato in \Cref{fig:stateT}.
+
+\input{chapters/chapter02/figures/stateT}
+
+L'istanza di monad transformer di \lstinline{StateT} è:\footnote{La \emph{type lambda} \lstinline{StateTFixS} serve a ottenere un costruttore di tipi della forma richiesta per essere un transformer fissando il tipo dello stato gestito dalla monade. Infatti, se \lstinline{S} non fosse fissato allora \lstinline{StateT} sarebbe un costruttore di tipi che richiede tre tipi generici, mentre per poter essere un transformer è richiesto che sia generico su due soli tipi.}
+
+\scalaFromFile{24}{27}{monads/transformers/StateT.scala}
+Poiché \lstinline{lift} non può aggiungere alcun side effect alla monade la sua implementazione si limita a restituire lo stato mutabile senza modificarlo.
+
+Anche l'istanza di monade sarà analoga a quella utilizzata da \lstinline{State} con la differenza che sarà necessario effettuare le computazioni con stato all'interno della generica monade \lstinline{M} sulla quale è parametrizzato il transformer:
+\scalaFromFile{10}{22}{monads/transformers/StateT.scala}
+\begin{itemize}
+  \item \lstinline{pure} permette di creare una computazione che non presenta alcun side effect. In questo caso l'effetto neutro consiste nel non modificare lo stato globale e nel non applicare gli effetti della monade sottostante
+  \item \lstinline{flatMap} permette di mettere in sequenza operazioni monadiche che possono avere l'effetto di modificare uno stato mutabile condiviso. L'implementazione non fa altro che effettuare il \emph{threading} dello stato fra le computazioni monadiche che avvengono nella generica monade \lstinline{M}
+\end{itemize}
+
+Le operazioni di base di \lstinline{get} e \lstinline{set} viste per la monade \lstinline{State} possono essere implementate in anche per il generico \lstinline{StateT}:
+\scalaFromFile{29}{33}{monads/transformers/StateT.scala}
+
+Grazie a queste funzioni è possibile definire delle computazioni alle quali aggiungere il side effect della modifica di uno stato globale:
+\scalaFromFile{38}{44}{monads/transformers/StateT.scala}
+
+Analizzando il tipo di \lstinline{stateAndIO} è possibile comprendere come la computazione modellata possa effettuare sia input e output che modificare uno stato globale: infatti la monade di base \lstinline{IO} è stata arricchita dal transformer \lstinline{StateT} ottenendo una monade composta che modella i side effect di entrambi.
+Per poter interpretare la computazione modellata ottenendo i side effect desiderati è sufficiente sfruttare \lstinline{runStateT} fornendo il valore iniziale dello stato mutabile:
+\begin{lstlisting}[language=scala3]
+@main def main: Unit =
+  stateAndIO.runStateT("foo").unsafeRun()
+// -> Current state: foo
+// -> Setting new state
+\end{lstlisting}
+
+\subsection{Rimozione della duplicazione di codice}
+È possibile osservare come l'implementazione del transformer per lo stato mutabile sia molto simile a quella della normale monade \lstinline{State}. Anche le loro istanze di monade sono piuttosto simili effettuando il threading dello stato mutabile fra computazioni successive. È possibile eliminare tale duplicazione di codice definendo la monade \lstinline{State} in termini della monade \lstinline{StateT}:
+\scalaFromFile{49}{49}{monads/transformers/StateT.scala}
+\lstinline{State} viene espressa come la monade identità -- che non presenta side effect -- arricchita dalla possibilità di modificare uno stato globale. In questo modo non è più necessario implementare manualmente l'istanza di monade per \lstinline{State} che sarà derivata automaticamente: infatti, poiché \lstinline{Identity} è una monade, anche \lstinline{StateT[S, Identity, _]} lo sarà.
+Le operazioni della monade \lstinline{State} possono essere implementate in termini di quelle della monade \lstinline{StateT}:
+\scalaFromFile{51}{52}{monads/transformers/StateT.scala}
+In questo modo è comunque possibile scrivere codice in termini della monade \lstinline{State} nascondendo il fatto che questa è stata implementata sfruttando il transformer \lstinline{StateT}; per esempio il codice mostrato nella \Cref{sec:for-comprehension-in-scala} per incrementare il valore di un contatore rimarrà inalterato:
+\scalaFromFile{54}{59}{monads/transformers/StateT.scala}

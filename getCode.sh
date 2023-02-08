@@ -21,6 +21,7 @@ echo "file:$INPUTFILE\nstart:$START\nend:$END" > $LOGFILE
 # Check if the file exists, exit otherwise
 if [[ ! -f "$INPUTFILE" ]]; then
   echo "$INPUTFILE does not exist!" >> $LOGFILE
+  rm "$TEMPFILE"
   exit 1
 fi
 

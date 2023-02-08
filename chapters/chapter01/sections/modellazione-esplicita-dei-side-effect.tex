@@ -153,7 +153,7 @@ def eighth(n: Int): Option[Int] =
 \end{lstlisting}
 La funzione è solo interessata dalla logica applicativa: dividere tre volte il valore in input. La gestione del fallimento è delegata ad \lstinline{andThen}\footnote{In Scala è già definito per \lstinline{Option} il metodo \lstinline{flatMap} con lo stesso comportamento di \lstinline{andThen} mostrato nell'esempio. Per questi esempi si preferisce utilizzare \lstinline{andThen} in quanto rende più chiaro il ruolo della funzione.} che, in caso di fallimento, restituisce immediatamente \lstinline{None}.
 
-\todo{3. Per completezza si potrebbbe anche mostrare come alcuni linguaggi (come Kotlin, Rust) adottano un approccio analogo ma con un supporto diretto del compilatore e annesso zucchero sintattico? In questo caso la soluzione è ad hoc e non è generica come per le monadi ma comunque interessante}
+\nicetohave{Per completezza si potrebbbe anche mostrare come alcuni linguaggi (come Kotlin, Rust) adottano un approccio analogo ma con un supporto diretto del compilatore e annesso zucchero sintattico? In questo caso la soluzione è ad hoc e non è generica come per le monadi ma comunque interessante}
 
 \subsubsection{Gestione della lettura e modifica di uno stato globale}
 \label{gestione-della-lettura-e-modifica-di-uno-stato-globale}
