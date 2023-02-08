@@ -43,7 +43,7 @@ x || y = case x of
 Le due funzioni hanno una struttura simile: inizialmente viene forzata la valutazione del primo argomento tramite \emph{pattern matching} sul suo valore. In seguito viene restituito il secondo argomento o un valore predefinito in base al risultato del pattern matching. In entrambi i casi non viene forzata la valutazione del secondo argomento attuando la logica di \emph{short-circuiting} che ci si potrebbe aspettare dagli operatori logici \lstinline{&&} e \lstinline{||}: il risultato di \lstinline{False && undefined} sarà \lstinline{False} e il programma non terminerà con un'eccezione dato che l'espressione \lstinline{undefined} non sarà valutata.
 
 \subsubsection{Incompatibilità di \emph{laziness} e side effect}
-Un aspetto negativo della strategia \emph{lazy} è che può diventare estremamente complesso capire l'ordine con il quale le espressioni vengono valutate. Infatti, come mostrato negli esempi precedenti la valutazione dei \emph{thunk} viene forzata solo quando strettamente necessario. Per questo motivo sarebbe pressoché impossibile riuscire a compiere in una sequenza prevedibile i side effect delle funzioni~\cite{cit:tackling-the-awkward-squad}.\todo{Forse si potrebbe aggiungere un esempio più complesso in un listato a parte che mostri la difficoltà di avere side effect in un contesto lazy? Per esempio con lettura e chiusura di file handle}
+Un aspetto negativo della strategia \emph{lazy} è che può diventare estremamente complesso capire l'ordine con il quale le espressioni vengono valutate. Infatti, come mostrato negli esempi precedenti la valutazione dei \emph{thunk} viene forzata solo quando strettamente necessario. Per questo motivo sarebbe pressoché impossibile riuscire a compiere in una sequenza prevedibile i side effect delle funzioni~\cite{cit:tackling-the-awkward-squad}.\nicetohave{Forse si potrebbe aggiungere un esempio più complesso in un listato a parte che mostri la difficoltà di avere side effect in un contesto lazy? Per esempio con lettura e chiusura di file handle}
 
 È proprio questa caratteristica che ha fatto sì che Haskell rimanesse un linguaggio puro e ha portato all'invenzione dell'input e output monadico: ``forse il più grande beneficio della \emph{laziness} non è la \emph{laziness} in sè, quanto il fatto che ci abbia forzato a rimanere puri, motivando così una grande quantità di lavoro sulle monadi''\footnote{Traduzione dal testo originale: ``[...] perhaps the biggest single benefit of laziness is not laziness per se, but rather that laziness kept us pure, and thereby motivated a great deal of productive work on monads [...]''~\cite{cit:a-history-of-haskell-being-lazy-with-class}}.
 
@@ -148,7 +148,6 @@ main =
   let messages = ["message1", "message2", "message3"]
   in void (sequence (map putStrLn messages))
 \end{lstlisting}
-\todo{Forse questi esempi sarebbero potuti essere introdotti in precedenza nel capitolo dedicato alle monadi e mostrati per maybe e state}
 
 In realtà le stesse funzioni \lstinline{forever} e \lstinline{retry} possono essere definite in maniera generica rispetto al tipo di effetto in considerazione:
 \begin{lstlisting}[language=haskell]
@@ -164,27 +163,15 @@ L'implementazione è tralasciata in quanto identica a quanto riportato nell'esem
 \subsection{I/O monadico in Scala}
 In Haskell la monade \lstinline{IO} deve essere implementata come un tipo di dato opaco con un supporto speciale del compilatore. Haskell infatti è un linguaggio puro con una modalità di valutazione \emph{lazy} che, come mostrato in precedenza, è incompatibile con la presenza di side effect.
 In Scala non è necessario un supporto diretto del compilatore in quanto è già possibile definire computazioni che svolgono side effect; perciò una semplice implementazione\footnote{L'implementazione vuole unicamente mostrare come si possa immaginare l'implementazione della monade \lstinline{IO} in un linguaggio come Scala. Tuttavia, un'implementazione simile non è \emph{stack safe:} interpretare un'azione \lstinline{IO} ottenuta componendo molti blocchi di base può portare a un errore di \emph{stack overflow}. Questo problema può essere risolto complicando l'implementazione della monade sfruttando una tecnica nota come \emph{trampolining}~\cite{cit:stackless-scala-with-free-monads} ed è l'approccio adottato da librerie come Cats Effect~\cite{cit:cats-effect-stack-safety}.} della monade \lstinline{IO} potrebbe essere la seguente:
-\begin{lstlisting}[language=scala3]
-final case class IO[A](unsafeRun: () => A)
-
-given Monad[IO] with
-  def pure[A](a: A): IO[A] = IO(() => a)
-	extension [A](m: IO[A]) 
-    def flatMap[B](f: A => IO[B]): IO[B] =
-      IO(() => f(m.unsafeRun()).unsafeRun())
-\end{lstlisting}
+\scalaFromFile{7}{14}{monads/IO.scala}
 \begin{itemize}
-  \item \lstinline{IO} è un costruttore di tipi che preso in input un valore di tipo \lstinline{A} restituisce un valore di tipo \lstinline{IO[A]} che rappresenta una computazione che, quando eseguita, può effettuare input o output e restituisce un valore di tipo \lstinline{A}
+  \item \lstinline{IO} è un costruttore di tipi che preso in input un valore di tipo \lstinline{A} restituisce un valore di tipo \lstinline{IO[A]}. Un valore con questo tipo rappresenta una computazione che, quando eseguita, può effettuare input o output e restituisce un valore di tipo \lstinline{A}
   \item \lstinline{pure} permette di trasformare un valore di tipo \lstinline{A} in uno di tipo \lstinline{IO[A]}. Non introduce alcun side effect e restituisce semplicemente il valore passato in input
   \item \lstinline{flatMap} permette di concatenare in sequenza due operazioni che possono svolgere I/O. Il risultato sarà una singola computazione che esegue i side effect di ciascuna in sequenza
 \end{itemize}
 
 Le funzioni impure della libreria standard di Scala possono quindi essere espresse in termini di \lstinline{IO}:
-\begin{lstlisting}[language=scala3]
-import scala.io.StdIn.readLine
-def putStrLn(s: String): IO[Unit] = IO(() => println(s))
-def getLine: IO[String] = IO(() => readLine())
-\end{lstlisting}
+\scalaFromFile{16}{17}{monads/IO.scala}
 \lstinline{putStrLn} e \lstinline{getLine} sono valori di tipo \lstinline{IO}; vale a dire strutture dati immutabili che descrivono come eseguire un side effect nel momento in cui la computazione verrà interpretata. Si noti la differenza fra una computazione \lstinline{IO} e l'equivalente versione impura:
 \begin{lstlisting}[language=scala3]
 val res1 = putStrLn("Hello, World!")
@@ -209,37 +196,43 @@ program.unsafeRun()
 \end{lstlisting}
 Il metodo è stato chiamato \lstinline{unsafeRun} a suggerire l'eccezionalità nella sua invocazione. Infatti, l'intero programma dovrebbe essere descritto all'interno della monade \lstinline{IO} per poter poi essere eseguito nel main del programma con un'unica chiamata a \lstinline{unsafeRun}.
 
-I vantaggi ottenuti grazie a questo approccio sono gli stessi già descritti nella \Cref{sub:io-monadico-haskell}: è possibile separare chiaramente il codice impuro dal codice puro, i programmi diventano cittadini di prima classe che possono essere presi come input e restituiti in output e diventa possibile sfruttare tutte le funzioni generiche sul tipo di monade per comporre programmi complessi. Per esempio, il codice mostrato in precedenza per effettuare delle richieste a un server può essere scritto in Scala in maniera molto simile\footnote{Nell'esempio per effettuare le richieste a un server viene utilizzata la libreria \emph{Requests-Scala}~\cite{cit:requests-scala}}:
-\begin{lstlisting}[language=scala3]
-extension[A](m: IO[A])
-  def forever[B]: IO[B] = m.flatMap(_ => m.forever)
-  def retry(times: Int, shouldRetry: A => Boolean):
-    IO[Option[A]] =
-    times match
-      case 0 => IO.pure(None)
-      case n => m.flatMap{ result => 
-        if shouldRetry(result)
-        then m.retry(n-1, shouldRetry)
-        else IO.pure(Some(result))
-      }
+I vantaggi ottenuti grazie a questo approccio sono gli stessi già descritti nella \Cref{sub:io-monadico-haskell}: è possibile separare chiaramente il codice impuro dal codice puro, i programmi diventano cittadini di prima classe che possono essere presi come input e restituiti in output e diventa possibile sfruttare tutte le funzioni generiche sul tipo di monade per comporre programmi complessi. Per esempio, come mostrato al \Cref{lst:io-http}, il codice mostrato in precedenza per effettuare delle richieste a un server può essere scritto in Scala in maniera molto simile\footnote{Nell'esempio per effettuare le richieste a un server viene utilizzata la libreria \emph{Requests-Scala}~\cite{cit:requests-scala}}.
 
-def URLToResource(url: String): IO[Response] =
-  IO(() => requests.get(url))
+\begin{figure}[htp]
+  \begin{lstlisting}[language=scala3, caption={Esempio di codice monadico che incapsula i side effect all'interno della monade IO per implementare una politica di \emph{retry} per le richieste HTTP.}, label={lst:io-http}]
+    extension[A](m: IO[A])
+      def forever[B]: IO[B] = m.flatMap(_ => m.forever)
+      def retry(times: Int, shouldRetry: A => Boolean):
+        IO[Option[A]] =
+        times match
+          case 0 => IO.pure(None)
+          case n => m.flatMap{ result => 
+            if shouldRetry(result)
+            then m.retry(n-1, shouldRetry)
+            else IO.pure(Some(result))
+          }
 
-def shouldRetry(response: Response): Boolean = 
-  val statusCode = response.statusCode
-  List(500, 503).contains(statusCode)
+    def urlToResource(url: String): IO[Try[Response]] =
+      IO(() => Try(requests.get(url)))
 
-@main def main: IO[Unit] = 
-  val times = 10
-  val step = for 
-    _ <- putStrLn("URL of the resource: ")
-    url <- getLine
-    result <- URLToResource(url)
-                .retry(times, shouldRetry)
-    _ <- result match
-      case None => putStrLn("Failed after 10 retries")
-      case Some(_) => putStrLn("Got a response")
-  yield ()
-  step.forever.unsafeRun()
-\end{lstlisting}
+    def shouldRetry(response: Try[Response]): Boolean =
+      response match
+        case Failure(exception: RequestFailedException) =>
+          val statusCode = exception.response.statusCode
+          List(500, 503).contains(statusCode)
+        case _ => false
+
+    @main def main: Unit = 
+      val times = 10
+      val step = for 
+        _ <- putStrLn("URL of the resource: ")
+        url <- getLine
+        result <- URLToResource(url)
+                    .retry(times, shouldRetry)
+        _ <- result match
+          case None => putStrLn("Failed after 10 retries")
+          case Some(_) => putStrLn("Got a response")
+      yield ()
+      step.forever.unsafeRun()
+  \end{lstlisting}
+\end{figure}

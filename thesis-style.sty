@@ -25,6 +25,12 @@
 \usepackage{hyperref}
 \usepackage[\thesislang]{cleveref}
 
+% Shortcuts for todo notes
+\newcommand{\mustfix}[1]{\todo[color=red!40]{#1}}
+\newcommand{\shouldfix}[1]{\todo[color=orange!40]{#1}}
+\newcommand{\nicetohave}[1]{\todo[color=green!40]{#1}}
+
+
 % Command to import code from a file and autogobble it
 % #0 = language
 % #1 = start-line (1-based)
@@ -113,8 +119,8 @@
 	string=[b]",
 	comment=[l]{//},
 	morekeywords=[1]{=, =>},
-	morekeywords=[2]{@main, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
+	morekeywords=[2]{opaque, @main, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
 	morekeywords=[3]{*},
-	morekeywords=[4]{MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
+	morekeywords=[4]{Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
 	otherkeywords={*, =, =>}
 }
