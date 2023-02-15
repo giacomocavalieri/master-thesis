@@ -1,11 +1,11 @@
 \section{MTL come effect system}
 
-MTL può essere visto come un primo esempio di \emph{effect system}: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
+MTL può essere visto come un primo esempio di effect system: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
 
 Per esempio, il meccanismo delle eccezioni di Java rappresenta un rudimentale effect system che permette di tracciare una sola tipologia di side effect: il lancio di un'eccezione~\cite[p.~985]{cit:design-concepts-in-programming-languages}.
-Anche in Scala, tramite l'uso delle \emph{capability}~\cite{cit:scala-3-reference-canthrow}, è stato definito un sistema di effetti che permette di verificare staticamente la presenza di eccezioni~\cite{cit:safer-exceptions-for-scala}.
+Anche in Scala, tramite l'uso delle \emph{capability}~\cite{cit:scala-3-reference-canthrow}, è stato definito un sistema di effetti\footnote{Attualmente è possibile abilitare questo meccanismo di cattura delle eccezioni come feature sperimentale. Tuttavia, diverse ricerche sono attualmente in atto per permettere l'utilizzo delle \emph{capability} per gestire qualunque tipologia di effetto~\cite{cit:effects-capabilities-and-boxes-from-scope-based-reasoning-to-type-based-reasoning-and-back,cit:caprese}}\mustfix{L'unica fonte ``istituzionale'' che sono riuscito a trovare riguardante il progetto Caprese è questa offerta di lavoro dell'EPFL. In alternativa ci sarebbe un tweet di Odersky che annuncia l'avvio del progetto ma non so se sia opportuno o meno inserirlo nella sitografia come fonte} che permette di verificare staticamente la presenza di eccezioni~\cite{cit:safer-exceptions-for-scala}.
 
-La versione originale della libreria MTL include diverse classi per trattare un'ampia gamma di side effect comuni: il fallimento di una computazione, la lettura di uno stato immutabile, la modifica di uno stato mutabile, etc.
+La versione originale della libreria MTL include diverse classi per trattare un'ampia gamma di side effect comuni: il fallimento di una computazione, la lettura di uno stato immutabile, la modifica di uno stato mutabile, ecc.
 
 Tuttavia, l'approccio MTL è molto generale e permette di definire in \emph{user space} quali sono gli effetti rilevanti per un determinato dominio applicativo, lasciando ampia libertà al programmatore di scegliere il livello di astrazione più adatto.
 Un effect system può diventare quindi uno strumento di design per la realizzazione di sistemi orientati agli effetti.
@@ -16,18 +16,19 @@ Un effect system può diventare quindi uno strumento di design per la realizzazi
 
 Le operazioni che si vogliono implementare sono il recupero di un utente in base al suo identificativo, il salvataggio di un utente e la sua cancellazione.
 
-Sicuramente tali operazioni potrebbero essere descritte direttamente all'interno della monade \lstinline{IO}, stabilendo una connessione con il database ed eseguendo le query SQL corrispondenti. Tuttavia, tale approccio rende più difficile la realizzazione di test unitari: nell'esecuzione delle query queste cercheranno di stabilire una connessione con il database e potrebbero sporcarne lo stato se non opportunamente gestite. Una soluzione comunemente adottata consiste nell'attuare \emph{dependency injection} simulando il comportamento del database senza effettivamente stabilire una connessione, oppure connettendo i test a un database di test separato da quello in produzione.
+Sicuramente tali operazioni potrebbero essere descritte direttamente all'interno della monade \lstinline{IO}, stabilendo una connessione con il database ed eseguendo le query SQL corrispondenti. Tuttavia, tale approccio rende più difficile la realizzazione di test unitari: nell'esecuzione delle query queste cercheranno di stabilire una connessione con il database e potrebbero alterarne lo stato se non opportunamente gestite. Una soluzione comunemente adottata consiste nell'attuare \emph{dependency injection} simulando il comportamento del database senza effettivamente stabilire una connessione, oppure connettendo i test a un database di test separato da quello in produzione.
 
-Secondo lo stile MTL vengono innanzitutto definite le operazioni rilevanti per il dominio: primitive astratte che definiscono le operazioni che si possono eseguire sul database:
+\subsubsection{Definizione degli effetti}
+Secondo lo stile MTL vengono innanzitutto definite le operazioni rilevanti per il dominio: primitive astratte che definiscono le operazioni che si possono eseguire sul database. La codifica mostrata in precedenza per gli effetti del fallimento e dello stato mutabile può essere utilizzata anche in questo caso:
 \scalaFromFile{14}{17}{monads/mtl/Design.scala}
-Queste possono poi essere sfruttate e composte per definire operazioni complesse:
+L'interfaccia definisce un insieme minimale e ortogonale di operazioni di base che si vuole poter compiere nell'interazione con il database contenente gli utenti. Queste operazioni possono poi essere composte per ottenere logiche più complesse:
 \scalaFromFile{29}{40}{monads/mtl/Design.scala}
 Lo scopo di \lstinline{updateOrDelete} è di permettere di aggiornare un utente a partire dal suo identificativo, oppure di cancellarlo secondo la logica stabilita da una funzione passata come parametro.
 Tale funzione è definita in astratto per un qualunque tipo \lstinline{M[_]} che permetta di ottenere le operazioni di \lstinline{UserStore}.
 
 \subsubsection{Interpretazione in un ambiente di produzione}
 Il vantaggio dato dall'encoding MTL delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
-Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo stack utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga per lo meno la connessione al database:
+Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo stack utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga la connessione al database:
 \scalaFromFile{54}{55}{monads/mtl/Design.scala}
 In questo caso l'interprete adottato per un ambiente di produzione può manipolare uno stato -- nell'esempio chiamato \lstinline{Runtime} -- che contiene la connessione al database.
 
@@ -50,26 +51,3 @@ L'interprete \lstinline{TestRunner} non è altro che la monade \lstinline{State}
 
 Diventa quindi possibile testare la logica applicativa senza dover effettuare alcuna operazione di input e output; il test stabilisce lo stato iniziale del sistema e verifica che la logica dell'operazione eseguita sia corretta:
 \scalaFromFile{105}{110}{monads/mtl/Design.scala}
-
-
-% MTL: Composable modular effectful programming
-
-
-% FREE 
-
-% FREE (are in their infancy, just getting started)
-% Beauty in the beast: a functional semantics for the akward squad
-% Data types a la carte 
-% Freer monads (faster!)
-
-% Denotational semantics: the meaning of a term is given by defining in a compositional way a mapping to a lower language. Layers of an onion
-% NAtural transfomration takes an operation described in f and turns it into a sequential program described in g
-
-% Defining algebras of operation
-
-% Analisi: un programma è dati. Free applicatives (Totally parallel operations) possono essere esplorati senza produrre valori a runtime quindi è possibile fare ottimizzazioni e analisi statiche
-% Es. ho un file system language molto semplice con poche operazioni e posso darci una semantica denotazionale mostrando come vengono tradotte in chiamate al SO
-
-% MOCKING
-% Kill integration and system testing
-

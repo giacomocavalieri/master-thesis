@@ -16,7 +16,7 @@ Il tipo che descrive tutti i side effect della funzione \lstinline{manualLifting
 Per poter eseguire l'operazione di stampa in output il cui tipo è \lstinline{IO[Unit]} è quindi necessario trasformarla in un valore compatibile con lo stack utilizzato. In questo caso la prima operazione di \emph{lifting} trasforma il tipo in \lstinline{OptionT[IO, Unit]}; l'operazione è applicata un'ultima volta per portare il valore nello stack descritto.
 
 Come è possibile osservare il codice è molto verboso e introduce la necessità di inserire diverse chiamate a \lstinline{lift} il cui unico scopo è quello di far combaciare i tipi delle operazioni.
-Il risultato sarà un codice poco leggibile dove la logica applicativa viene offuscata dalla presenza di numerose operazioni di lifting.
+Il risultato sarà un codice poco leggibile dove la logica applicativa viene offuscata dalla presenza di numerose operazioni di \emph{lifting}.
 Infatti, specialmente in stack composti da diversi transformer, è necessario ricorrere a più operazioni di \emph{lifting} per ogni singola azione con side effect. Questo comporta un significativo sbilanciamento fra le porzioni di codice effettivamente rilevanti -- che codificano la logica applicativa -- e il boilerplate necessario per poter utilizzare correttamente lo stack di monadi.
 
 Inoltre, il codice scritto utilizzando uno specifico stack di monadi sarà ``viscoso'': opporrà maggiore resistenza al cambiamento della struttura dello stack di monadi comportando la riscrittura di diverse porzioni di codice. Per esempio, aggiungendo o rimuovendo un ulteriore transformer allo stack utilizzato sarà necessario aggiungere o rimuovere da ogni operazione la chiamata al metodo \lstinline{lift}. Immaginando di rimuovere il transformer \lstinline{StateT} dalla funzione \lstinline{manualLifting} mostrata in precedenza il codice dovrà essere trasformato in:
@@ -27,9 +27,9 @@ def manualLifting: OptionT[IO, String] =
     _ <- OptionT.fail[IO, Any]
   yield "result"
 \end{lstlisting}
-in questo caso il cambiamento nel tipo di ritorno della funzione ha comportato il dover modificare tutte le operazioni coinvolte rimuovendo la chiamata a \lstinline{lift}.
+In questo caso il cambiamento nel tipo di ritorno della funzione ha comportato il dover modificare tutte le operazioni coinvolte rimuovendo le chiamate a \lstinline{lift}.
 
-Anche la semplice operazione di riordinare gli elementi dello stack di monadi comporta la necessità di apportare modifiche al codice. Sempre riprendendo l'esempio di \lstinline{manualLifting} si immagini di dover cambiare lo stack di monadi in modo da avere un tipo \lstinline{OptionT[StateT[Int, IO, _], String]}. In questo caso il codice dovrà essere modificato come segue:
+Anche il semplice riordinare gli elementi dello stack di monadi comporta la necessità di apportare modifiche al codice. Sempre riprendendo l'esempio di \lstinline{manualLifting} si immagini di dover cambiare lo stack di monadi in modo da avere un tipo \lstinline{OptionT[StateT[Int, IO, _], String]}. In questo caso il codice dovrà essere modificato come segue:
 \begin{lstlisting}[language=scala3]
   def manualLifting: OptionT[StateT[Int, IO, _], String] =
     for
@@ -49,7 +49,7 @@ Una possibile soluzione al dover intervallare operazioni relative alla logica ap
     column  <- csv.getIntColumn("column") // : App[List[Int]]
   yield column.sum
 \end{lstlisting}
-La logica applicativa viene espressa in maniera concisa e leggibile. Ciò è reso possibile dal fatto che ogni operazione intermedia restituisce un valore all'interno della monade \lstinline{App} e quindi non è necessario effettuare lifting delle operazioni per permettere ai tipi di combaciare.
+La logica applicativa viene espressa in maniera concisa e leggibile. Ciò è reso possibile dal fatto che ogni operazione intermedia restituisce un valore all'interno della monade \lstinline{App} e quindi non è necessario effettuare \emph{lifting} delle operazioni per permettere ai tipi di combaciare.
 
 Questo vantaggio dal punto di vista della leggibilità del codice viola però il principio di privilegio minimo: il programmatore, per poter esprimere in maniera concisa la logica applicativa, è costretto a incapsulare ogni valore intermedio all'interno dell'intero stack di monadi dell'applicazione anche qualora ciò non sia necessario. Per esempio, l'operazione di parsing del contenuto del file potrebbe fallire nel caso in cui questo sia mal formato; tuttavia, il parsing non richiede di effettuare operazioni di input e output. Nonostante ciò, \lstinline{parseCSV} -- per poter essere composto con le altre operazioni -- restituisce un valore di tipo \lstinline{OptionT[IO, CSV]}. Vale a dire che l'operazione di \emph{parsing} potrebbe potenzialmente effettuare input e output anche se dal punto di vista logico ciò non ha senso.
 Lo stesso ragionamento vale per la chiamata al metodo \lstinline{getIntColumn} che per esempio potrebbe fallire nel caso in cui non sia presente una colonna col nome desiderato; non c'è alcun motivo per cui tale operazione dovrebbe poter effettuare operazioni di input e output.
