@@ -19,6 +19,7 @@
 \usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{latexsym}
+\usepackage{enumitem}
 \usepackage{geometry}
 \usepackage[backend=biber, sorting=none, style=numeric-comp, defernumbers=true]{biblatex}
 \usepackage[\thesislang]{todonotes}
@@ -30,21 +31,17 @@
 \newcommand{\shouldfix}[1]{\todo[color=orange!40]{#1}}
 \newcommand{\nicetohave}[1]{\todo[color=green!40]{#1}}
 
+% Remove spacing between list items
+\setlist{noitemsep}
 
 % Command to import code from a file and autogobble it
-% #0 = language
-% #1 = start-line (1-based)
-% #2 = end-line (inclusive)
-% #3 = file (relative to the root of the project)
+% #1 = language
+% #2 = start-line (1-based)
+% #3 = end-line (inclusive)
+% #4 = file (relative to the root of the project)
 \newcommand{\codeFromFile}[4]{%
-% Take the required lines from the given file and write them to a temporary file
-%\immediate\write18{sed -n '#2,#3p;#3q' #4 > out/code.txt}%
-% Remove excess indentation from specified lines based on indentation of first line
-%\immediate\write18{awk 'NR==1 && match($0, /^ */) {p=RLENGTH+1};
-%  {print(substr($0,p))}' out/code.txt > out/code-indent.txt}%
-% Include the temporary file in the document
-\immediate\write18{./getCode.sh "#4" #2 #3}
-\lstinputlisting[language=#1]{out/getCode/temp.txt}%
+	\immediate\write18{./getCode.sh "#4" #2 #3}
+	\lstinputlisting[language=#1]{out/getCode/temp.txt}%
 }
 
 \newcommand{\scalaFromFile}[3]{\codeFromFile{scala3}{#1}{#2}{master-thesis-code-examples/src/main/scala/#3}}
@@ -61,7 +58,7 @@
 \renewcommand{\lstlistlistingname}{Elenco dei listati}
 \crefname{lstlisting}{listato}{listati}
 \Crefname{lstlisting}{Listato}{Listati}
-\crefname{listing}{listato}{listati}  
+\crefname{listing}{listato}{listati}
 \Crefname{listing}{Listato}{Listati}
 
 % Colors for code highlighting
@@ -96,8 +93,8 @@
 }
 
 \lstset{
-	style=inline, 
-	autogobble=true 
+	style=inline,
+	autogobble=true
 	% automatically removes whitespace at the beginnning
 	% of the lines of code inside listings
 }
@@ -119,8 +116,8 @@
 	string=[b]",
 	comment=[l]{//},
 	morekeywords=[1]{=, =>},
-	morekeywords=[2]{throw, using, opaque, @main, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
+	morekeywords=[2]{new, extends, private, throw, using, opaque, @main, @tailrec, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
 	morekeywords=[3]{*},
-	morekeywords=[4]{User, UserId, UserStore, Delete, Runtime, ProductionRunner, TestRunner, Map, Fail, HasState, App, Any, Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
+	morekeywords=[4]{List, ConcurrentDSL, YieldControl, Stop, Perform, Fork, Concurrent, ProgramView, Interpreter, Return, Instruction, Then, StateDSL, Get, Set, User, UserId, UserStore, Delete, Runtime, ProductionRunner, TestRunner, Map, Fail, HasState, App, Any, Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
 	otherkeywords={*, =, =>}
 }
