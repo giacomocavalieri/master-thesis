@@ -1,0 +1,114 @@
+\section{Implementazione di una Free Monad}
+
+L'AST descritto tramite una free monad ha l'obiettivo di catturare la struttura sintattica di una computazione monadica~\cite{cit:programming-monads-operationally-with-unimo}.
+Come già descritto in precedenza, l'interfaccia delle monadi permette di descrivere una computazione come una sequenza di passi successivi che, una volta terminati, restituiscono un valore.
+
+In seguito verrà formalizzata tale definizione arrivando in maniera graduale alla definizione di una free monad.
+L'encoding adottato è quello delle cosiddette \emph{Free Operational Monads}~\cite{cit:programming-monads-operationally-with-unimo}; tuttavia esistono svariate tecniche per ottenere risultati analoghi~\cite{cit:data-types-a-la-carte,cit:freer-monads-more-extensible-effects,cit:fusion-for-free}.
+
+\subsection{Descrizione astratta di un programma monadico}
+\subsubsection{Istruzioni di un programma monadico}
+In generale si può considerare un programma monadico come definito da una serie di istruzioni appartenenti ad un insieme $I$ messe in sequenza fra loro.
+Ogni istruzione, una volta eseguita, può restituire un valore differente; si consideri per esempio il seguente programma definito nella monade \lstinline{State}:
+\begin{lstlisting}[language=scala3]
+def program[S](f: S => S): State[S, String] =
+  for
+    state <- get
+    newState = f(state)
+    _ <- set(newState)
+  yield "end"
+\end{lstlisting}
+Le operazioni di base di cui si compone sono \lstinline{get} e \lstinline{set}; mentre la prima restituisce un valore di tipo \lstinline{S}, la seconda restituisce \lstinline{Unit}.
+Quindi, in questo caso, l'insieme delle istruzioni sarebbe $I = \{get, set\}$; questo insieme può essere codificato in Scala con una semplice enumerazione:
+\scalaFromFile{7}{9}{monads/free/State.scala}
+Un valore di tipo \lstinline{StateDSL[S, A]} rappresenta una singola istruzione che opera su uno stato di tipo \lstinline{S} e restituisce un valore di tipo \lstinline{A}:
+\begin{itemize}
+  \item \lstinline{Get} opera su uno stato di tipo \lstinline{S} e lo restituisce, quindi ha tipo \lstinline{StateDSL[S, S]}
+  \item \lstinline{Set} ha tipo \lstinline{StateDSL[S, Unit]} in quanto, come descritto in precedenza, ha l'effetto di modificare lo stato \lstinline{S} ma non restituisce alcun valore d'interesse
+\end{itemize}
+
+\subsubsection{Esecuzione di istruzioni in un programma monadico}
+Come descritto all'inizio del capitolo una free monad cattura in una struttura dati la struttura sintattica di un programma monadico.
+Un tipo di dato che rappresenti l'AST di un programma monadico deve quindi permettere di rappresentare l'esecuzione di una singola istruzione.
+Per disaccoppiare l'AST dallo specifico tipo di istruzioni eseguite un programma verrà definito in maniera generica rispetto alle istruzioni che può eseguire:
+\begin{lstlisting}[language=scala3]
+enum Program[I[_], A]: ...
+\end{lstlisting}
+Il tipo generico \lstinline{I} rappresenta il set di istruzioni che possono essere eseguite dal programma monadico, mentre \lstinline{A} rappresenta il tipo del valore di ritorno ottenuto dall'esecuzione del programma. Per esempio un valore di tipo \lstinline{Program[StateDSL[Int, _], String]} rappresenterà un programma monadico che può eseguire operazioni su uno stato di tipo \lstinline{Int} e restituisce un valore di tipo \lstinline{String}.
+
+Per poter costruire un programma che esegue una singola istruzione può essere definito un caso ad hoc dell'enumerazione e uno \emph{smart constructor}:
+\begin{lstlisting}[language=scala3]
+enum Program[I[_], A]:
+  case Instruction[I[_], A](instruction: I[A])
+    extends Program[I, A]
+
+object Program:
+  def fromInstruction[I[_], A](instruction: I[A]): Program[I, A] =
+    Instruction(instruction)
+\end{lstlisting}
+
+Questa definizione permette di creare semplici programmi che eseguono una singola istruzione:
+\begin{lstlisting}[language=scala3]
+  def get[S] = Program.fromInstruction(StateDSL.Get())
+  def set[S](state: S) =
+    Program.fromInstruction(StateDSL.Set(state))
+\end{lstlisting}
+
+Chiaramente un programma che esegue una singola istruzione non è particolarmente interessante; per poter combinare semplici istruzioni e realizzare programmi complessi è necessario espandere la definizione di \lstinline{Program} fornita.
+
+\subsubsection{Terminazione di un programma monadico}
+Un'ulteriore caratteristica di ogni computazione monadica -- espressa dal metodo \lstinline{pure} dell'interfaccia delle monadi -- sta nella possibilità di poter inserire un qualunque valore all'interno della sequenza delle computazioni senza aggiungervi ulteriori side effect.
+Tuttavia, fino a questo momento un programma monadico si limita a permettere l'esecuzione di una singola istruzione appartenente al set \lstinline{I} specificato. L'AST di \lstinline{Program} può essere esteso per permettere questa operazione:
+\begin{lstlisting}[language=scala3]
+enum Program[I[_], A]:
+  case Instruction[I[_], A](instruction: I[A])
+    extends Program[I, A]
+  case Return[I[_], A](value: A) extends Program[I, A]
+
+object Program:
+  def fromValue[I[_], A](value: A): Program[I, A] =
+    Return(value)
+\end{lstlisting}
+
+Questo ulteriore costruttore permette di definire programmi che restituiscono valori senza alcun side effect, ovvero senza eseguire nessuna delle operazioni dell'insieme \lstinline{I}. Per esempio
+\begin{lstlisting}[language=scala3]
+val program: Program[StateDSL[Int, _], String] =
+  Program.fromValue("result")
+\end{lstlisting}
+Restituisce il valore \lstinline{"result"} senza modificare lo stato mutabile tramite le operazioni definite nello \lstinline{StateDSL}.
+
+\subsubsection{Messa in sequenza di programmi}
+L'aspetto più importante di una monade sta nella possibilità di mettere in sequenza operazioni tramite l'uso di \lstinline{flatMap}.
+Anche l'AST di \lstinline{Program} deve esprimere questo concetto per poter catturare la struttura di un programma monadico. Per questo motivo viene definito un ultimo costruttore:
+\scalaFromFile{9}{16}{monads/free/lib/Free.scala}
+Il costruttore \lstinline{Then} permette di catturare la messa in sequenza di operazioni monadiche: il primo argomento è il primo programma da eseguire che produrrà un valore di tipo \lstinline{A}; il secondo argomento è una continuazione che, preso il valore prodotto dal primo programma, restituisce un secondo programma da eseguire.
+
+È possibile definire un \emph{extension method} per rendere più facile la costruzione di programmi complessi:
+\begin{lstlisting}[language=scala3]
+extension [I[_], A](program: Program[I, A])
+  def andThen[B](continuation: A => Program[I, B]) =
+    Then(program, continuation)
+\end{lstlisting}
+
+Per esempio il programma con stato mostrato alla sezione precedente può essere ora espresso come:
+\begin{lstlisting}[language=scala3]
+def program[S](f: S => S): Program[StateDSL[S, _], String] =
+  get.andThen { state => 
+    val newState = f(state)
+    set(newState).andThen { _ => 
+      Program.fromValue("end")
+    }
+  }
+\end{lstlisting}
+
+È possibile osservare come \lstinline{Program} rispetti per costruzione l'interfaccia delle monadi, indipendentemente dal tipo di istruzioni che utilizza: i costruttori \lstinline{Result} e \lstinline{Then} equivalgono rispettivamente alle operazioni \lstinline{pure} e \lstinline{flatMap}:
+\scalaFromFile{36}{41}{monads/free/lib/Free.scala}
+In questo modo è possibile definire programmi nella monade \lstinline{Program} sfruttando lo zucchero sintattico della \emph{for comprehension}; l'esempio precedente può essere riscritto in maniera più chiara come:
+\begin{lstlisting}[language=scala3]
+def program[S](f: S => S): Program[StateDSL[S, _], String] =
+  for
+    state <- get
+    newState = f(state)
+    _ <- set(newState)
+  yield "end"
+\end{lstlisting}

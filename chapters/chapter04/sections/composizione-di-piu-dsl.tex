@@ -1,0 +1,130 @@
+\section{Composizione di più DSL}
+
+\subsection{Composizione modulare di linguaggi}
+Negli esempi mostrati fino ad ora è sempre stato utilizzato un programma il cui insieme di istruzioni è definito da una sola enumerazione. Tuttavia, sarebbe desiderabile poter combinare fra loro più linguaggi di base per poter descrivere programmi complessi. Se il programmatore fosse obbligato a definire l'intero insieme di operazioni in una sola enumerazione allora questa finirebbe per essere l'equivalente di una \emph{god interface} con moltissimi metodi che mescolano operazioni appartenenti a diversi ambiti.
+
+Per esempio, si immagini di realizzare un programma che legge e scrive dal terminale e deve anche permettere di effettuare logging delle operazioni che esegue. Sicuramente sarebbe possibile definire un solo set di istruzioni che racchiuda tutte le funzionalità richieste:
+\begin{lstlisting}[language=scala3]
+enum LogLevel:
+  case Info, Warning, Error
+
+enum LogAndConsole[A]:
+  case Log(level: LogLevel, msg: String)
+    extends LogAndConsole[Unit]
+  case GetLine() extends LogAndConsole[String]
+  case PrintLine(msg: String) extends LogAndConsole[Unit]
+\end{lstlisting}
+Tuttavia, il linguaggio \lstinline{LogAndConsole} unisce due funzionalità differenti: la gestione del logging e la gestione del terminale.
+Se un programma dovesse avere bisogno unicamente di accedere al side effect del logging dovrebbe comunque essere definito in termini di \lstinline{LogAndConsole}.
+Idealmente, dovrebbe essere possibile definire i due DSL separatamente per poterli combinare in un secondo momento, se necessario.
+
+\subsubsection{Iniezione di istruzioni in un linaguaggio generico}
+Si considerino due degli \emph{smart constructor} mostrati come esempi nelle sezioni precedenti:
+\begin{lstlisting}[language=scala3]
+def get[S]: Program[StateDSL, S] = ...
+def stop: Program[ConcurrentDSL, Nothing] = ...
+\end{lstlisting}
+I tipi di questi programmi sono troppo specifici per poter essere utilizzati nel comporre programmi complessi che fanno uso di più DSL contemporaneamente: infatti, ciascuno limita l'insieme di istruzioni a cui il programma può accedere a quelle di uno specifico DSL; \lstinline{StateDSL} nel primo e \lstinline{ConcurrentDSL} nel secondo.
+
+Il problema sta nella definizione della funzione \lstinline{Program.fromInstruction} utilizzata per creare gli smart constructor. Questa funzione, infatti, restituisce un programma le cui istruzioni devono essere tutte appartenenti al tipo dell'istruzione specificata. È possibile definire uno \emph{smart constructor} più generico che permette di ``iniettare'' un'istruzione all'interno di un linguaggio più ampio; per fare ciò è possibile sfruttare nuovamente il concetto di interprete introdotto in precedenza:
+\scalaFromFile{32}{33}{monads/free/lib/Free.scala}
+
+La funzione utilizza implicitamente un interprete \lstinline{T} che permette di trasformare un'istruzione dell'insieme \lstinline{I} in un'istruzione dell'insieme \lstinline{I2}. L'istruzione passata in input viene quindi trasformata in un'istruzione del secondo insieme sfruttando tale interprete.
+In questo modo è possibile realizzare degli \emph{smart constructor} che non limitano il set di istruzioni a cui il programma può accedere:
+\begin{lstlisting}[language=scala3]
+def stop[I[_]](using ConcurrentDSL ~> I): Program[I, Nothing] =
+  Program.inject(ConcurrentDSL.Stop())
+\end{lstlisting}
+Il costruttore stabilisce che, dato un qualunque insieme di istruzioni \lstinline{I} per il quale sia possibile inserirvi istruzioni di tipo \lstinline{ConcurrentDSL}, è possibile creare un programma che utilizza le istruzioni di \lstinline{I}.
+La notazione può essere ulteriormente alleggerita definendo un \emph{type alias} per gli interpreti:
+\scalaFromFile{8}{8}{monads/free/lib/Interpreter.scala}
+In questo modo \lstinline{With} può essere utilizzato per descrivere in maniera dichiarativa le istruzioni che un generico linguaggio deve poter offrire:
+\begin{lstlisting}[language=scala3]
+def stop[I[_]: With[ConcurrentDSL]]: Program[I, Nothing] =
+  Program.inject(ConcurrentDSL.Stop())
+\end{lstlisting}
+La firma del metodo può essere letta come \emph{``Dato un qualunque linguaggio \lstinline{I} che ha a disposizione le operazioni del \lstinline{ConcurrentDSL}, restituisco un programma che può utilizzare le istruzioni di \lstinline{I} e restituisce \lstinline{Nothing} quando termina''}.
+
+\subsubsection{Esempio di un programma che combina più DSL}
+Sfruttando le definizioni appena mostrate è possibile definire un programma che combina le funzionalità di più DSL. Si consideri nuovamente l'esempio riportato all'inizio della Sezione di un programma che deve effettuare logging e interagire con il terminale.
+
+Gli effetti richiesti dal programma possono quindi essere descritti da due DSL distinti:
+\scalaFromFile{12}{13}{monads/free/CompositionExample.scala}
+\scalaFromFile{24}{26}{monads/free/CompositionExample.scala}
+La differenza fondamentale sta nella definizione degli \emph{smart constructor} che utilizzeranno la funzione \lstinline{inject} mostrata in precedenza per non fissare a priori il set di istruzioni da utilizzare. Per esempio nel caso del \lstinline{LogDSL} il risultato sarà:
+\scalaFromFile{15}{17}{monads/free/CompositionExample.scala}
+
+In questo modo è possibile utilizzare entrambi gli insiemi di istruzioni in un unico programma ottenuto tramite la \emph{for comprehension} e i vincoli imposti dai singoli costruttori si accumuleranno definendo una lista di DSL che il programma può utilizzare:
+\scalaFromFile{40}{51}{monads/free/CompositionExample.scala}
+Il programma \lstinline{echo} può utilizzare un qualunque insieme di istruzioni \lstinline{I} purché permetta di utilizzare le istruzioni di base del \lstinline{LogDSL} e del \lstinline{ConsoleDSL}. Per poter interpretare ed eseguire il programma è necessario un ultimo passo: concretizzare il linguaggio \lstinline{I} in un tipo specifico che rispetti i vincoli imposti.
+
+\subsubsection{Concretizzazione di un linguaggio generico}
+Per permettere di combinare fra loro più set di istruzioni può essere conveniente definire un coprodotto\footnote{Un coprodotto è spesso indicato anche col nome di \emph{sum type} o unione disgiunta. In Scala 3 può essere ottenuto utilizzando \lstinline{sealed trait} e \lstinline{case class} o delle enumerazioni.} che, combinando due linguaggi, permette di avere istruzioni provenienti dall'uno o dall'altro~\cite{cit:data-types-a-la-carte}.
+Sfruttando il supporto diretto agli \emph{union type}~\cite{cit:scala3-union-types} di Scala 3 è possibile utilizzare la seguente definizione:
+\scalaFromFile{10}{10}{monads/free/lib/Interpreter.scala}
+Grazie a questo \emph{type alias} è piuttosto semplice definire linguaggi composti da un numero arbitrario di DSL:
+\begin{lstlisting}[language=scala3]
+enum LogDSL[A]: ... 
+enum ConsoleDSL[A]: ...
+enum FileSystemDSL[A]: ...
+
+type ComposedDSL[A] =
+  (LogDSL :| ConsoleDSL :| FileSystemDSL)[A]
+val program: Program[ComposedDSL, Int] = ...
+\end{lstlisting}
+Un programma definito tramite il linguaggio \lstinline{ComposedDSL} può utilizzare le istruzioni provenienti da ciascuno dei componenti di base dell'unione disgiunta. Infatti, espandendo i diversi \emph{type alias} il tipo \lstinline{ComposedDSL} non sarà altro che una serie di opzioni rappresentate da uno \emph{union type}:
+\begin{lstlisting}
+ComposedDSL[A] =
+= (LogDSL :| ConsoleDSL :| FileSystemDSL)[A]
+= ((LogDSL :| ConsoleDSL) :| FileSystemDSL)[A]
+= (LogDSL :| ConsoleDSL)[A] | FileSystemDSL[A]
+= (LogDSL[A] | ConsoleDSL[A]) | FileSystemDSL[A]
+= LogDSL[A] | ConsoleDSL[A] | FileSystemDSL[A]
+\end{lstlisting}
+
+Il programma \lstinline{echo} mostrato in precedenza potrebbe usare come linguaggio concreto \lstinline{ConsoleDSL :| LogDSL}. Non rimane che trovare un modo per generare in automatico le istanze di \lstinline{Interpreter} necessarie per inserire le operazioni dei singoli DSL all'interno del linguaggio composto.
+
+Una prima osservazione fondamentale sta nel fatto che un linguaggio \lstinline{F} può sempre essere interpretato in un linguaggio \lstinline{F :| G}:
+\scalaFromFile{13}{14}{monads/free/lib/Interpreter.scala}
+Una qualunque istruzione di tipo \lstinline{F[A]} è automaticamente un sottotipo di \lstinline{(F :| G)[A]}; infatti, \lstinline{(F :| G)[A]} equivale all'unione \lstinline{F[A] | G[A]}.
+
+La sola istanza \lstinline{left} non è sufficiente per generare in automatico gli interpreti necessari a combinare più linguaggi. Infatti permette solo di inserire \lstinline{F} in un'unione che contiene \lstinline{F} come primo elemento. Una generalizzazione di quest'istanza permette di inserire \lstinline{F} in un'unione il cui primo elemento possa a sua volta contenere \lstinline{F}:
+\scalaFromFile{16}{19}{monads/free/lib/Interpreter.scala}
+Dati tre linguaggi \lstinline{F, G} e \lstinline{H} se è possibile interpretare \lstinline{F} nel linguaggio \lstinline{G} allora è anche possibile definire un interprete per \lstinline{F} nel linguaggio \lstinline{G :| H}.
+
+Questa coppia di definizioni è sufficiente perché il compilatore possa automaticamente generare qualunque istanza di interprete per linguaggi ottenuti componendo un numero arbitrario di DSL tramite il combinatore \lstinline{(:|)}.
+
+Al \Cref{lst:echo} è mostrato come sia possibile definire un interprete che permette di eseguire un programma con un set di istruzioni composto da \lstinline{ConsoleDSL} e \lstinline{LogDSL}.
+
+\begin{figure}[htp]
+  \begin{lstlisting}[language=scala3, caption={Esempio di interpretazione di un programma composto da più DSL. Il \emph{pattern matching} sulle istruzioni permette di gestire istruzioni provenienti da entrambi i DSL di base.}, label={lst:echo}]
+@tailrec def interpret[A](
+  program: Program[LogDSL :| ConsoleDSL, A]
+): A =
+  program.next match
+    case ProgramView.Return(a) => a
+    case ProgramView.Then(instruction, continuation) =>
+      instruction match
+        case ConsoleDSL.PrintLine(msg) =>
+          println(msg)
+          interpret(continuation(()))
+        case ConsoleDSL.GetLine() =>
+          val line = scala.io.StdIn.readLine()
+          interpret(continuation(line))
+        case LogDSL.Log(logLevel, msg) =>
+          println(f"[$logLevel] $msg")
+          interpret(continuation(()))
+  \end{lstlisting}
+\end{figure}
+
+
+% \subsubsection{Composizione di interpreti}
+
+\nicetohave{Non sono nella scaletta ma, se c'è tempo, si potrebbe parlare anche delle Hierarchical Free Monads come approccio alternativo per combinare linguaggi diametralmente opposto alla composizione mostrata.}
+
+%\subsection{Hierarchical Free Monads}
+%Definizione di \emph{subsystem} che stabiliscono con precisione e in maniera puntuale quali sono le operazioni che possono essere eseguite. Non c'è libertà, non è estensibile (un possibile escape hatch al massimo è permettere l'esecuzione di codice arbitrario)
+
+%Quindi forza a scegliere un buon design per la realizzazione di un framework fornendo unicamente allo sviluppatore un DSL che non può che essere usato come previsto. Separa la parte di interfaccia che poi viene usata per realizzare "script" monadici da quella di implementazione degli interpreti che permettono di eseguire le implementazioni. Netta separazione fra i due aspetti.
+
+%Inoltre riduce fortemente il carico cognitivo per lo sviluppatore che deve utilizzare il linguaggio esposto dal DSL. Non ci sono type class, non ci sono context bound o complicazioni simili; l'unico modo è osservare l'interfaccia del DSL, l'entry point e come questo interagisce con altri subsystem.

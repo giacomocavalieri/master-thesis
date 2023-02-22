@@ -1,0 +1,129 @@
+\section{Interpretazione di una free monad}
+
+\subsection{Interpretazione delle istruzioni di un programma}
+I valori di tipo \lstinline{Program} mostrati fino ad ora non sono altro che degli AST che rappresentano sotto forma di struttura dati un programma monadico.
+Questa struttura dati può essere attraversata e interpretata per assegnare una semantica alle istruzioni di cui si compone.
+Prima di poter definire come interpretare un programma monadico è necessario definire come interpretarne le singole istruzioni; perciò si introduce il concetto di interprete\footnote{Questo concetto è noto in letteratura come trasformazione naturale\cite{cit:monad-transformers-and-modular-algebraic-effects}. Nella trattazione si preferisce utilizzare il termine ``interprete''  in quanto rende in maniera efficace il suo utilizzo nell'interpretazione delle operazioni di una free monad.}:
+\scalaFromFile{4}{7}{monads/free/lib/Interpreter.scala}
+Un interprete, dato un generico insieme di istruzioni \lstinline{F} permette di trasformare -- tramite il metodo \lstinline{apply} -- una qualunque istruzione di tipo \lstinline{F[A]} in un valore \lstinline{G[A]}. Il tipo \lstinline{G[_]} è generico e potrebbe per esempio essere un secondo insieme di istruzioni o una monade.
+
+Per esempio, è possibile definire un interprete che trasforma le istruzioni dello \lstinline{StateDSL} in azioni concrete all'interno del transformer \lstinline{StateT}:
+\scalaFromFile{25}{30}{monads/free/State.scala}
+L'interprete si limita a tradurre le istruzioni di \lstinline{Get} e \lstinline{Set} nelle corrispondenti operazioni del transformer.
+
+\subsection{Interpretazione di un'intero programma}
+È possibile sfruttare gli interpreti che traducono singole istruzioni per interpretare interi programmi definiti all'interno della monade \lstinline{Program}.
+
+L'unico accorgimento necessario è che l'interprete traduca ciascuna istruzione in un tipo che rispetti l'interfaccia di monade. Grazie a questo vincolo è possibile mettere automaticamente in sequenza le operazioni una volta che sono state tradotte:
+\scalaFromFile{43}{53}{monads/free/lib/Free.scala}
+
+\begin{itemize}
+  \item \lstinline{Return} corrisponde ad una chiamata di \lstinline{pure} nella generica monade \lstinline{M}
+  \item \lstinline{Instruction} permette di eseguire una singola istruzione che viene direttamente interpretata dall'interprete fornito in input
+  \item \lstinline{Then} rappresenta la composizione in sequenza di due programmi. Il primo programma viene interpretato ottenendo un valore di tipo \lstinline{A}; questo viene fornito in input alla continuazione per ottenere il secondo programma che ricorsivamente viene interpretato producendo il risultato finale
+\end{itemize}
+
+\subsection{Ispezione dell'AST di una free monad}
+Il metodo mostrato nella sezione precedente permette di dare semantica al programma stabilendo come ciascuna delle istruzioni debba essere interpretata.
+Tuttavia, il vantaggio dato dalla rappresentazione della computazione come AST sta nella possibilità di poter ispezionare il programma per avere un controllo più fine sulla sua interpretazione.
+Infatti, è possibile estrarre dal programma la prima istruzione che questo deve eseguire e la continuazione che determina come l'esecuzione deve procedere. Per fare ciò è possibile definire la seguente struttura:
+\scalaFromFile{19}{24}{monads/free/lib/Free.scala}
+\lstinline{ProgramView} permette di avere una vista uniforma di un programma limitando i casi possibili a due sole opzioni: il programma esegue un'istruzione e prosegue con una data continuazione, oppure il programma termina restituendo un valore.
+
+Per poter estrarre una \lstinline{ProgramView} a partire da un programma è possibile definire un metodo:
+\begin{lstlisting}[language=scala3]
+extension [I[_], A](program: Program[I, A])
+  @tailrec def next: ProgramView[I, A] = program match
+  case Return(value) => ProgramView.Return(value)
+  case Instruction(instruction) =>
+    ProgramView.Then(instruction, Return(_))
+  case Then(program, f) =>
+    program match
+      case Return(value) => f(value).next
+      case Instruction(instruction) =>
+        ProgramView.Then(instruction, f)
+      case Then(program, g) =>
+        program.andThen(x => g(x).andThen(f)).next
+\end{lstlisting}
+
+I diversi casi del pattern matching coprono tutte le possibili conformazioni di un programma:
+\begin{itemize}
+  \item Se il programma restituisce un valore questo viene mappato nella vista corrispondente
+  \item Se il programma esegue un'istruzione questa viene inserita nella vista come prossima istruzione e la continuazione si limita a restituire il valore dell'istruzione
+  \item Nel caso vengano composti più programmi in sequenza è necessario osservare la composizione del primo programma:
+        \begin{itemize}
+          \item Se si limita a restituire un valore questo viene fornito alla continuazione e viene restituita la prima istruzione del programma ottenuto
+          \item Se si limita a eseguire un'istruzione questa viene tradotta nella vista corrispondente che racchiude al proprio interno l'istruzione e la continuazione
+          \item Se è a sua volta la composizione sequenziale di due programmi, allora viene restituita la prima operazione del programma più interno
+        \end{itemize}
+\end{itemize}
+
+Questo meccanismo rende possibile realizzare funzioni che, ispezionando di volta in volta la successiva istruzione di un programma, permette di interpretarlo. Per esempio, è possibile realizzare una funzione che esegue una computazione che fa uso dello \lstinline{StateDSL}:
+\scalaFromFile{40}{47}{monads/free/State.scala}
+La funzione ottiene la prima istruzione da eseguire e nel caso in cui sia una \lstinline{Get} fornisce alla continuazione lo stato corrente. Invece, nel caso in cui l'istruzione sia \lstinline{Set} la continuazione viene ripresa fornendole il valore \lstinline{Unit} e sul programma viene chiamato il metodo \lstinline{runWithState} ricorsivamente modificando lo stato fornito.
+
+\subsubsection{A poor man’s concurrency (free) monad}
+\label{sec:poor-man}
+È possibile sfruttare la possibilità di ispezionare l'AST di un programma descritto in questo modo per realizzare interpreti più complessi.
+
+Questa sezione riprende l'eccellente esempio mostrato in~\cite{cit:a-poor-mans-concurrency-monad} e illustra come sia possibile implementare una \emph{``poor man's concurrency monad''} utilizzando la free monad appena mostrata.
+In particolare, la possibilità di accedere alla continuazione che determina come deve procedere la computazione rende piuttosto semplice l'implementazione di una forma di concorrenza in \emph{user space}.
+
+Il linguaggio preso in considerazione è il seguente:
+\scalaFromFile{9}{15}{monads/free/PoorManConcurrency.scala}
+Le operazioni mostrate sono sufficienti per descrivere un meccanismo di multithreading cooperativo:
+\begin{itemize}
+  \item \lstinline{Fork} permette di creare un nuovo thread che esegue il programma specificato
+  \item \lstinline{YieldControl} permette a un thread di segnalare esplicitamente allo scheduler di voler mettere in pausa la propria esecuzione lasciando il controllo ad altri thread
+  \item \lstinline{Stop} permette a un thread di terminare prematuramente la propria esecuzione
+  \item \lstinline{Perform} viene utilizzato come meccanismo per eseguire una qualunque azione con side effect; la funzione che produce il valore di tipo \lstinline{A} può eseguire side effect arbitrari
+\end{itemize}
+
+È possibile definire alcuni \emph{smart constructor} per permettere di costruire più semplicemente un programma concorrente:
+\scalaFromFile{17}{22}{monads/free/PoorManConcurrency.scala}
+Un esempio di programma ottenuto a partire da queste operazioni di base potrebbe essere il seguente:
+\scalaFromFile{59}{68}{monads/free/PoorManConcurrency.scala}
+
+Per poter stabilire l'effettiva semantica delle operazioni e permettere l'esecuzione del programma è necessario definire una funzione che permetta di interpretarlo. In questo esempio il comportamento desiderato è quello di realizzare uno scheduler che esegua i thread in maniera cooperativa: un thread esegue le proprie operazioni ininterrotto fino a quando non termina o rende esplicito il voler cedere il controllo tramite una chiamata a \lstinline{yield}; a quel punto lo scheduler stabilirà il nuovo thread da mandare in esecuzione con la stessa politica.
+Il metodo per eseguire un programma secondo questa politica di scheduling è il seguente:
+\scalaFromFile{25}{33}{monads/free/PoorManConcurrency.scala}
+Per semplificare l'implementazione dello scheduler, questo utilizza una coda in cui si trovano i thread da eseguire e nel momento in cui avviene lo \lstinline{yield} il thread corrente viene messo in fondo alla coda e viene dato il controllo al thread in testa alla coda.
+L'intera logica di esecuzione delle istruzioni è codificata nella funzione \lstinline{runInstructions} mostrata al \Cref{lst:run-instructions}.
+A seconda dell'istruzione che viene eseguita, il comportamento è il seguente:
+\begin{itemize}
+  \item \lstinline{Perform}: viene eseguita l'azione incapsulata nel costruttore e il risultato ottenuto è dato come input alla continuazione per ottenere il programma che contiene la continuazione del thread corrente. Questo programma viene inserito in testa alla coda dei thread da eseguire in quanto la semantica scelta stabilisce che un thread possa essere interrotto solo se esegue esplicitamente \lstinline{yield}. Si noti come sarebbe possibile modificare questa politica interrompendo con \emph{preemption} un thread ad ogni operazione: sarebbe sufficiente inserire il programma che rappresenta la continuazione in fondo alla coda così da dare precedenza ad altri thread
+  \item \lstinline{Stop}: interrompe l'esecuzione del thread. In questo caso non viene aggiunta alcuna continuazione alla lista di thread da eseguire. Si noti inoltre un aspetto interessante: poiché \lstinline{Stop} ha tipo \lstinline{ConcurrentDSL[Nothing]} in questo ramo del pattern matching la continuazione necessiterebbe di un valore di tipo \lstinline{Nothing} per poter generare il programma che rappresenta la continuazione del thread corrente. Poiché non esiste alcun valore che possa assumere il tipo \lstinline{Nothing}\footnote{Tecnicamente sarebbe possibile creare un valore di tipo \lstinline{Nothing} (per esempio \lstinline{???} o una qualunque eccezione) ma questo comporterebbe una terminazione anomala del programma o la sua divergenza senza poter eseguire in ogni caso la continuazione} è impossibile ottenere la continuazione e l'unica operazione sensata è quella di terminare l'esecuzione del thread
+  \item \lstinline{YieldControl}: in questo caso la continuazione del thread corrente viene messa in fondo alla lista dei thread
+  \item \lstinline{Fork}: è l'unica operazione che permette di accrescere il numero di programmi contenuti nella lista dei thread da eseguire. In questo caso la continuazione del thread corrente viene messa in cima alla lista in modo che possa continuare l'esecuzione mentre il thread di cui è stato effettuato il fork viene messo in fondo
+\end{itemize}
+
+\begin{figure}[htp]
+  \begin{lstlisting}[language=scala3, caption={Implementazione della funzione \lstinline{runInstructions}.}, label={lst:run-instructions}]
+    def runInstruction(
+      instruction: ProgramView[ConcurrentDSL, Unit],
+      threads: List[Concurrent[Unit]]
+    ): Unit =
+      instruction match
+        case ProgramView.Return(_) => runThreads(threads)
+        case ProgramView.Then(instruction, continuation) =>
+          instruction match
+            case Perform(action) =>
+              val result = action()
+              val newThreads = continuation(result) +: threads
+              runThreads(newThreads)
+            case Stop =>
+              runThreads(threads)
+            case YieldControl =>
+              val newThreads = threads :+ continuation(())
+              runThreads(newThreads)
+            case Fork(process) =>
+              val newThreads =
+                continuation(()) +: threads :+ process
+              runThreads(newThreads)
+  \end{lstlisting}
+\end{figure}
+
+
+
+
+
