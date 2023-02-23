@@ -59,7 +59,7 @@ Chiaramente un programma che esegue una singola istruzione non è di particolare
 
 \subsubsection{Restituzione di un valore puro}
 Un'ulteriore caratteristica di ogni computazione monadica -- espressa dal metodo \lstinline{pure} dell'interfaccia delle monadi -- sta nella possibilità di poter inserire un qualunque valore all'interno della sequenza delle computazioni senza aggiungervi ulteriori side effect.
-Tuttavia, fino a questo momento un programma monadico si limita a permettere l'esecuzione di una singola istruzione appartenente al set \lstinline{I} specificato. L'AST di \lstinline{Program} può essere esteso per permettere questa operazione:
+Tuttavia, data la definizione attuale di \lstinline{Program}, un programma monadico può limitarsi a permettere l'esecuzione di una singola istruzione appartenente al set \lstinline{I} specificato. Dunque l'AST di \lstinline{Program} deve essere esteso per permettere di ritornare un valore senza eseguire istruzioni:
 \begin{lstlisting}[language=scala3]
 enum Program[I[_], A]:
   case Instruction[I[_], A](instruction: I[A])
@@ -71,7 +71,7 @@ object Program:
     Return(value)
 \end{lstlisting}
 
-Questo ulteriore costruttore permette di definire programmi che restituiscono valori senza alcun side effect, ovvero senza eseguire nessuna delle operazioni dell'insieme \lstinline{I}. Per esempio
+Il nuovo costruttore \lstinline{Return} permette di definire programmi che restituiscono valori senza alcun side effect, ovvero senza eseguire nessuna delle operazioni dell'insieme \lstinline{I}. Per esempio
 \begin{lstlisting}[language=scala3]
 val program: Program[StateDSL[Int, _], String] =
   Program.fromValue("result")
