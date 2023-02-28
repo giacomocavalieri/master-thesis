@@ -14,6 +14,7 @@
 \usepackage{tabularx}
 \usepackage{ltablex}
 \usepackage{tikz}
+\usepackage{nowidow}
 \usepackage{svg}
 \usepackage{booktabs}
 \usepackage{xcolor}
@@ -115,9 +116,22 @@
 	sensitive=true,
 	string=[b]",
 	comment=[l]{//},
-	morekeywords=[1]{=, =>},
+	literate={~}{{\raisebox{0.5ex}{\texttildelow}}}{1},
+	morekeywords=[1]{=, =>, =>>},
 	morekeywords=[2]{new, extends, private, throw, using, opaque, @main, @tailrec, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
 	morekeywords=[3]{*},
 	morekeywords=[4]{Save, Log, LogLevel, LogAndConsole, UserStoreDSL, Console, With, GetLine, PrintLine, ComposedDSL, LogDSL, ConsoleDSL, FileSystemDSL, RightF, EitherF, LeftF, List, ConcurrentDSL, YieldControl, Stop, Perform, Fork, Concurrent, ProgramView, Interpreter, Return, Instruction, Then, StateDSL, Get, Set, User, UserId, UserStore, Delete, Runtime, ProductionRunner, TestRunner, Map, Fail, HasState, App, Any, Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
-	otherkeywords={*, =, =>}
+	otherkeywords={*, =, =>, =>>}
 }
+
+\lstdefinelanguage{koka}{
+	sensitive=true,
+	string=[b]",
+	comment=[l]{//},
+	morekeywords=[1]{:=, =, <-, ->},
+	morekeywords=[2]{fun, effect, ctl, forall, fn, with, val, var, match, type},
+	morekeywords=[3]{*},
+	morekeywords=[4]{Red, Green, Blue, failure, color, optional, Some, Empty},
+	otherkeywords={*, =, :=, <-, ->}
+}
+

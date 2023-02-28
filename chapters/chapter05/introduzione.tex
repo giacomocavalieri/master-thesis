@@ -1,0 +1,16 @@
+Tutti gli approcci mostrati fino ad ora fanno uso del concetto di monade basandosi sulla fondamentale osservazione che una computazione può essere modellata tramite un'opportuna monade per descriverne in maniera pura i side effect.
+Partendo dalla base teorica del lavoro di Moggi, Haskell è stato il primo linguaggio a introdurre il concetto di monade come elemento chiave per la gestione dei side effect.
+
+A dimostrazione dell'efficacia di questo approccio, sono state sviluppate librerie ed estensioni per poter sfruttare la programmazione monadica anche in altri linguaggi come OCaml~\cite{cit:ppx-let}, Scala~\cite{cit:zio,cit:cats} e Kotlin~\cite{cit:arrow-monad-comprehensions}.
+
+Tuttavia, il concetto di monade non è l'unico approccio possibile per modellare i side effect: in particolare, gli \emph{effetti algebrici} sono un'alternativa che sta ricevendo grande attenzione.
+Questi permettono -- come nel caso delle monadi -- di modellare di effetti come le eccezioni, il non determinismo e la mutabilità\cite{cit:handlers-of-algebraic-effects}.
+Inoltre, è stato mostrato come questo meccanismo sia una generalizzazione di un'ampia gamma di costrutti di programmazione per il controllo di flusso: eccezioni, iteratori, \emph{async-await}, \emph{coroutines} e \emph{green thread}~\cite{cit:algebraic-effect-handlers-go-mainstream}.
+
+Non sorprende dunque che ci sia un crescente interesse per l'adozione di questo meccanismo:
+\begin{itemize}
+  \item Nello standard WebAssembly è in corso la valutazione se adottare gli effetti algebrici come meccanismo unificante per la compilazione efficiente di meccanismi di controllo come le eccezioni e i generatori~\cite{cit:wasmfx}
+  \item Sono state realizzate diverse librerie sia in Scala~\cite{cit:scala-effekt} che in Haskell~\cite{cit:fused-effects,cit:effect-handlers,cit:extensible-effects} per poter utilizzare gli effetti algebrici in alternativa all'approccio MTL
+  \item Nella sua versione 5.0, OCaml supporta nativamente gli effetti algebrici~\cite{cit:retrofitting-effect-handlers-onto-ocaml}
+  \item Sono stati sviluppati numerosi linguaggi di ricerca per esplorare l'implementazione degli effetti algebrici: Eff~\cite{cit:eff-lang}, Effekt~\cite{cit:effekt-lang}, Koka~\cite{cit:koka-lang} e Unison~\cite{cit:unison-lang}
+\end{itemize}
