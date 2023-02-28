@@ -94,7 +94,7 @@ given Monad[Option] with
 \end{lstlisting}
 
 \begin{itemize}
-  \item \lstinline{Option} è il costruttore di tipi: preso un tipo \lstinline{A} restituisce un tipo \lstinline{Option[A]} che rappresenta una computazione che può fallire o produrre un valore di tipo \lstinline{A}
+  \item \lstinline{Option} è il costruttore di tipi: preso un tipo \lstinline{A}, restituisce un tipo \lstinline{Option[A]} che rappresenta una computazione che può fallire o produrre un valore di tipo \lstinline{A}
   \item \lstinline{pure} permette di trasformare un valore di tipo  \lstinline{A} in uno di tipo \lstinline{Option[A]} senza avere side effect. In questo caso il side effect sarebbe fallire restituendo \lstinline{None}; quindi \lstinline{pure(a)} restituisce \lstinline{Some(a)}
   \item \lstinline{flatMap} permette di concatenare in sequenza passaggi intermedi propagando il fallimento
 \end{itemize}
@@ -195,8 +195,11 @@ Senza bisogno di conoscerne le implementazioni si può capire che la prima funzi
 \subsubsection{Side effect come cittadini di prima classe del linguaggio}
 Utilizzare il concetto di monade come astrazione unificante delle diverse tipologie di side effect ha un ulteriore vantaggio: le azioni con side effect sono valori di prima classe che possono essere combinati in maniera modulare e astraendo dallo specifico tipo di effetti.
 
-È possibile definire l'equivalente di strutture di controllo imperative tramite funzioni generiche; per poter ripetere più volte gli effetti di un'azione è possibile implementare una funzione come segue\footnote{L'\emph{extension method} \lstinline{>>} viene utilizzato nell'implementazione per mettere in sequenza due azioni con side effect ignorando il valore di ritorno della prima (che quindi verrà eseguita unicamente per i propri side effect). Può essere definito in termini di \lstinline{flatMap} come segue: \lstinline{m1 >> m2 = m1.flatMap(_ => m2)}}:
+È possibile definire l'equivalente di strutture di controllo imperative tramite funzioni generiche; per poter ripetere più volte gli effetti di un'azione è possibile implementare una funzione come segue:
 \begin{lstlisting}[language=scala3]
+extension [A, M[_]: Monad](m: M[A])
+  def >>[B](other: M[B]) = m.flatMap(_ => other)
+
 def repeat[M[_]: Monad, A]
   (times: Int)
   (action: M[A]): M[Unit] =
