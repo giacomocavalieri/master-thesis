@@ -24,7 +24,7 @@ def divBy(n: Int): Int =
     case 0 => throw Exception("n = 0")
     case _ => 10 / n
 \end{lstlisting}
-\lstinline|divBy| non può essere assimilata a una funzione $divBy : \mathbb{Z} \rightarrow \mathbb{Z}$ in termini matematici; infatti, per certi input -- in questo caso \lstinline|0| -- la funzione non restituisce un valore appartenente al proprio codominio ma lancia un'eccezione.
+\lstinline|divBy| non può essere assimilata a una funzione $divBy : \mathbb{Z} \rightarrow \mathbb{Z}$ in termini matematici; infatti, per certi input -- in questo caso 0 -- la funzione non restituisce un valore appartenente al proprio codominio ma lancia un'eccezione.
 
 Per rendere esplicito il fatto che la funzione possa terminare in maniera anomala per determinati input si può estenderne il codominio: ritornando all'analogia matematica si può pensare ad \lstinline{divBy} come a una funzione $divBy : \mathbb{Z} \rightarrow \mathbb{Z} \cup \{ \texttt{Error} \}$.
   L'equivalente implementazione Scala sarebbe:
