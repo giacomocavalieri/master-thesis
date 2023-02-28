@@ -91,7 +91,7 @@ Per poter eseguire concretamente la computazione ed estrarre un valore dalla mon
 \subsubsection{Il transformer \lstinline{StateT}}
 È possibile definire un transformer il cui compito è quello di aggiungere ad una qualsiasi monade la possibilità di simulare la presenza di uno stato mutabile in maniera simile a quanto fatto dalla monade \lstinline{State}:
 \scalaFromFile{7}{7}{monads/transformers/StateT.scala}
-La struttura di \lstinline{StateT} è analoga a quella di \lstinline{State} con la differenza che il valore di ritorno ottenuto dalla computazione è contenuto all'interno di un generico \lstinline{M}. Graficamente l'applicazione del transformer può essere visualizzata come mostrato in \Cref{fig:stateT}.
+La struttura di \lstinline{StateT} è analoga a quella di \lstinline{State}, con la differenza che il valore di ritorno ottenuto dalla computazione è contenuto all'interno di un generico \lstinline{M}. Graficamente l'applicazione del transformer può essere visualizzata come mostrato in \Cref{fig:stateT}.
 
 \input{chapters/chapter02/figures/stateT}
 

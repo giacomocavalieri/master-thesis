@@ -22,8 +22,8 @@ Un parser che fallisce in caso di stringhe vuote e altrimenti ne consuma il prim
 \scalaFromFile{8}{17}{monads/Parser.scala}
 
 \begin{itemize}
-  \item \lstinline{pure} è l'operazione di costruzione di un parser che non attua alcun side effect: restituisce il valore \lstinline{a} senza consuma la stringa e senza fallire
-  \item \lstinline{flatMap} permette di concatenare fra loro dei parser ottenendo il seguente comportamento: se uno dei parser fallisce allora fallisce l'intera sequenza; altrimenti verranno usati i due parser in sequenza e il secondo consumerà la stringa rimanente non consumata dal primo
+  \item \lstinline{pure} è l'operazione di costruzione di un parser che non attua alcun side effect: restituisce il valore \lstinline{a} senza consumare la stringa e senza fallire
+  \item \lstinline{flatMap} permette di concatenare fra loro dei parser ottenendo il seguente comportamento: se uno dei parser fallisce allora fallisce l'intera sequenza, altrimenti verranno usati i due parser in sequenza e il secondo consumerà la stringa rimanente non consumata dal primo
 \end{itemize}
 
 Grazie a quest'interfaccia monadica è possibile definire parser complessi in maniera modulare, combinando fra loro blocchi elementari tramite l'uso di \lstinline{flatMap}~\cite{cit:monadic-parsing-in-haskell}. Per esempio un parser che consuma esattamente due caratteri dalla testa di una stringa può essere definito come:
