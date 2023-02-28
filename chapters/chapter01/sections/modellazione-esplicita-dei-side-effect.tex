@@ -19,36 +19,36 @@ In seguito sono riportati alcuni esempi di questo approccio in Scala\footnote{Se
 Le eccezioni sono un meccanismo di controllo del flusso che permette di interrompere l'esecuzione di una funzione e di ritornare il controllo al chiamante.
 Tuttavia, una funzione che ne fa uso non avrà trasparenza referenziale:
 \begin{lstlisting}[language=scala3]
-def h(n: Int): Int =
+def divBy(n: Int): Int =
   n match
     case 0 => throw Exception("n = 0")
-    case _ => n * 2
+    case _ => 10 / n
 \end{lstlisting}
-\lstinline|h| non può essere assimilata a una funzione $h : \mathbb{Z} \rightarrow \mathbb{Z}$ in termini matematici; infatti, per certi input -- in questo caso \lstinline|0| -- la funzione non restituisce un valore appartenente al proprio codominio ma lancia un'eccezione.
+\lstinline|divBy| non può essere assimilata a una funzione $divBy : \mathbb{Z} \rightarrow \mathbb{Z}$ in termini matematici; infatti, per certi input -- in questo caso \lstinline|0| -- la funzione non restituisce un valore appartenente al proprio codominio ma lancia un'eccezione.
 
-Per rendere esplicito il fatto che la funzione possa terminare in maniera anomala per determinati input si può estenderne il codominio: ritornando all'analogia matematica si può pensare ad \lstinline{h} come a una funzione $h : \mathbb{Z} \rightarrow \mathbb{Z} \cup \{ \texttt{Error} \}$.
+Per rendere esplicito il fatto che la funzione possa terminare in maniera anomala per determinati input si può estenderne il codominio: ritornando all'analogia matematica si può pensare ad \lstinline{divBy} come a una funzione $divBy : \mathbb{Z} \rightarrow \mathbb{Z} \cup \{ \texttt{Error} \}$.
   L'equivalente implementazione Scala sarebbe:
   \begin{lstlisting}[language=scala3]
 enum Result:
   case Ok(value: Int)
   case Error
 
-def betterH(n: Int): Result =
+def safeDivBy(n: Int): Result =
   n match
     case 0 => Error
-    case _ => Ok(n * 2)
+    case _ => Ok(10 / n)
 \end{lstlisting}
-  In questo caso è evidente dal tipo di ritorno di \lstinline|betterH| che questa può fallire restituendo un valore di tipo \lstinline{Result.Error}.
+  In questo caso è evidente dal tipo di ritorno di \lstinline|safeDivBy| che questa può fallire restituendo un valore di tipo \lstinline{Error}.
   La funzione non nasconde questo comportamento tramite il meccanismo delle eccezioni, lo rende invece evidente nel proprio tipo \lstinline{Int => Result}.
   Il grande vantaggio di rendere esplicita la possibilità di fallimento nel tipo di ritorno sta nel fatto che il programmatore dovrà obbligatoriamente gestire anche il caso in cui la computazione fallisca o il compilatore solleverà un errore a tempo di compilazione:
   \begin{lstlisting}[language=scala3]
-def useBetterH(n: Int): Int =
-  // betterH(n) + betterH(n + 1) darebbe un errore
-  // a tempo di compilazione dato che betterH(x)
+def useSafeDivBy(n: Int): Int =
+  // safeDivBy(n) + safeDivBy(n + 1) darebbe un errore
+  // a tempo di compilazione dato che safeDivBy(x)
   // ha come tipo Result e non Int
-  betterH(n) match
+  safeDivBy(n) match
     case Error      => 0
-    case Ok(value1) => betterH(n + 1) match
+    case Ok(value1) => safeDivBy(n + 1) match
       case Error      => 0
       case Ok(value2) => value1 + value2
 \end{lstlisting}
