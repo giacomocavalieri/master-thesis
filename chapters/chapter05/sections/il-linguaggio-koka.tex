@@ -1,0 +1,178 @@
+\section{Il linguaggio Koka}
+Prima di poter proseguire nella trattazione degli effetti è necessario dare un'introduzione al linguaggio di riferimento utilizzato per gli esempi che saranno riportati: Koka.
+
+Koka è un linguaggio di ricerca con supporto agli effetti algebrici; alcune delle sue caratteristiche chiave sono:
+\begin{itemize}
+  \item Tipizzazione statica e \emph{type inference}
+  \item Supporto agli effetti algebrici e \emph{effect inference} per minimizzare la necessità di annotazioni
+  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, tipi di dato algebrici, effetti algebrici e handler
+  \item Uso del metodo Perceus~\cite{cit:perceus-garbage-free-reference-counting-with-reuse} per gestire automaticamente la memoria tramite \emph{reference counting}. Questa tecnica elimina il bisogno di avere un \emph{garbage collector} o un \emph{runtime system} ottenendo ottime prestazioni. Inoltre, l'uso di Perceus rende possibile programmare secondo uno stile che i suoi autori definiscono \emph{Functional But In Place}: grazie all'analisi del \emph{reference counter} è possibile ottimizzare algoritmi puramente funzionali -- che utilizzano strutture dati immutabili -- in modo tale da eseguire mutazioni \emph{in place} in maniera trasparente al programmatore~\cite{cit:koka-benchmarks}
+\end{itemize}
+
+\subsection{Sintassi di base}
+\subsubsection{Dichiarazione di funzioni e zucchero sintattico}
+Per dichiarare una funzione viene utilizzata la parola chiave \lstinline{fun}, mentre per dichiarare una funzione anonima la parola chiave da utilizzare è \lstinline{fn}:
+\begin{lstlisting}[language=koka]
+fun main() {
+  repeat(10, fn() {
+    println("Hello, Koka!")
+  })
+}
+\end{lstlisting}
+Nell'esempio viene chiamata la funzione \lstinline{repeat} con due argomenti: una funzione anonima che descrive l'azione da compiere e un numero che indica quante volte ripetere l'azione.
+
+La sintassi Koka è molto simile a quella di linguaggio come C e Java; tuttavia, il linguaggio adotta una serie di regole e zucchero sintattico per rendere la sintassi più concisa.
+
+In particolare, secondo la regola della \emph{brace elision}, ogni blocco di codice indentato viene automaticamente considerato come compreso fra parentesi graffe. Dunque, come in linguaggi come Python e Haskell, gli spazi bianchi sono significativi.
+
+Sfruttando questo zucchero sintattico è possibile riscrivere l'esempio come:
+\begin{lstlisting}[language=koka]
+fun main()
+  repeat(10, fn()
+    println("Hello, Koka!")
+  )
+\end{lstlisting}
+
+Inoltre, in Koka -- così come in Swift e Kotlin -- è disponibile zucchero sintattico per semplificare la scrittura delle \emph{trailing lambda}: qualora l'ultimo argomento di una funzione sia una funzione anonima, questa può seguire direttamente la chiamata a funzione.
+
+L'esempio precedente può quindi essere riscritto come:
+\begin{lstlisting}[language=koka]
+fun main()
+  repeat(10) fn()
+    println("Hello, Koka!")
+\end{lstlisting}
+Infine, se la funzione anonima non presenta argomenti allora si può omettere di scrivere \lstinline{fn()}:
+\begin{lstlisting}[language=koka]
+fun main()
+  repeat(10)
+    println("Hello, Koka!")
+\end{lstlisting}
+Grazie a queste regole è semplice definire funzioni che appaiano simili a keyword del linguaggio e costrutti di controllo di flusso che normalmente richiederebbero un supporto diretto del compilatore.
+Per esempio la funzione \lstinline{for} potrebbe essere implementata come:
+\begin{lstlisting}[language=koka]
+fun for(start: int, end, action)
+  if start > end then () else
+    action(start)
+    for(start + 1, end, action)
+
+fun main()
+  for(1, 10, fn(i) { println(i) })
+\end{lstlisting}
+Poiché Koka attua \emph{Tail Call Optimization} di coda il codice generato sarà stack safe e simile a un normale ciclo \lstinline{for}.
+
+\subsubsection{La parola chiave \lstinline{with}}
+Un'altra regola sintattica che verrà utilizzata frequentemente negli esempi a seguire è l'uso della parola chiave \lstinline{with}. Questa permette di eliminare l'annidamento di funzioni che prendono in input delle funzioni anonime:
+\begin{lstlisting}
+with x <- f(a1,...,an)
+<body>
+\end{lstlisting}
+Viene trasformata in \lstinline|f(a1,...,an, fn(x){ <body> })|. Inoltre, se la funzione anonima non prende argomenti, è possibile omettere \lstinline{x <-}.
+
+Perciò, l'esempio precedente può essere riscritto come:
+\begin{lstlisting}[language=koka]
+fun main()
+  with repeat(10)
+  println("Hello, Koka!")
+\end{lstlisting}
+
+Nel caso della funzione \lstinline{for} mostrata in precedenza, invece la parola chiave \lstinline{with} può essere utilizzata come segue:
+\begin{lstlisting}[language=koka]
+fun main()
+  with i <- for(1, 10)
+  println(i)
+\end{lstlisting}
+
+\subsubsection{Dot selection}
+In maniera analoga a Go, in Koka è possibile usare la sintassi generalmente associata alla chiamata di un metodo per poter invocare una funzione: \lstinline{a1.f(a2,...,an)} non è altro che zucchero sintattico per \lstinline{f(a1,a2,...,an)}.
+Si osservi per esempio la seguente porzione di codice:
+\begin{lstlisting}[language=koka]
+fun main()
+  println(show(map([1, 2, 3], fn(i) { i + 1 })))
+\end{lstlisting}
+Può essere riscritta come:
+\begin{lstlisting}[language=koka]
+fun main()
+  [1, 2, 3].map(fn(i) { i + 1 }).show.println
+\end{lstlisting}
+
+\subsection{Tipi di dato algebrici e pattern matching}
+Koka permette di definire tipi di dato algebrici\footnote{D'ora in avanti abbreviato come ADT}, l'equivalente delle enumerazioni Scala, tramite la parola chiave \lstinline{type} e separando i diversi costruttori su linee differenti:
+\begin{lstlisting}[language=koka]
+type color
+  Red
+  Green
+  Blue
+\end{lstlisting}
+Inoltre un ADT può essere parametrizzato su tipi generici e i suoi costruttori possono avere campi differenti l'uno dall'altro. Per esempio si potrebbe definire un tipo di dato opzionale tramite la seguente dichiarazione:
+\begin{lstlisting}[language=koka]
+type optional<a>
+  Some(value: a)
+  Empty
+\end{lstlisting}
+Avendo a disposizione un valore di tipo \lstinline{optional}, questo potrebbe essere uno qualunque dei due costruttori. L'unico modo per poter determinare quale dei costruttori sia e accedere ai suoi campi è tramite pattern matching.
+
+Si consideri per esempio la funzione \lstinline{map} che, preso in input un valore opzionale e una funzione \lstinline{f}, la applica al suo contenuto se questo è definito:
+\begin{lstlisting}[language=koka]
+fun map(option, f)
+  match option
+    Some(value) -> Some(f(value))
+    Empty       -> Empty
+
+fun main()
+  val option = Some(1)
+  option.map(fn(i) { i + 2 }) // Some(3)
+\end{lstlisting}
+
+Si noti come non è stato necessario annotare il tipo dei parametri della funzione \lstinline{map}, nè il suo tipo di ritorno: l'algoritmo di inferenza di Koka si basa sul type system di Hindley e Milner ed è quasi sempre possibile inferire automaticamente il tipo più generico possibile per le funzioni senza necessità di inserire annotazioni.
+
+In questo caso il tipo della funzione viene inferito essere \lstinline{forall<a,b> (option : optional<a>, f : (a) -> b) -> optional<b>}.
+
+\subsection{Effect system}
+Koka dispone anche di un \emph{effect system} basato sui \emph{row types}~\cite{cit:koka-programming-with-row-polymorphic-effect-types} che permette di tracciare staticamente tutti i side effect che può avere una funzione.
+
+In generale una funzione avrà come tipo $(\tau_1, \dots, \tau_n) \rightarrow \langle\epsilon_1,\dots,\epsilon_m\rangle\ \tau'$ a indicare che prende come argomenti i valori di tipo $\tau_1, \dots, \tau_n$, produce un valore $\tau'$ e può avere i side effect $\epsilon_1,\dots,\epsilon_m$.
+
+Per esempio, in Koka, la funzione \lstinline{println} ha tipo \lstinline{(string) -> <console> ()}: prende in input una stringa, produce un valore \lstinline{unit} e ha il solo side effect di interagire con la console.
+
+Una funzione senza side effect avrà come tipo $(\tau_1, \dots, \tau_n) \rightarrow \langle\rangle\ \tau'$ che viene abbreviato in $(\tau_1, \dots, \tau_n) \rightarrow\ \tau'$. Per esempio la funzione \lstinline{show} ha tipo \lstinline{(int) -> string} e non presenta alcun side effect.
+
+\subsubsection{Propagazione e inferenza degli effetti}
+L'unico momento in cui può verificarsi un side effect è quando una funzione viene invocata. Per questo, se una funzione ha side effect $\epsilon_1,\dots,\epsilon_m$ questi possono avere luogo solo se la funzione è invocata.
+
+Se una funzione invoca una funzione con side effect allora produrrà i suoi effetti e di conseguenza il suo tipo deve rispecchiare tale comportamento. Si consideri per esempio:
+\begin{lstlisting}[language=koka]
+fun print-twice()
+  println("Hello")
+  println("World!")
+\end{lstlisting}
+La funzione \lstinline{print-twice} invoca due volte la funzione \lstinline{println}; poiché questa funzione ha l'effetto di interagire con la console allora anche \lstinline{print-twice} avrà lo stesso effetto: il tipo inferito per la funzione infatti è \lstinline{() -> <console> ()}.
+
+Inoltre, è possibile definire funzioni generiche sullo specifico tipo di effetto che possono avere. Si consideri per esempio la funzione \lstinline{repeat} utilizzata in precedenza: uno dei suoi argomenti è una funzione da ripetere un determinato numero di volte.
+Questa funzione potrebbe presentare qualunque tipo di side effect e il comportamento desiderato è che \lstinline{repeat} ripeta più volte gli effetti della funzione.
+
+L'implementazione di repeat potrebbe essere la seguente:
+\begin{lstlisting}[language=koka]
+fun repeat(n, action)
+  if n <= 0 then () else
+    action()
+    repeat(n - 1, action)
+\end{lstlisting}
+In questo caso l'azione deve essere una funzione generica sui side effect che può compiere: il suo tipo sarà \lstinline{forall<e, a> () -> e a}.
+
+Poiché \lstinline{repeat} invoca la funzione \lstinline{action} nel proprio corpo allora avrà i suoi stessi side effect. Complessivamente il tipo inferito sarà: \lstinline{forall<a,e> (n : int, action : () -> e a) -> e ()}. È reso esplicito nel tipo della funzione che, se questa viene invocata con un'azione che presenta dei side effect \lstinline{e}, allora avrà gli stessi effetti.
+
+\subsubsection{Accumulazione degli effetti}
+Se una funzione utilizza al proprio interno funzioni che possono avere side effect differenti, questi sono automaticamente accumulati nel tipo risultante della funzione. Si consideri il seguente esempio:
+\begin{lstlisting}[language=koka]
+fun log-action(action)
+  println("invoking action")
+  action()
+  println("action invoked")
+\end{lstlisting}
+
+\lstinline{log-action} prende in input una funzione che potrebbe avere presentare qualunque side effect, stampa un messaggio ed esegue la funzione.
+
+Complessivamente, \lstinline{log-action} deve presentare non solo tutti i possibili side effect della generica funzione presa come parametro ma anche il side effect dell'interazione con la console di \lstinline{println}.
+
+Il tipo inferito per la funzione sarà quindi \lstinline{forall<a,e> (action: () -> e a) -> <console|e> ()}. È possibile osservare come la funzione include nei propri effetti sia il concreto effetto \lstinline{console} che tutti i possibili generici effetti \lstinline{e} del proprio parametro.
+La notazione \lstinline{<e1|e>} serve a indicare che una funzione può avere tutti gli effetti \lstinline{e1} e anche tutti i generici effetti \lstinline{e}.

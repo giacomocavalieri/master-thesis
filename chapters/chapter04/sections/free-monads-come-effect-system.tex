@@ -4,6 +4,7 @@ Il meccanismo delle free monad introdotto in questo capitolo è sicuramente un e
 I programmi realizzati tramite l'uso di questo meccanismo non sono altro che strutture dati che descrivono in maniera astratta quali effetti devono avere luogo. L'interpretazione degli effetti avviene in un secondo momento e può assegnare un significato alle diverse istruzioni in base alle necessità del contesto in cui si sta lavorando.
 
 \subsection{Definizione di effetti arbitrari}
+\label{sec:free-effetti-arbitrari}
 Anche in questo caso, così come per l'approccio MTL, è possibile definire qualunque tipo di effetto sia ritenuto rilevante ai fini della computazione; la scelta del livello di dettaglio con cui questi vengono descritti è lasciato a discrezione dell'autore del DSL.
 
 In seguito viene ripreso l'esempio mostrato per MTL nella \Cref{sec:mtl-effetti-arbitrari} reimplementandolo in maniera analoga nello stile delle free monad. Gli effetti da modellare sono il recupero di un utente, il salvataggio e la cancellazione:

@@ -120,7 +120,7 @@
 	morekeywords=[1]{=, =>, =>>},
 	morekeywords=[2]{new, extends, private, throw, using, opaque, @main, @tailrec, type, with, import, summon, for, yield, final, given, try, finally, extension, def, val, var, if, then, else, enum, case, match, object, class, trait, sealed},
 	morekeywords=[3]{*},
-	morekeywords=[4]{Save, Log, LogLevel, LogAndConsole, UserStoreDSL, Console, With, GetLine, PrintLine, ComposedDSL, LogDSL, ConsoleDSL, FileSystemDSL, RightF, EitherF, LeftF, List, ConcurrentDSL, YieldControl, Stop, Perform, Fork, Concurrent, ProgramView, Interpreter, Return, Instruction, Then, StateDSL, Get, Set, User, UserId, UserStore, Delete, Runtime, ProductionRunner, TestRunner, Map, Fail, HasState, App, Any, Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
+	morekeywords=[4]{Save, Log, FailDSL, LogLevel, LogAndConsole, UserStoreDSL, Console, With, GetLine, PrintLine, ComposedDSL, LogDSL, ConsoleDSL, FileSystemDSL, RightF, EitherF, LeftF, List, ConcurrentDSL, YieldControl, Stop, Perform, Fork, Concurrent, ProgramView, Interpreter, Return, Instruction, Then, StateDSL, Get, Set, User, UserId, UserStore, Delete, Runtime, ProductionRunner, TestRunner, Map, Fail, HasState, App, Any, Parser, Program1, Program2, Program, MonadTransformer, StateTFixS, Unit, OptionT, StateT, IO, String, Monad, State, Option, Some, None, Result, Ok, Error, Int, Exception},
 	otherkeywords={*, =, =>, =>>}
 }
 
@@ -128,10 +128,21 @@
 	sensitive=true,
 	string=[b]",
 	comment=[l]{//},
-	morekeywords=[1]{:=, =, <-, ->},
-	morekeywords=[2]{fun, effect, ctl, forall, fn, with, val, var, match, type},
+	morekeywords=[1]{=, :=, <-, ->},
+	morekeywords=[2]{return, handle, handler, if, then, else, fun, effect, ctl, forall, fn, with, val, var, match, type},
 	morekeywords=[3]{*},
 	morekeywords=[4]{Red, Green, Blue, failure, color, optional, Some, Empty},
 	otherkeywords={*, =, :=, <-, ->}
+}
+
+\lstdefinelanguage{javascript}{
+	sensitive=true,
+	string=[b]",
+	comment=[l]{//},
+	morekeywords=[1]{},
+	morekeywords=[2]{yield, function, const},
+	morekeywords=[3]{},
+	morekeywords=[4]{},
+	otherkeywords={}
 }
 

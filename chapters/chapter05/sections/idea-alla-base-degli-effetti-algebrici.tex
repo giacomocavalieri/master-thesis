@@ -1,186 +1,45 @@
 \section{Idea alla base degli effetti algebrici}
+
 Nella teoria elaborata da Plotkin e Power, un effetto viene modellato tramite un insieme di operazioni e una serie di equazioni che ne descrivono le proprietà~\cite{cit:handling-algebraic-effects,cit:computational-effects-and-operations-an-overview}.
 
 Le operazioni di un effetto determinano le modalità con cui questo può verificarsi; possono quindi essere considerate come dei \emph{costruttori} di un effetto~\cite{cit:algebraic-operations-and-generic-effects}.
 Per poter interpretare un effetto e assegnarvi semantica vengono invece utilizzati degli appositi \emph{handler}, o distruttori. Questi specificano come l'esecuzione del programma deve proseguire al verificarsi di ciascuna operazione di uno specifico effetto.
 
-Prima di poter proseguire nella trattazione degli effetti è necessario dare una breve introduzione a Koka: il linguaggio di riferimento utilizzato per tutti gli esempi riportati.
+\subsection{Modellazione degli effetti}
+\subsubsection{Fallimento di una computazione}
+In Koka la parola chiave \lstinline{effect} definisce un effetto e i suoi costruttori sono definiti tramite la parola chiave \lstinline{ctl}.
 
-\subsection{Il linguaggio Koka}
-Koka è un linguaggio di ricerca con supporto agli effetti algebrici; alcune delle sue caratteristiche chiave sono:
-\begin{itemize}
-  \item Tipizzazione statica e \emph{type inference}
-  \item Supporto agli effetti algebrici e \emph{effect inference} per minimizzare la necessità di annotazioni
-  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, tipi di dato algebrici, effetti algebrici e handler
-  \item Uso del metodo Perceus~\cite{cit:perceus-garbage-free-reference-counting-with-reuse} per gestire automaticamente la memoria tramite \emph{reference counting}. Questa tecnica elimina il bisogno di avere un \emph{garbage collector} o un \emph{runtime system} ottenendo ottime prestazioni. Inoltre, l'uso di Perceus rende possibile programmare secondo uno stile che i suoi autori definiscono \emph{Functional But In Place}: grazie all'analisi del \emph{reference counter} è possibile ottimizzare algoritmi puramente funzionali -- che utilizzano strutture dati immutabili -- in modo tale da eseguire mutazioni \emph{in place} in maniera trasparente al programmatore~\cite{cit:koka-benchmarks}
-\end{itemize}
-
-\subsubsection{Sintassi di base}
-Per dichiarare una funzione viene utilizzata la parola chiave \lstinline{fun}, mentre per dichiarare una funzione anonima la parola chiave da utilizzare è \lstinline{fn}:
-\begin{lstlisting}[language=koka]
-fun main() {
-  repeat(10, fn() {
-    println("Hello, Koka!")
-  })
-}
-\end{lstlisting}
-Nell'esempio viene chiamata la funzione \lstinline{repeat} con due argomenti: una funzione anonima che descrive l'azione da compiere e un numero che indica quante volte ripetere l'azione.
-
-Inoltre, è possibile rimuovere le parentesi graffe in quanto ogni blocco di codice indentato viene implicitamente considerato come compreso fra parentesi graffe:
-\begin{lstlisting}[language=koka]
-fun main()
-  repeat(10, fn()
-    println("Hello, Koka!")
-  )
-\end{lstlisting}
-
-In Koka -- così come in Swift e Kotlin -- è disponibile zucchero sintattico per semplificare la scrittura delle \emph{trailing lambda}: qualora l'ultimo argomento di una funzione sia una funzione anonima, questa può seguire direttamente la chiamata a funzione. L'esempio precedente può quindi essere riscritto come:
-\begin{lstlisting}[language=koka]
-fun main()
-  repeat(10) fn()
-    println("Hello, Koka!")
-\end{lstlisting}
-Infine, se la funzione anonima non presenta argomenti allora si può omettere \lstinline{fn()}:
-\begin{lstlisting}[language=koka]
-fun main()
-  repeat(10)
-    println("Hello, Koka!")
-\end{lstlisting}
-
-Un'altra regola sintattica che verrà utilizzata frequentemente negli esempi a seguire è l'uso della parola chiave \lstinline{with}. Questa permette di eliminare l'annidamento di funzioni che prendono in input delle funzioni anonime:
-\begin{lstlisting}
-with x <- f(a1,...,an)
-<body>
-\end{lstlisting}
-Viene trasformata in \lstinline|f(a1,...,an, fn(x){ <body> })|. Inoltre, se la funzione anonima non prende argomenti, è possibile omettere \lstinline{x <-}.
-
-Perciò, l'esempio precedente può essere riscritto come:
-\begin{lstlisting}[language=koka]
-fun main()
-  with repeat(10)
-  println("Hello, Koka!")
-\end{lstlisting}
-
-Infine, in maniera analoga a Go, in Koka è possibile usare la sintassi generalmente associata alla chiamata di un metodo per poter invocare una funzione: \lstinline{a1.f(a2,...,an)} non è altro che zucchero sintattico per \lstinline{f(a1,a2,...,an)}.
-Si osservi per esempio la seguente porzione di codice:
-\begin{lstlisting}[language=koka]
-fun main() {
-  for(1, 10, fn(i) {
-    println(show(i))
-  })
-}
-\end{lstlisting}
-In Koka, diverse strutture di controllo come \lstinline{for} e \lstinline{while} sono semplici funzioni definite nella libreria standard. In questo caso \lstinline{for} prende in input due indici di inizio e fine e una funzione anonima che indica l'azione che dev'essere ripetuta.
-Utilizzando lo zucchero sintattico descritto in precedenza il codice può essere trasformato in:
-\begin{lstlisting}[language=koka]
-fun main()
-  with i <- for(1, 10)
-  println(i.show)
-\end{lstlisting}
-
-\subsubsection{Tipi di dato algebrici e pattern matching}
-Koka permette di definire tipi di dato algebrici tramite la parola chiave \lstinline{type} e separando i diversi costruttori su linee differenti:
-\begin{lstlisting}[language=koka]
-type color
-  Red
-  Green
-  Blue
-\end{lstlisting}
-Inoltre, in maniera analoga alle enumerazioni in Scala, un tipo può essere generico e ciascun costruttore può avere campi differenti:
-\begin{lstlisting}[language=koka]
-type optional<a>
-  Some(value: a)
-  Empty
-\end{lstlisting}
-È possibile accedere ai campi di uno specifico costruttore tramite pattern matching sui valori di un certo tipo:
-\begin{lstlisting}[language=koka]
-fun map(option, f)
-  match option
-    Some(value) -> Some(f(value))
-    Empty       -> Empty
-
-fun main()
-  val option = Some(1)
-  option.map(fn(i) { i + 2 }) // Some(3)
-\end{lstlisting}
-Si noti come non è stato necessario annotare il tipo dei parametri della funzione \lstinline{map}, nè il suo tipo di ritorno: il tipo della funzione viene correttamente inferito come \lstinline{forall<a,b> (option : optional<a>, f : (a) -> b) -> optional<b>}.
-
-\subsubsection{Effect system}
-In Koka è presente un effect system che permette di tracciare i side effect di ciascuna funzione. Il compito di tale effect system è dare la garanzia, a tempo di compilazione, della corretta gestione dei side effect; in particolare, un programma che compili senza errori non potrà presentare side effect che non siano stati gestiti esplicitamente~\cite{cit:koka-programming-with-row-polymorphic-effect-types}.
-
-In Koka una funzione ha un tipo della forma \lstinline{a -> e b} per indicare che prende in input un valore di tipo \lstinline{a} e produce un valore di tipo \lstinline{b} producendo un side effect \lstinline{e}. Perciò un side effect può avere luogo solo come risultato della chiamata di una funzione; un valore di un qualunque altro tipo non può avere side effect~\cite{cit:algebraic-effects-for-functional-programming}.
-
-Il tipo della funzione \lstinline{map} mostrata in precedenza è in realtà incompleto poiché sono state omesse le annotazioni relative agli effetti. In realtà il tipo più generale possibile inferito dal compilatore è:
-\begin{lstlisting}[language=koka]
-forall<a,b,e>
-(option : optional<a>, f : (a) -> e b) -> e optional<b>
-\end{lstlisting}
-Il primo valore preso in input ha tipo \lstinline{optional<a>} mentre la funzione \lstinline{f} presa in input può trasformare un valore \lstinline{a} in un valore \lstinline{b} producendo un generico effetto \lstinline{e}.
-Complessivamente, la funzione \lstinline{map} restituisce un valore \lstinline{optional<b>} producendo un effetto \lstinline{e}.
-
-Osservando il corpo della funzione è possibile osservare come questa non produca alcun side effect limitandosi a effettuare pattern matching sul valore opzionale.
-L'unica azione ``pericolosa'' consiste nella chiamata della funzione \lstinline{f}: questa infatti potrebbe presentare dei side effect arbitrari (rappresentati dal generico \lstinline{e} nel tipo inferito). Poiché \lstinline{map} chiama nel proprio corpo la funzione \lstinline{f} allora dovrà avere espresso nella propria \emph{type signature} il fatto che può produrre gli effetti di \lstinline{f}.
-
-In generale, se una funzione chiama nel proprio corpo una serie di funzioni con side effect dovrà riportarli tutti nel proprio tipo:
-\begin{lstlisting}[language=koka]
-fun function() // () -> <e1,...,en> ()
-  func1(a1,...) // (a1, ...) -> e1 r1
-  ... 
-  funcn(an,...) // (an, ...) -> en rn 
-  ()
-\end{lstlisting}
-La notazione \lstinline{<e1,...,en>} indica la lista di tutti i possibili side effect della funzione. Come è possibile osservare, l'effect system permette di tracciare tutti i side effect che non possono essere ``nascosti'' all'interno del corpo di una funzione.
-
-Il tipo di una funzione senza alcun side effect può essere indicato come \lstinline{a -> <> b} o, più semplicemente, \lstinline{a -> b}.
-Si consideri per esempio la seguente funzione:
-\begin{lstlisting}[language=koka]
-fun sum(x, y)
-  x + y
-\end{lstlisting}
-Il tipo inferito è \lstinline{(x : int, y : int) -> <> int}; quindi, semplicemente osservandone il tipo, è possibile capire che la funzione è pura e non presenta alcun side effect.
-
-Se l'implementazione di \lstinline{sum} dovesse cambiare, per esempio chiamando una funzione con side effect al proprio interno, allora questo comportamento verrebbe rispecchiato nel tipo:
-\begin{lstlisting}[language=koka]
-fun sum(x, y)
-  println("Side effect!")
-  x + y
-\end{lstlisting}
-In questo caso il nuovo tipo inferito è \lstinline{(x : int, y : int) -> console int} rendendo evidente come la funzione in questo caso presenti il side effect di interagire con la console.
-
-
-\section{Definizione di un effetto}
-\mustfix{Spostare qui l'introduzione all'inizio del capitolo? Rivedere l'ordine dell'esposizione}
-
-\subsection{Effetto del fallimento}
-Come descritto all'inizio del capitolo un effetto si compone di una serie di costruttori che sono le azioni che possono generarlo.
-Per esempio l'effetto del fallimento di una computazione può essere definito come:
+Si consideri l'esempio già utilizzato del fallimento di una computazione: questo effetto può essere ottenuto con una sola operazione che sarà chiamata \lstinline{fail}:
 \begin{lstlisting}[language=koka]
 effect failure
   ctl fail(): a
 \end{lstlisting}
+La dichiarazione permette di definire un effetto chiamato \lstinline{failure} con una sola operazione \lstinline{fail()}. Questa operazione non prende in input alcun valore e restituisce un valore di un qualsiasi tipo. In automatico sarà generata una funzione \lstinline{fail} con tipo \lstinline{forall<a> () -> failure a}.
 
-In Koka la parola chiave \lstinline{effect} definisce un effetto e i suoi costruttori sono definiti tramite la parola chiave \lstinline{ctl}.
-In questo caso, l'effetto del fallimento è definito da una sola operazione \lstinline{fail} che produce una funzione omonima di tipo \lstinline{forall<a> () -> failure a}.
-
-Una funzione che fa uso del costruttore \lstinline{fail} avrà automaticamente fra i propri effetti quello del fallimento:
+Grazie all'inferenza dell'effect system, una funzione che fa uso di \lstinline{fail} nel proprio corpo avrà automaticamente fra i propri effetti quello del fallimento:
 \begin{lstlisting}[language=koka]
 fun div(n, m)
   match m
     0 -> fail()
     _ -> n / m
 \end{lstlisting}
-Il tipo inferito per \lstinline{safe-div} sarà \lstinline{(n : int, m : int) -> failure int}. Semplicemente osservando il tipo della funzione è possibile capire che questa potrebbe fallire, l'effect system fa in modo che non sia possibile ignorare questo aspetto.
+Il tipo inferito per \lstinline{div} sarà \lstinline{(n : int, m : int) -> failure int}. Semplicemente osservando il tipo della funzione è possibile capire che questa potrebbe fallire; l'effect system fa in modo che non sia possibile ignorare questo aspetto.
 
-\subsection{Modellazione di uno stato mutabile}
-Seguendo la stessa strategia evidenziata per l'effetto del fallimento è possibile definire l'effetto che permette di modellare la presenza di uno stato mutabile:
+\subsubsection{Lettura e scrittura di uno stato mutabile}
+Seguendo la stessa strategia evidenziata per l'effetto del fallimento è possibile definire un effetto per modellare la presenza di uno stato mutabile:
 \begin{lstlisting}[language=koka]
 effect state<s>
   ctl get(): s
   ctl set(new-state: s): ()
 \end{lstlisting}
-In questo caso l'effetto è parametrico rispetto a un generico stato di tipo \lstinline{s}; l'operazione di \lstinline{get} non prende alcun parametro e restituisce un valore di tipo \lstinline{s}, l'operazione \lstinline{set} prende in input il nuovo stato e non restituisce alcun valore.
 
-È possibile combinare queste operazioni di base per realizzare funzioni più complesse, per esempio:
+In questo caso l'effetto viene definito rispetto a un generico tipo \lstinline{s} che rappresenta il tipo dello stato mutabile.
+\begin{itemize}
+  \item \lstinline{get} avrà come tipo \lstinline{() -> state<s> s}: una sua invocazione restituisce un valore di tipo \lstinline{s} e ha il side effect di accedere a uno stato mutabile
+  \item \lstinline{set} avrà come tipo \lstinline{(new-state: s) -> state<s> ()}: prende in input il nuovo stato di tipo \lstinline{s} e non restituisce alcun valore, inoltre ha il side effect di accedere a uno stato mutabile \lstinline{s}
+\end{itemize}
+
+Queste operazioni di base possono essere combinate per realizzare funzioni più complesse, per esempio:
 \begin{lstlisting}[language=koka]
 fun update(f)
   val current-state = get()
@@ -190,76 +49,165 @@ fun update(f)
 In questo caso la funzione prende in input una funzione \lstinline{f} che viene utilizzata per trasformare lo stato e aggiornarlo.
 
 Poiché \lstinline{update} utilizza al proprio interno le operazioni \lstinline{get} e \lstinline{set} avrà nel proprio tipo l'effetto dello stato: il tipo inferito è \lstinline{(f : (s) -> e s) -> <state<s>|e> ()}.
+
 Si noti come il tipo di \lstinline{f} è stato inferito come il più generico possibile: vale a dire che questa funzione potrebbe avere un qualunque side effect \lstinline{e}.
-Per questo motivo il tipo di \lstinline{update} combina sia l'effetto dello stato che i possibili ulteriori effetti provenienti dall'uso del proprio argomento.
+Per questo motivo il tipo di \lstinline{update} combina sia l'effetto dello stato che i possibili ulteriori effetti provenienti dall'invocazione di \lstinline{f}.
 
-\mustfix{Bisognerebbe parlare dei row type nell'effect system}
-
-\mustfix{bisogna dire che una funzione con tipo a -> e b può essere usata come una normale funzione a -> b e cambia che l'effetto viene propagato alla funzione dentro la quale si trova!!!}
-
-\section{Interpretazione degli effetti}
+\subsection{Interpretazione degli effetti}
 Fino a questo momento gli effetti sono stati descritti in maniera astratta definendo una serie di operazioni; queste definiscono un'interfaccia attraverso la quale è possibile generare l'effetto desiderato.
 
-Per poter dare una semantica alle operazioni di un effetto è necessario definire un \emph{handler}. Gli handler sono anche detti distruttori in quanto rappresentano un meccanismo duale rispetto alle operazioni: mentre quest'ultime arricchiscono il tipo di una funzione aggiungendovi effetti, gli handler permettono di scaricare gli effetti dal tipo di una funzione.
+Per poter dare una semantica alle operazioni di un effetto è necessario definire un \emph{handler}. Gli handler, detti anche detti distruttori, sono un meccanismo duale rispetto alle operazioni: mentre l'invocazione di quest'ultime arricchiscono il tipo di una funzione aggiungendovi effetti, gli handler permettono di ``scaricare'' gli effetti dal tipo di una funzione.
 
-In generale, un handler per l'effetto \lstinline{e1} sarà una funzione con tipo \lstinline{(a -> <e1|e> b) -> (a' -> e b')}: vale a dire che l'handler può prendere in input una computazione che può mettere in atto l'effetto gestito e restituisce una nuova computazione che non presenta più l'effetto fra quelli che può avere.
+In generale, un handler in grado di dare semantica alle operazioni dell'effetto \lstinline{e1} sarà una funzione che prende in input una computazione con tale effetto e lo rimuove dalla lista dei suoi effetti.
 
-\subsection{Gestione del fallimento di una computazione}
+\subsubsection{Effetti come eccezioni}
 Per poter definire un handler in Koka viene utilizzata la parola chiave \lstinline{handle} a cui viene passata come argomento la computazione della quale devono essere gestiti gli effetti.
 
-Considerando il side effect del fallimento di una computazione è possibile definire un handler che, in caso venga chiamata l'operazione \lstinline{fail}, restituisca un valore di default:
+Il corpo di un handler viene definito tramite pattern matching sulle possibili operazioni dell'effetto che si sta interpretando.
+
+Operativamente, quando viene invocata un'operazione il risultato è simile al sollevamento di un'eccezione in un linguaggio come Java o Scala: il normale flusso di controllo viene interrotto e il controllo passa all'handler più vicino in grado di gestire lo specifico effetto.
+
+Per esempio, considerando la funzione \lstinline{div} mostrata in precedenza, una possibile gestione del fallimento potrebbe essere la seguente:
 \begin{lstlisting}[language=koka]
-fun catch-default(default, computation)
-  handle(computation)
-    ctl fail() -> default
+fun main()
+  handle(fn() div(10, 0).println)
+    ctl fail() -> println("Exception: divided by zero")
 \end{lstlisting}
 
-\section{Koka}
-\section{Definizione degli effetti}
-\subsection{L'effetto del fallimento}
-\subsection{L'effetto dello stato}
-\section{interpretazione degli effetti}
-\section{Composizione di effetti}
+Nel caso in cui venga chiamata l'operazione \lstinline{fail} il controllo della computazione sarà interrotto e l'handler eseguirà la porzione di codice associata all'operazione \lstinline{fail}.
 
+In questo caso un blocco \lstinline|handle(...){...}| può essere assimilato al blocco \lstinline{try-catch} di linguaggi che supportano le eccezioni.
 
-% Spiegare cosa succede quando viene chiamata un'operazione: è come se si verificasse un'eccezione e il controllo viene passato a uno dei rami dell'handler a seconda dell'operazione che è stata chiamata (esempio Catch)
-% È anche possibile intercettare il caso in cui la computazione termini senza mai chiamare un'operazione (esempio Maybe, mostrare come sia facile passare da una rappresentazione all'altra (try/untry))
-% Prima osservazione: è possibile definire strutture di controllo di flusso come blocchi try/catch/finally in user space! (provare a implementare finally)
+Per esempio, si potrebbe gestire il fallimento restituendo un valore di default in caso di eccezione:
+\begin{lstlisting}[language=koka]
+fun default(value, computation)
+  handle(computation)
+    ctl fail() -> value
+\end{lstlisting}
+Il tipo di \lstinline{default} è \lstinline{forall<a,e> (value : a, computation : () -> <failure|e> a) -> e a}:
+\begin{itemize}
+  \item La computazione restituisce un valore di tipo \lstinline{a} e potrebbe avere, fra gli altri effetti, anche quello del fallimento
+  \item \lstinline{value} è un valore di default con lo stesso tipo del valore di ritorno di \lstinline{computation} che viene restituito in caso di fallimento
+  \item Il risultato non ha più l'effetto del fallimento fra i propri effetti in quanto tutte le sue operazioni (in questo caso solo \lstinline{fail}) sono state gestite nell'handler. Rimangono comunque i possibili altri effetti \lstinline{e} della computazione in quanto l'handler gestisce solo le operazioni del fallimento
+\end{itemize}
 
-% Passare all'esempio dello stato mutabile
-% Mostrare l'uso di `resume`: quindi gli effetti non sono semplici eccezioni, possono essere visti -- dal punto di vista operazionale -- come delle eccezioni recuperabili! È possibile, chiamando resume, ripristinare il normale flusso di controllo nel punto esatto in cui l'operazione è stata invocata.
-% Per poter far riprendere il flusso, resume deve essere chiamata con un valore che abbia il tipo di ritorno atteso dall'operazione in quanto è il contratto che questa stabilisce.
-% Nel caso di get quindi ``resume' è una funzione che prende in input un valore del tipo dello stato
-% Nel caso di set invece resume non prende alcun valore in input e può sempre essere fatta ripartire. Tuttavia, l'operazione fornisce il nuovo stato che può essere aggiornato
+In caso si verifichi l'effetto del fallimento la computazione viene interrotta e l'handler restituisce immediatamente il valore di default; in caso contrario il risultato sarà quello restituito normalmente dalla computazione:
+\begin{lstlisting}[language=koka]
+fun main()
+  default(-1, { div(10, 0) }).println // -1
+  default(-1, { div(10, 2) }).println // 5
+\end{lstlisting}
 
-% Parentesi sulle variabili in Koka: in Koka è possibile avere variabili e il loro utilizzo viene riflesso negli effetti delle computazioni che le presentano! Inoltre, Koka permette di eliminare tale side effect dalla firma della funzione se questo non è osservabile esternamente. Quindi è possibile utilizzare in maniera opportunistica la mutazione di variabili e se non è osservabile esternamente non viene considerata come un side effect in quanto non è visibile dall'esterno e non altera la natura matematica della funzione.
+\subsubsection{Cattura del risultato di una computazione}
+Un handler può anche gestire esplicitamente il caso in cui una computazione termini normalmente senza chiamare alcuna operazione.
 
-% State primo esempio del potere espressivo degli effetti, la computazione può essere ripresa nel punto in cui è stata interrotta.
+In Koka questo viene fatto aggiungendo un ramo al pattern matching:
+\begin{lstlisting}[language=koka]
+fun to-option(computation)
+  handle(computation)
+    return(value) -> Some(value)
+    ctl fail()    -> Empty
+\end{lstlisting}
+Il ramo \lstinline{return(value)} viene utilizzato se la computazione gestita dall'handler termina senza chiamare l'operazione di \lstinline{fail}; in questo caso alla variabile \lstinline{value} viene assegnato il valore di ritorno della computazione.
 
-% Altri effetti iteratori (evidenziare come questi necessitino di supporto diretto del compilatore, in questo caso sono generalizzati dagli effetti!) (pipe di generatore/consumatore)
+La funzione quindi permette di rimuovere l'effetto del fallimento di una funzione trasformando il suo valore di ritorno in un valore opzionale:
+\begin{lstlisting}[language=koka]
+fun main()
+  to-option { div(10, 0) } // Empty
+  to-option { div(10, 2) } // Some(5)
+\end{lstlisting}
 
-% Effetti più complessi: NON DETERMINISMO
-% Interessante esempio che permette di capire come ``resume'' non sia altro che una normale funzione, le funzioni sono elementi di prima classe e possono essere passate come argomento, invocate più volte, etc.
-% in questo caso l'interpretazioni possono essere molteplici! Si sceglie sempre una delle due opzioni, scelta non deterministica (mostrare come un handler può quindi rimuovere un effetto ma aggiungerne altri!!!!), oppure si esplorano tutti i rami della computazione uno dopo l'altro
+Se non viene specificato il caso \lstinline{return} -- come negli esempi mostrati in precedenza -- allora l'handler restituisce semplicemente il valore della computazione.
 
-% Composizione di più effetti
-% È automatica! L'effect system traccia e accumula tutti gli effetti, parlare di effect polymorphism e row type nell'effect system, mostrare una computazione che usa più effetti
-% Gestione di più effetti, basta applicare tutti gli handler necessari, anche in questo caso è automatico! 
-% Anche in questo caso potrebbe cambiare la semantica dell'operazione in base all'ordine con cui sono applicati gli handler (esempio di fallimento e stato mutabile)
+\subsubsection{Definizione di strutture di controllo}
+Grazie a questo meccanismo è possibile definire funzioni più complicate.
 
-% Confronto con l'approccio monadico
-% Boilerplate nullo: gli effetti sono elementi di prima classe che non devono essere codificati tramite meccanismi come le type class.
-% È difficile comporre le monadi (vedi gli stack) mentre gli effetti vengono composti e propagati automaticamente
-% Definire una monade richiede concentrarsi su come le operazioni vengono concatenate (flatMap), ed è questo che da semantica. Nel caso degli effetti, invece, si da semantica definendo degli handler e l'attenzione è sulle operazioni! (In questo, l'approccio degli effetti è più simile alle free monad dove in quel caso l'istanza di monade si otteneva in automatico e l'interpretazione avveniva stabilendo come comportarsi ad ogni operazione)
-% È possibile scrivere il codice in maniera diretta, senza dover ricorrere alla for comprehension e bind monadico.
-% Il carico cognitivo per il programmatore è estremamente ridotto
-% Facendo un confronto specifico con scala, inoltre un vantaggio significativo è la possibilità di avere inferenza completa di effetti! Con gli approcci MTL/Free monad è sempre necessario indicare esplicitamente gli effetti delle computazioni nel tipo delle funzioni. In questo caso il programmatore ha a disposizione un meccanismo di innferenza potente e può farsi guidare da questo se volesse inserire esplicitamente le annotazioni (anche se non sono obbligatorie!)
+Molti linguaggi di programmazione forniscono, tramite supporto diretto del compilatore, le eccezioni come meccanismo per far terminare prematuramente una computazione.
+Inoltre, è possibile definire dei blocchi \lstinline{finally} per stabilire delle azioni che devono essere intraprese quando una computazione dentro ad un blocco \lstinline{try-catch} termina, con un'eccezione o normalmente.
 
-% Codice estremamente conciso
+Avendo a disposizione gli effetti è possibile definire blocchi \lstinline{finally} come semplici funzioni di libreria senza bisogno di aggiungere supporto speciale del compilatore o nuove parole chiave al linguaggio:
+\begin{lstlisting}[language=koka]
+fun finalizer(fin, computation)
+  handle(computation)
+    return(_)  -> ()
+    ctl fail() -> ()
+  fin()
+\end{lstlisting}
+La computazione viene gestita dall'handler il quale ignora il valore di ritorno e, in caso di eccezione, restituisce \lstinline{()}. In entrambi i casi, dopo la gestione della computazione viene eseguita la funzione di finalizzazione:
+\begin{lstlisting}[language=koka]
+fun main()
+  with finalizer { print("Finalizer") }
+  print("Start,")
+  print(div(10, 0).show ++ ",")
+  print("End")
+\end{lstlisting}
+In questo caso l'output sarà \lstinline{"Start,5,Finalizer"} in quanto l'operazione di divisione per 0 comporta il fallimento della computazione.
 
-% Koka utilizzato per Makoko
+\subsection{Effetti come eccezioni ripristinabili}
+Si consideri adesso l'esempio dello stato: un handler per l'effetto \lstinline{state} dovrà stabilire come dare semantica alle operazioni di \lstinline{get} e \lstinline{set}.
 
-% Possibile accenno alle tecniche implementative?
+In questo però pensare agli effetti come semplici eccezioni risulta essere limitante. Per capire il problema, si osservi la seguente computazione che ricorre all'effetto dello stato:
+\begin{lstlisting}[language=koka]
+fun increment-counter()
+  val counter: int = get()
+  println("counter is " ++ counter.show)
+  set(counter + 1)
+\end{lstlisting}
+Se la chiamata all'operazione \lstinline{get} si limitasse a interrompere l'esecuzione della funzione, non sarebbe possibile eseguire i comandi successivi. Invece, il comportamento desiderato sarebbe quello di ottenere lo stato corrente, stampare un messaggio e modificare lo stato con un nuovo valore.
 
-% Potenza del meccanismo: molto conveniente per il compilatore una sola cosa che va supportata e ottimizzata e sottende a tutti i meccanismi di controllo di flusso: iteratori, async-await, ... che quindi possono essere semplicemente implementati come librerie basandosi sugli effetti
+In realtà, gli effetti sono un meccanismo più generale delle semplici eccezioni. Infatti, non solo possono permettere di interrompere il normale flusso d'esecuzione del codice (come mostrato negli esempi per il side effect del fallimento) ma possono anche ripristinare il flusso d'esecuzione nel punto in cui è stata invocata un'operazione.
 
+\subsubsection{Ripristino del flusso di controllo}
+Quando viene chiamata l'operazione di un effetto e il flusso di controllo viene passato all'handler, questo ha la possibilità di far riprendere la normale esecuzione della funzione utilizzando la funzione \lstinline{resume}.
+
+Il tipo della funzione \lstinline{resume} cambierà in base all'effetto invocato. Si consideri per esempio l'effetto di leggere valori di configurazione:
+\begin{lstlisting}[language=koka]
+effect configuration
+  ctl get-name(): string
+  ctl get-int(): int
+
+fun print-config()
+  val name = get-name()
+  println("Name is: " ++ name)
+  val n = get-int()
+  println("Int is: " ++ n.show)
+\end{lstlisting}
+
+Quindi, quando si verifica l'effetto \lstinline{get-name}, per poter riprendere la normale computazione è necessario fornire in un qualche modo una stringa che è il valore di ritorno atteso dalla funzione \lstinline{get-name}. In maniera analoga, quando si verifica l'effetto \lstinline{get-int} sarà necessario fornire un valore intero per poter far riprendere la computazione.
+
+Un handler per questo effetto potrebbe, per esempio, fornire sempre gli stessi valori:
+\begin{lstlisting}[language=koka]
+fun constant-config(computation)
+  handle(computation)
+    ctl get-name() -> resume("Koka")
+    ctl get-int()  -> resume(11)
+\end{lstlisting}
+A seconda del ramo del pattern matching sarà presente in scope una funzione \lstinline{resume} con tipo differente: nel primo caso richiede una stringa mentre nel secondo un valore intero.
+L'effetto in entrambi i casi è quello di riprendere il normale flusso di esecuzione dando come valore di ritorno dell'operazione il valore passato alla funzione \lstinline{resume}:
+\begin{lstlisting}[language=koka]
+fun main()
+  with constant-config
+  print-config()
+  // Name is: Koka
+  // Int is: 11
+\end{lstlisting}
+
+\subsubsection{Handler per lo stato mutabile}
+Tornando all'esempio dello stato mutabile, è possibile osservare come, per riprendere la computazione in seguito ad una chiamata a \lstinline{get}, sia necessario fornire un valore del tipo dello stato.
+Un possibile handler potrebbe essere il seguente:
+\begin{lstlisting}[language=koka]
+fun initial-state(initial-state, computation)
+  var state := initial-state
+  handle(computation) 
+    return(x) -> (state, x)
+    ctl get() -> resume(state)
+    ctl set(new-state) ->
+      state := new-state
+      resume(())
+\end{lstlisting}
+
+La funzione utilizza internamente una variabile per tenere traccia dello stato attuale: quando viene chiamato \lstinline{get} l'esecuzione viene ripresa con il valore attuale dello stato; invece alla chiamata di \lstinline{set} si modifica lo stato attuale e poi viene fatta ripartire la computazione fornendo alla funzione \lstinline{resume} il valore \lstinline{()} -- vale a dire il tipo di ritorno atteso dalla funzione \lstinline{set}.
+
+Il type system di Koka è in grado di capire che l'uso della variabile è limitato allo scope della funzione e la mutabilità non è osservabile dall'esterno; per questo motivo il tipo della funzione appare essere puro e privo di side effect.\mustfix{Aggiungere un paragrafo sull'uso opportunistico della mutabilità parlando di Koka!
+  % Parentesi sulle variabili in Koka: in Koka è possibile avere variabili e il loro utilizzo viene riflesso negli effetti delle computazioni che le presentano! Inoltre, Koka permette di eliminare tale side effect dalla firma della funzione se questo non è osservabile esternamente. Quindi è possibile utilizzare in maniera opportunistica la mutazione di variabili e se non è osservabile esternamente non viene considerata come un side effect in quanto non è visibile dall'esterno e non altera la natura matematica della funzione.
+}
