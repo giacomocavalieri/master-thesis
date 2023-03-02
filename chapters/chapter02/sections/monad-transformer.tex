@@ -1,24 +1,24 @@
 \section{Monad transformer}
 
-Un \emph{monad transformer} è una coppia (\lstinline{t}, \lstinline{lift}) dove:
+Un \emph{monad transformer} è una coppia (\lstinline{T}, \lstinline{lift}) dove:
 \begin{itemize}
-  \item \lstinline{t} è un costruttore di tipi che prende in input un costruttore di tipi \lstinline{m}, un tipo \lstinline{a} e restituisce un tipo \lstinline{t m a}
-  \item Se \lstinline{m} è una monade, allora \lstinline{t m} è una monade
-  \item \lstinline{lift} è una funzione polimorfa con tipo \lstinline{m a -> t m a} (dove \lstinline{m} è una monade). Questa funzione serve a portare nella monade \lstinline{t m} valori che si trovano nella monade \lstinline{m}
+  \item \lstinline{T} è un costruttore di tipi che prende in input un costruttore di tipi \lstinline{M}, un tipo \lstinline{A} e restituisce un tipo \lstinline{T[M, A]}
+  \item Se \lstinline{M} è una monade, allora \lstinline{T[M, _]} è una monade
+  \item \lstinline{lift} è una funzione polimorfa con tipo \lstinline{M[A] => T[M, A]} (dove \lstinline{M} è una monade). Questa funzione serve a portare nella monade \lstinline{T[M, _]} valori che si trovano nella monade \lstinline{M}
 \end{itemize}
 
-Inoltre è richiesto che valgano alcune leggi\footnote{Per chiarezza vengono riportate a pedice le indicazioni su quale monade appartengano le operazioni \lstinline{return} e \lstinline{>>=}: \lstinline{m} a pedice indica che l'operazione appartiene alla monade \lstinline{m}, mentre \lstinline{tm} a pedice indica che l'operazione fa riferimento alla monade \lstinline{t m}.}:
+Inoltre è richiesto che valgano alcune leggi\footnote{Per chiarezza vengono riportate a pedice le indicazioni su quale monade appartengano le operazioni \lstinline{pure} e \lstinline{>>=}: \lstinline{m} a pedice indica che l'operazione appartiene alla monade \lstinline{M}, mentre \lstinline{tm} a pedice indica che l'operazione fa riferimento alla monade \lstinline{T[M, _]}.}:
 \begin{itemize}
-  \item \lstinline{lift (return}$_\text{\lstinline{m}}$ \lstinline{x) = return}$_\text{\lstinline{tm}}$ \lstinline{x}
-  \item \lstinline{lift (m >>=}$_\text{\lstinline{m}}$ \lstinline{f) = lift m >>=}$_\text{\lstinline{tm}}$ \lstinline{(\x -> lift (f x))}
+  \item \lstinline{lift(pure}$_\text{\lstinline{m}}$ \lstinline{x) = pure}$_\text{\lstinline{tm}}$\lstinline{(x)}
+  \item \lstinline{lift(m >>=}$_\text{\lstinline{m}}$ \lstinline{f) = lift(m) >>=}$_\text{\lstinline{tm}}$ \lstinline{(x => lift(f(x)))}
 \end{itemize}
 
-La prima legge serve a garantire che \lstinline{lift} sia l'operazione neutra: un valore senza side effect nella monade \lstinline{m} -- indicato come \lstinline{return}$_\text{\lstinline{m}}$\lstinline{ x} -- non avrà alcun side effect se portato nella monade \lstinline{t m} tramite l'operazione di \emph{lifting}. La seconda legge indica che effettuare il \emph{lifting} di una sequenza di operazioni -- vale a dire \lstinline{lift (m >>=}$_\text{\lstinline{m}}$ \lstinline{f)} -- è equivalente a effettuare il lifting delle singole operazioni e poi metterle in sequenza all'interno della monade \lstinline{t m}.
+La prima legge serve a garantire che \lstinline{lift} sia l'operazione neutra: un valore senza side effect nella monade \lstinline{M} -- indicato come \lstinline{pure}$_\text{\lstinline{m}}$\lstinline{(x)} -- non avrà alcun side effect se portato nella monade \lstinline{T[M, _]} tramite l'operazione di \emph{lifting}. La seconda legge indica che effettuare il \emph{lifting} di una sequenza di operazioni -- vale a dire \lstinline{lift(m >>=}$_\text{\lstinline{m}}$ \lstinline{f)} -- è equivalente a effettuare il lifting delle singole operazioni e poi metterle in sequenza all'interno della monade \lstinline{T[M, _]}.
 
-È possibile interpretare un monad transformer \lstinline{t} come una monade di ordine superiore: ovvero una monade parametrizzata su una generica monade \lstinline{m}. L'idea alla base di un transformer è che questo permette di arricchire la monade parametro aggiungendovi ulteriori effetti~\cite{cit:monad-transformers-and-modular-interpreters}.
+È possibile interpretare un monad transformer \lstinline{T} come una monade di ordine superiore: ovvero una monade parametrizzata su una generica monade \lstinline{M}. L'idea alla base di un transformer è che questo permette di arricchire la monade parametro aggiungendovi ulteriori effetti~\cite{cit:monad-transformers-and-modular-interpreters}.
 
 \subsection{Encoding di un monad transformer}
-L'encoding di un transformer può essere effettuato in maniera analoga a quanto mostrato per le monadi: è sufficiente definire un costruttore di tipi \lstinline{t} che prenda in input un costruttore di tipi \lstinline{m} e un tipo \lstinline{a}. Inoltre è possibile definire tramite il meccanismo delle \emph{type class} la funzione \lstinline{lift} che ha tipo \lstinline{m a -> t m a}.
+L'encoding di un transformer può essere effettuato in maniera analoga a quanto mostrato per le monadi: è sufficiente definire un costruttore di tipi \lstinline{T} che prenda in input un costruttore di tipi \lstinline{M} e un tipo \lstinline{A}. Inoltre è possibile definire tramite il meccanismo delle \emph{type class} la funzione \lstinline{lift} che ha tipo \lstinline{M[A] -> T[M, A]}.
 
 \subsubsection{Encoding in Haskell}
 Secondo la definizione fornita un monad transformer deve possedere una funzione in grado di portare un valore da una generica monade \lstinline{m} alla monade composta \lstinline{t m}. Questo vincolo può essere espresso in Haskell tramite la seguente definizione:

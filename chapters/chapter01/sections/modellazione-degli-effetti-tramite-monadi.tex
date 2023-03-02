@@ -8,21 +8,20 @@ Questo meccanismo può essere catturato dall'astrazione delle monadi.
 Il concetto di monade, nato nell'ambito della teoria delle categorie~\cite{cit:categories-for-the-working-mathematician}, venne utilizzato da Eugenio Moggi come mezzo per strutturare la semantica denotazionale di aspetti di un programma come lo stato mutabile, la gestione delle eccezioni e delle continuazioni~\cite{cit:an-abstract-view-of-programming-languages}.
 Fu poi Philip Wadler, ispirato dal lavoro di Moggi e Michael Spivey~\cite{cit:a-functional-theory-of-exceptions}, a intuire che questa stessa tecnica potesse essere sfruttata direttamente per \emph{strutturare} un programma funzionale -- non solo per descriverne la semantica come fatto da Moggi~\cite{cit:comprehending-monads,cit:the-essence-of-functional-programming}.
 
-Una monade è una tripla \lstinline{(M, return, >>=)} dove:
+Una monade è una tripla \lstinline{(M, pure, flatMap)} dove:
 \begin{itemize}
-  \item \lstinline{M} è un costruttore di tipi; ovvero prende in input un tipo \lstinline{a} e restituisce un tipo \lstinline{M a}. Un valore di tipo \lstinline{M a} può essere interpretato come una computazione che restituisce un valore di tipo \lstinline{a} e può avere un qualche side effect
-  \item \lstinline{return} è una funzione polimorfa con tipo \lstinline{a -> M a}\footnote{\lstinline{return} è spesso anche indicato come \lstinline{pure}.}
-  \item \lstinline{>>=} è una funzione polimorfa con tipo \lstinline{M a -> (a -> M b) -> M b}\footnote{\lstinline{>>=} è anche indicato come \lstinline{bind} o \lstinline{flatMap}. Nella sua versione \lstinline{>>=} viene generalmente utilizzato come operatore binario infisso: vale a dire che \lstinline{m >>= f} è equivalente a indicare \lstinline{bind m f}.}; rappresenta la combinazione in sequenza di due computazioni che possono presentare side effect
+  \item \lstinline{M} è un costruttore di tipi; ovvero prende in input un tipo \lstinline{A} e restituisce un tipo \lstinline{M[A]}. Un valore di tipo \lstinline{M[A]} può essere interpretato come una computazione che restituisce un valore di tipo \lstinline{A} e può avere un qualche side effect
+  \item \lstinline{pure} è una funzione polimorfa con tipo \lstinline{A => M[A]}\footnote{\lstinline{pure} è spesso anche indicato come \lstinline{return}.}
+  \item \lstinline{flatMap} è una funzione polimorfa con tipo \lstinline{(M[A], A => M[B]) => M[B]}\footnote{\lstinline{flatMap} è anche indicato come \lstinline{bind} o \lstinline{>>=}. Nella sua versione \lstinline{>>=} viene generalmente utilizzato come operatore binario infisso: vale a dire che \lstinline{m >>= f} è equivalente a indicare \lstinline{flatMap(m, f)}.}; rappresenta la combinazione in sequenza di due computazioni che possono presentare side effect
 \end{itemize}
 Inoltre è richiesto che valgano le seguenti \emph{leggi monadiche}:
 \begin{itemize}
-  \item (Identità sinistra) \lstinline{return a >>= f = f a}
-        \mustfix{Rimuovere questo footnote quando sarà completata l'appendice con la sintassi haskell e rimandare semplicemente all'appendice}\footnote{Per le seguenti definizioni è stata adottata una sintassi in pseudo-linguaggio simile a quella di Haskell. L'applicazione di funzione è indicata semplicemente come il nome della funzione seguito dai suoi argomenti separati da spazi. In questo caso \lstinline{f a} denota l'applicazione della funzione \lstinline{f} ad un valore chiamato \lstinline{a}. Inoltre, per ridurre il numero di parentesi si considera l'applicazione di funzione avere priorità massima (anche rispetto all'applicazione di una funzione binaria infissa come \lstinline{>>=}), quindi \lstinline{return a >>= f} equivale a \lstinline{(return a) >>= f}.}
-  \item (Identità destra) \lstinline{m >>= return = m}
-  \item (Associatività) \lstinline{(m >>= f) >>= g = m >>= (\x -> f x >>= g)}\footnote{\lstinline{\\x -> f x >>= g} denota una funzione anonima che prende in input un valore \lstinline{x} e che restituisce \lstinline{f x >>= g}.}
+  \item (Identità sinistra) \lstinline{pure(a) >>= f = f(a)}
+  \item (Identità destra) \lstinline{m >>= pure = m}
+  \item (Associatività) \lstinline{(m >>= f) >>= g = m >>= (x => f(x) >>= g)}
 \end{itemize}
-Le prime due leggi servono a garantire che \lstinline{return} sia l'elemento neutro per l'operazione di concatenazione \lstinline{>>=}: \lstinline{return} può essere quindi visto come l'operazione che trasforma un valore di tipo \lstinline{a} in un valore di tipo \lstinline{M a} senza compiere alcun side effect.
-La terza legge, garantisce che \lstinline{>>=} sia associativa, dunque scrivere \lstinline{m >>= f >>= g} è equivalente a scrivere \lstinline{(m >>= f) >>= g} o \lstinline{m >>= (\x -> f x >>= g)}.
+Le prime due leggi servono a garantire che \lstinline{pure} sia l'elemento neutro per l'operazione di concatenazione \lstinline{flatMap}: \lstinline{pure} può essere quindi visto come l'operazione che trasforma un valore di tipo \lstinline{A} in un valore di tipo \lstinline{M[A]} senza compiere alcun side effect.
+La terza legge, garantisce che \lstinline{flatMap} sia associativa, dunque scrivere \lstinline{m >>= f >>= g} è equivalente a scrivere \lstinline{(m >>= f) >>= g} o \lstinline{m >>= (x => f(x) >>= g)}.
 
 \subsection{Encoding di una monade}
 È possibile esprimere le soluzioni ad hoc adottate alla \Cref{svantaggi-della-modellazione-esplicita} in termini del concetto di monade, garantendo un'interfaccia uniforme per diversi side effect.
@@ -179,7 +178,6 @@ incrementCounter =
       get >>= (\newCounter ->
         return ("counter is:" ++ show newCounter))))
 \end{lstlisting}
-
 
 \subsection{Vantaggi nell'uso delle monadi}
 \subsubsection{Separazione del codice impuro dal codice puro}
