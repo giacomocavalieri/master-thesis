@@ -1,16 +1,4 @@
-La ragion d'essere di un qualunque programma è quella di produrre un qualche effetto tangibile sul mondo esterno: che sia scrivere dei dati su disco, inviare un messaggio sulla rete, stampare dei caratteri a schermo ecc.
-Linguaggi dalla natura imperativa come C, Java o Scala forniscono delle funzioni apposite per ottenere tali effetti; in Scala, per esempio, si potrebbe implementare la seguente funzione per apporre una stringa al contenuto di un file su disco\footnote{In questa funzione così come in tutte le altre funzioni Scala a seguire viene adottata la sintassi introdotta da Scala 3~\cite{cit:new-in-scala-3}.}:
+Date le criticità evidenziate nella sezione precedente, diverse pratiche di buona programmazione suggeriscono di ridurre al minimo le funzioni che presentano side effect~\cite[p.~44]{cit:clean-code-a-handbook-of-agile-software-craftsmanship} e, quando inevitabili, di renderli espliciti nel nome della funzione~\cite[p.~313]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.
 
-\begin{lstlisting}[language=scala3]
-def appendToFile(file: File, line: String): Unit =
-  println(f"Appending $line to $file")
-  val writer = FileWriter(file, true)
-  try writer.write(f"$line\n")
-  finally writer.close
-\end{lstlisting}
-Lo scopo di funzioni come \lstinline{appendToFile}, \lstinline{write} e \lstinline{println} non è quello di produrre un risultato -- il loro valore di ritorno è sempre \lstinline{Unit} -- ma di mettere in atto dei \emph{side effect}.
-
-Più in generale, con side effect si intende una qualunque interazione della funzione con un ambiente diverso da quello locale.
-Possono essere quindi considerati side effect il modificare una variabile globale o un parametro passato per riferimento, lanciare un'eccezione, l'effettuare operazioni di input e output -- come mostrato precedentemente in \lstinline{appendToFile} -- o il chiamare una funzione che a sua volta presenta dei side effect~\cite{cit:on-the-prevalence-of-function-side-effects-in-general-purpose-open-source-software-systems}.
-
-Le funzioni che presentano side effect sono spesso anche dette \emph{impure} mentre funzioni che non hanno side effect sono anche dette \emph{pure} o caratterizzate da \emph{trasparenza referenziale}.
+Tuttavia, si possono individuare altre tecniche più sofisticate per tracciare i side effect delle funzioni.
+Queste nascono nel contesto dei linguaggi funzionali puri, perciò è necessario comprendere come questa classe di linguaggi possa conciliare la presenza di side effect con la loro natura puramente funzionale.

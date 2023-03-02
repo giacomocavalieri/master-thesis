@@ -1,4 +1,4 @@
-\section{Criticità dei side effect}
+\section*{Criticità dei side effect}
 \label{section:criticita-dei-side-effect}
 
 Il fatto che una funzione possa avere interazioni con il mondo esterno presenta però alcune criticità.
@@ -16,13 +16,14 @@ Dall'esempio è possibile intuire come, in presenza di side effect, sia più dif
 
 Al contrario, quando si ha a che fare con una funzione pura è possibile manipolarla ed effettuare refactoring del codice in maniera \emph{equazionale}: è sempre possibile sostituire alla chiamata di funzione il suo valore di ritorno senza il rischio di alterare la semantica del programma. Se \lstinline{f} è una funzione pura allora \lstinline{f(1) + f(1) = 2 * f(1)}.
 
-\subsection{Complessità del refactoring}
+\subsection*{Complessità del refactoring}
 \label{subsection:complessita-del-refactoring}
 \emph{L'ordine} e il \emph{numero delle invocazioni} di funzioni con side effect ha importanza nel determinare il comportamento complessivo di un programma e -- come mostrato nell'esempio della funzione \lstinline{f} -- modificare uno di questi due fattori può comportarne uno stravolgimento.
 Questa mancanza di trasparenza referenziale porta il codice ad avere una maggiore resistenza al cambiamento: è più difficile per il programmatore -- così come per strumenti automatici -- effettuare del refactoring avendo la certezza di mantenere inalterata la semantica del programma originale~\cite{cit:towards-purity-guided-refactoring-in-java}.
+
 Per utilizzare le efficaci parole di Robert Martin ``I side effect sono bugie. La tua funzione promette di fare una cosa, ma in realtà fa anche qualcos'altro \emph{di nascosto}. [...] Sono falsità che spesso risultano in strani accoppiamenti temporali e comportano dipendenze nell'ordine delle funzioni''\footnote{Traduzione dal testo originale: ``Side effects are lies. Your function promises to do one thing, but it also does other \emph{hidden} things. [...] They are [...] mistruths that often result in strange temporal couplings and order dependencies''~\cite[p.~44]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.}.
 
-\subsection{Difficoltà nel testare funzioni impure}
+\subsection*{Difficoltà nel testare funzioni impure}
 \label{subsection:difficolta-nel-testare-funzioni-impure}
 Le stesse motivazioni che rendono difficile ragionare e compiere refactoring di codice con side effect ne complicano anche la fase di \emph{unit testing.}
 Per testare una funzione impura in isolamento è necessario che vengano effettuate apposite operazioni prima e dopo lo svolgimento di ciascun test per garantire che il risultato non possa cambiare a seconda del loro ordine di esecuzione.
@@ -45,8 +46,8 @@ Si può notare come la dipendenza implicita introdotta dal side effect di \lstin
 Non solo, tali test non potranno nemmeno essere mandati in esecuzione simultaneamente\footnote{Si potrebbe ovviare a questo problema introducendo un meccanismo di locking della risorsa condivisa per gestire l'esecuzione parallela dei test. Tuttavia, questa strategia aggiungerebbe una complessità accidentale non indifferente per testare una funzione semplice come \lstinline{f}!} in quanto l'interleaving delle loro operazioni potrebbe portare a fallimenti imprevedibili.
 Due esempi di interleaving che portano a risultati differenti dei test sono riportati alle \Cref{table:test-f-interleaving-fail,table:test-f-interleaving-success}.
 
-\input{chapters/chapter01/tables/test-f-interleaving-success}
-\input{chapters/chapter01/tables/test-f-interleaving-fail}
+\input{chapters/introduzione/tables/test-f-interleaving-success}
+\input{chapters/introduzione/tables/test-f-interleaving-fail}
 
 Quest'ultimo esempio fornisce anche un ottimo spunto per riflettere sull'ulteriore difficoltà nella possibilità di parallelizzare codice che presenta side effect.
 Poiché i side effect introducono dipendenze temporali nascoste, non è possibile garantire che l'esecuzione di funzioni impure in parallelo -- e quindi con ordini di esecuzione che potrebbero variare a seconda dell'interleaving dei processi -- dia sempre lo stesso risultato.

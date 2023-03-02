@@ -1,19 +1,13 @@
-\section{Modellazione esplicita dei side effect}
-\label{modellazione-esplicita-dei-side-effect}
-
-Date le criticità evidenziate nella sezione precedente, diverse pratiche di buona programmazione suggeriscono di ridurre al minimo le funzioni che presentano side effect~\cite[p.~44]{cit:clean-code-a-handbook-of-agile-software-craftsmanship} e, quando inevitabili, di renderli espliciti nel nome della funzione~\cite[p.~313]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.
-
-Tuttavia, si possono individuare altre tecniche più sofisticate per tracciare i side effect delle funzioni.
-Queste nascono nel contesto dei linguaggi funzionali puri, perciò è necessario comprendere come questa classe di linguaggi possa conciliare la presenza di side effect con la loro natura puramente funzionale.
-
-\subsection{Linguaggi funzionali puri e side effect}
+\section{Linguaggi funzionali puri e side effect}
 \label{linguaggi-funzionali-puri-e-side-effect}
+
 Un linguaggio funzionale si dice \emph{puro} se le sue funzioni sono referenzialmente trasparenti.
 Questa totale assenza di side effect sembra in netto contrasto con la possibilità di scrivere codice di una qualche utilità: come può un programma puro interagire con il mondo esterno, leggere il valore di uno stato globale o lanciare eccezioni?
 
 La soluzione consiste nella possibilità di ``simulare'' la presenza di side effect tramite opportune modifiche ai tipi delle funzioni mantenendole pure.
 In seguito sono riportati alcuni esempi di questo approccio in Scala\footnote{Sebbene Scala sia un linguaggio impuro può essere utilizzato come se fosse un linguaggio puro evitando di ricorrere ai meccanismi che fornisce per produrre side effects.}.
 
+\subsection{Esempi di side effect modellati esplicitamente}
 \subsubsection{Eccezioni}
 \label{eccezioni}
 Le eccezioni sono un meccanismo di controllo del flusso che permette di interrompere l'esecuzione di una funzione e di ritornare il controllo al chiamante.
@@ -152,8 +146,6 @@ def eighth(n: Int): Option[Int] =
   halve(n).andThen(halve).andThen(halve)
 \end{lstlisting}
 La funzione è solo interessata dalla logica applicativa: dividere tre volte il valore in input. La gestione del fallimento è delegata ad \lstinline{andThen}\footnote{In Scala è già definito per \lstinline{Option} il metodo \lstinline{flatMap} con lo stesso comportamento di \lstinline{andThen} mostrato nell'esempio. Per questi esempi si preferisce utilizzare \lstinline{andThen} in quanto rende più chiaro il ruolo della funzione.} che, in caso di fallimento, restituisce immediatamente \lstinline{None}.
-
-\nicetohave{Per completezza si potrebbbe anche mostrare come alcuni linguaggi (come Kotlin, Rust) adottano un approccio analogo ma con un supporto diretto del compilatore e annesso zucchero sintattico? In questo caso la soluzione è ad hoc e non è generica come per le monadi ma comunque interessante}
 
 \subsubsection{Gestione della lettura e modifica di uno stato globale}
 \label{gestione-della-lettura-e-modifica-di-uno-stato-globale}

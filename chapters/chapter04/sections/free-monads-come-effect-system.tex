@@ -33,7 +33,7 @@ Si consideri per esempio la funzione \lstinline{updateAge} già mostrata nel cas
 Al \Cref{lst:mock-free} è possibile osservare l'implementazione di un interprete che implementa il \emph{mock} di un database in memoria e testa la corretta implementazione della logica applicativa.
 
 \begin{figure}
-  \begin{lstlisting}[language=scala3, label={lst:mock-free}, caption={Esempio di un interprete di test per un programma che usa lo \lstinline{UserStoreDSL}. In questo caso l'uso di una mappa degli utenti permette di testare semplicemente la logica applicativa delle operazioni senza dover ricorrere a un vero e proprio database}]
+  \begin{lstlisting}[language=scala3, label={lst:mock-free}, caption={Esempio di un interprete di test per un programma che usa lo il DSL per l'accesso a un database di utenti. In questo caso l'uso di una mappa degli utenti permette di testare semplicemente la logica applicativa delle operazioni senza dover ricorrere a un vero e proprio database}]
 extension [A](program: Program[UserStoreDSL, A])
   @tailrec
   def runMocked(users: Map[UserId, User]): Map[UserId, User] =
