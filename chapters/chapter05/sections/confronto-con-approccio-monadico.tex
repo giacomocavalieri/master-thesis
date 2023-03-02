@@ -44,7 +44,7 @@ def mixedSideEffects[I[_]: With[ConsoleDSL]: With[FailDSL]]() =
     _ <- fail()
   yield ()
 \end{lstlisting}
-Per poter comprendere l'esempio un programmatore deve essere a conoscenza di meccanismi del linguaggio non banali come il passaggio di istanze implicite, i context bound e gli higher-kinded types.
+Per poter comprendere l'esempio un programmatore deve essere a conoscenza di meccanismi del linguaggio non banali come il passaggio di istanze implicite, i context bound e gli \emph{higher-kinded types}.
 
 Il problema sorge dal fatto che linguaggi come Scala non sono stati pensati per tracciare gli effetti delle funzioni come elementi di prima classe nel proprio type system.
 È quindi necessario implementare un'infrastruttura -- come MTL e free monad -- in termini di funzionalità preesistenti del linguaggio che permetta di arricchirlo con le funzionalità desiderate.

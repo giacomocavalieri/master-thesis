@@ -2,28 +2,23 @@
 
 La presenza di side effect arbitrari nel codice è un elemento che complica notevolmente la capacità di ragionare sulle sue proprietà ed effettuare refactoring.
 
-Partendo da questa osservazione chiave, l'obiettivo di questa tesi è stato indicare diversi approcci che possono essere adottati per poter rendere espliciti i side effect nei tipi delle funzioni.
-
+Partendo da questa osservazione chiave, l'obiettivo di questa tesi è stato indicare diversi approcci che possono essere adottati per rendere espliciti i side effect nei tipi delle funzioni.
 In particolare, si è mostrato come il concetto di monade possa essere utilizzato per modellare semplici side effect come il fallimento di una computazione o la presenza di uno stato mutabile.
 
 Successivamente, osservando alcune limitazioni di questo approccio, è stato introdotto il concetto di monad transformer come meccanismo per la composizione di più monadi.
-Due innegabili benefici introdotti da questo approccio sono la possibilità di riutilizzare il codice delle monadi di base per poterle assemblare in monadi più complesse.
+Un innegabile beneficio introdotto da questo approccio sta nella possibilità di riutilizzare il codice delle monadi di base per poterle assemblare in monadi più complesse.
 
 Uno svantaggio dell'approccio dei monad transformer sta nel fatto che la loro adozione lega fortemente il codice ad una specifica implementazione dei side effect rendendo più difficile il testare porzioni di codice con side effect.
-
 Per questo motivo sono stati analizzati gli approcci più sofisticati di MTL e delle free monad.
 Entrambi permettono di definire in maniera astratta e modulare gli effetti che una computazione può avere per poi stabilirne l'implementazione in un secondo momento.
 
 Potendo definire effetti arbitrari, diventa facile scegliere il livello di astrazione più adatto a descrivere in maniera efficace la logica applicativa.
 Gli effetti possono quindi essere utilizzati come strumento di design per riflettere sulle operazioni che un sistema deve mettere a disposizione.
-
 Inoltre, grazie a queste tecniche, è possibile separare nettamente la dichiarazione degli effetti dalla loro specifica interpretazione rendendo facile il testare porzioni di codice con side effect attuando una sorta di dependency injection.
 
 Infine, è stato mostrato l'approccio degli effetti algebrici come alternativa a quello monadico per la rappresentazione esplicita dei side effect delle funzioni.
 Questo approccio, basato su solide basi teoriche, concentra la propria attenzione sulla definizione di operazioni -- che definiscono in astratto come un effetto può avere luogo -- e handler -- che vengono utilizzati per dare semantica alle singole operazioni.
-
 Questa netta distinzione fra operazioni e loro interpretazione, in maniera analoga al caso di MTL e delle free monad, rende più facile testare codice che presenta side effect definendo interpreti ad hoc in base alla necessità.
 
 Gli effetti algebrici, oltre a prestarsi bene a modellare i side effect delle funzioni, sono un potente meccanismo che generalizza diversi costrutti di controllo di flusso complessi come eccezioni, iteratori e concorrenza strutturata tramite \emph{async-await}.
-
 Sebbene i linguaggi che supportano gli effetti algebrici siano ancora principalmente solo linguaggi di ricerca, l'approccio sembra essere molto promettente e sta ricevendo crescente attenzione. Infatti coniuga i benefici dati dalla possibilità di tracciare esplicitamente gli effetti delle funzioni con la semplicità di scrittura di codice imperativo, senza dover ricorrere al più complesso stile monadico.
