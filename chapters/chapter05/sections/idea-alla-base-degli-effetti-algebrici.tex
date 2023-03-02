@@ -2,7 +2,7 @@
 
 Nella teoria elaborata da Plotkin e Power, un effetto viene modellato tramite un insieme di operazioni e una serie di equazioni che ne descrivono le proprietà~\cite{cit:handling-algebraic-effects,cit:computational-effects-and-operations-an-overview}.
 
-Le operazioni di un effetto determinano le modalità con cui questo può verificarsi; possono quindi essere considerate come dei \emph{costruttori} di un effetto~\cite{cit:algebraic-operations-and-generic-effects}.
+Le operazioni di un effetto determinano le modalità con cui questo può verificarsi; possono quindi essere considerate come dei costruttori di un effetto~\cite{cit:algebraic-operations-and-generic-effects}.
 Per poter interpretare un effetto e assegnarvi semantica vengono invece utilizzati degli appositi \emph{handler}, o distruttori. Questi specificano come l'esecuzione del programma deve proseguire al verificarsi di ciascuna operazione di uno specifico effetto.
 
 \subsection{Modellazione degli effetti}
@@ -56,11 +56,11 @@ Per questo motivo il tipo di \lstinline{update} combina sia l'effetto dello stat
 \subsection{Interpretazione degli effetti}
 Fino a questo momento gli effetti sono stati descritti in maniera astratta definendo una serie di operazioni; queste definiscono un'interfaccia attraverso la quale è possibile generare l'effetto desiderato.
 
-Per poter dare una semantica alle operazioni di un effetto è necessario definire un \emph{handler}. Gli handler, detti anche detti distruttori, sono un meccanismo duale rispetto alle operazioni: mentre l'invocazione di quest'ultime arricchiscono il tipo di una funzione aggiungendovi effetti, gli handler permettono di ``scaricare'' gli effetti dal tipo di una funzione.
+Per poter dare una semantica alle operazioni di un effetto è necessario definire un \emph{handler}. Gli handler, detti anche distruttori, sono un meccanismo duale rispetto alle operazioni: mentre l'invocazione di quest'ultime arricchisce il tipo di una funzione aggiungendovi effetti, gli handler permettono di ``scaricare'' gli effetti dal tipo di una funzione.
 
 In generale, un handler in grado di dare semantica alle operazioni dell'effetto \lstinline{e1} sarà una funzione che prende in input una computazione con tale effetto e lo rimuove dalla lista dei suoi effetti.
 
-\subsubsection{Effetti come eccezioni}
+\subsubsection{Interpretazione degli effetti come eccezioni}
 Per poter definire un handler in Koka viene utilizzata la parola chiave \lstinline{handle} a cui viene passata come argomento la computazione della quale devono essere gestiti gli effetti.
 
 Il corpo di un handler viene definito tramite pattern matching sulle possibili operazioni dell'effetto che si sta interpretando.
@@ -77,7 +77,6 @@ fun main()
 Nel caso in cui venga chiamata l'operazione \lstinline{fail} il controllo della computazione sarà interrotto e l'handler eseguirà la porzione di codice associata all'operazione \lstinline{fail}.
 
 In questo caso un blocco \lstinline|handle(...){...}| può essere assimilato al blocco \lstinline{try-catch} di linguaggi che supportano le eccezioni.
-
 Per esempio, si potrebbe gestire il fallimento restituendo un valore di default in caso di eccezione:
 \begin{lstlisting}[language=koka]
 fun default(value, computation)
@@ -143,7 +142,7 @@ fun main()
 \end{lstlisting}
 In questo caso l'output sarà \lstinline{"Start,5,Finalizer"} in quanto l'operazione di divisione per 0 comporta il fallimento della computazione.
 
-\subsection{Effetti come eccezioni ripristinabili}
+\subsection{Interpretazione degli effetti come eccezioni ripristinabili}
 Si consideri adesso l'esempio dello stato: un handler per l'effetto \lstinline{state} dovrà stabilire come dare semantica alle operazioni di \lstinline{get} e \lstinline{set}.
 
 In questo però pensare agli effetti come semplici eccezioni risulta essere limitante. Per capire il problema, si osservi la seguente computazione che ricorre all'effetto dello stato:
@@ -208,6 +207,38 @@ fun initial-state(initial-state, computation)
 
 La funzione utilizza internamente una variabile per tenere traccia dello stato attuale: quando viene chiamato \lstinline{get} l'esecuzione viene ripresa con il valore attuale dello stato; invece alla chiamata di \lstinline{set} si modifica lo stato attuale e poi viene fatta ripartire la computazione fornendo alla funzione \lstinline{resume} il valore \lstinline{()} -- vale a dire il tipo di ritorno atteso dalla funzione \lstinline{set}.
 
-Il type system di Koka è in grado di capire che l'uso della variabile è limitato allo scope della funzione e la mutabilità non è osservabile dall'esterno; per questo motivo il tipo della funzione appare essere puro e privo di side effect.\mustfix{Aggiungere un paragrafo sull'uso opportunistico della mutabilità parlando di Koka!
-  % Parentesi sulle variabili in Koka: in Koka è possibile avere variabili e il loro utilizzo viene riflesso negli effetti delle computazioni che le presentano! Inoltre, Koka permette di eliminare tale side effect dalla firma della funzione se questo non è osservabile esternamente. Quindi è possibile utilizzare in maniera opportunistica la mutazione di variabili e se non è osservabile esternamente non viene considerata come un side effect in quanto non è visibile dall'esterno e non altera la natura matematica della funzione.
-}
+\subsubsection{Uso delle variabili in Koka}
+È possibile osservare come, per poter implementare l'handler per lo stato mutabile, si sia fatto uso di una variabile.
+Questo potrebbe apparire strano data la natura funzionale di Koka, tuttavia il linguaggio introduce la possibilità di utilizzare variabili con alcune limitazioni che permettono di mantenere il codice puro.
+
+La scelta di Koka è quella di permettere la definizione di variabili all'interno del corpo di una funzione a condizione che queste non escano dallo scope lessicale della funzione all'interno della quale sono dichiarate. Per esempio il seguente codice risulterebbe in un errore da parte del compilatore:
+\begin{lstlisting}[language=koka]
+fun variable()
+  var x:= 0
+  fn() { x := 1; x }
+  // error: a reference to a local variable 
+  // escapes its scope
+\end{lstlisting}
+
+Le variabili non sono elementi di prima classe e non possono essere passate come argomenti alle funzioni o restituite come risultato di una funzione; ogni riferimento a una variabile equivale automaticamente a leggerne il contenuto:
+\begin{lstlisting}[language=koka]
+fun variables()
+  var x := 0
+  println(show(x)) // Read value referenced by x
+  x := x + 1
+  x // Returns the immutable value referenced by x
+\end{lstlisting}
+Se, come nell'esempio, viene restituita una variabile in realtà si restituisce il suo contenuto immutabile e non un riferimento mutabile.
+
+Questa limitazione permette di usare le variabili in maniera opportunistica all'interno del corpo di una funzione per poterla implementare in maniera efficiente. Tuttavia, l'uso di variabili non è mai osservabile dall'esterno della funzione che continua a comportarsi come una funzione pura. Per esempio si potrebbe realizzare un'implementazione efficiente per calcolare l'n-esimo numero della sequenza di Fibonacci:
+\begin{lstlisting}[language=koka]
+fun fibonacci(n)
+  var x := 0
+  var y := 1
+  repeat(n)
+    val temp = y
+    y := x + y
+    x := temp
+  x
+\end{lstlisting}
+I controlli del type system di Koka garantiscono che le variabili non possano sopravvivere oltre lo scope sintattico della funzione all'interno della quale sono dichiarate. Per questo la funzione \lstinline{fibonacci}, nonostante la mutazione di una variabile, sarà comunque considerata una funzione pura con tipo \lstinline{(int) -> <> int}.

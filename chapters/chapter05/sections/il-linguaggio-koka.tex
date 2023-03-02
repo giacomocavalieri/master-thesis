@@ -58,7 +58,7 @@ fun for(start: int, end, action)
 fun main()
   for(1, 10, fn(i) { println(i) })
 \end{lstlisting}
-Poiché Koka attua \emph{Tail Call Optimization} di coda il codice generato sarà stack safe e simile a un normale ciclo \lstinline{for}.
+Poiché Koka attua \emph{Tail Call Optimization} il codice generato sarà stack safe e simile a quello di un classico ciclo \lstinline{for}.
 
 \subsubsection{La parola chiave \lstinline{with}}
 Un'altra regola sintattica che verrà utilizzata frequentemente negli esempi a seguire è l'uso della parola chiave \lstinline{with}. Questa permette di eliminare l'annidamento di funzioni che prendono in input delle funzioni anonime:
@@ -75,7 +75,7 @@ fun main()
   println("Hello, Koka!")
 \end{lstlisting}
 
-Nel caso della funzione \lstinline{for} mostrata in precedenza, invece la parola chiave \lstinline{with} può essere utilizzata come segue:
+Nel caso della funzione \lstinline{for} mostrata in precedenza la parola chiave \lstinline{with} può essere utilizzata come segue:
 \begin{lstlisting}[language=koka]
 fun main()
   with i <- for(1, 10)
@@ -172,7 +172,7 @@ fun log-action(action)
 
 \lstinline{log-action} prende in input una funzione che potrebbe avere presentare qualunque side effect, stampa un messaggio ed esegue la funzione.
 
-Complessivamente, \lstinline{log-action} deve presentare non solo tutti i possibili side effect della generica funzione presa come parametro ma anche il side effect dell'interazione con la console di \lstinline{println}.
+Complessivamente, \lstinline{log-action} deve presentare non solo tutti i possibili side effect della generica funzione presa come parametro ma anche il side effect dell'interazione con la console dovuto all'uso di \lstinline{println}.
 
 Il tipo inferito per la funzione sarà quindi \lstinline{forall<a,e> (action: () -> e a) -> <console|e> ()}. È possibile osservare come la funzione include nei propri effetti sia il concreto effetto \lstinline{console} che tutti i possibili generici effetti \lstinline{e} del proprio parametro.
 La notazione \lstinline{<e1|e>} serve a indicare che una funzione può avere tutti gli effetti \lstinline{e1} e anche tutti i generici effetti \lstinline{e}.

@@ -48,7 +48,7 @@ fun mocked-users(initial-users, computation)
       resume(())
 \end{lstlisting}
 
-L'handler modifica internamente una lista di utenti in base alle operazioni dello \lstinline{user-store}. Anche in questo caso la funzione \lstinline{mocked-user} è inferita essere pura dato che la mutazione non è osservabile esternamente.
+L'handler modifica internamente una lista di utenti in base alle operazioni dello \lstinline{user-store}. Anche in questo caso l'utilizzo della variabile non è osservabile esternamente e la funzione è pura.
 
 Questo permette di scrivere test completamente deterministici che non necessitano di collegarsi effettivamente ad alcun database:
 \begin{lstlisting}[language=koka]
@@ -58,36 +58,89 @@ fun test-update-age-removes-underage-users()
   assert("underage user was removed", final-users.is-empty)
 \end{lstlisting}
 
-%\subsection{Meccanismi di controllo di flusso complessi}
-%Il meccanismo degli effetti algebrici è una generalizzazione delle eccezioni; come mostrato dagli esempi riportati, è stato possibile definire in maniera concisa meccanismi analoghi al \lstinline{try-catch-finally} di linguaggi di programmazione come Java che invece richiederebbero un supporto specifico da parte del compilatore.
+\subsection{Meccanismi di controllo di flusso complessi}
+Gli effetti algebrici sono una generalizzazione delle eccezioni; come mostrato dagli esempi riportati, è stato possibile definire in maniera concisa meccanismi analoghi al \lstinline{try-catch-finally} di linguaggi di programmazione come Java che invece richiederebbero un supporto specifico da parte del compilatore.
 
-%Grazie all'utilizzo degli effetti algebrici è possibile implementare in \emph{user space} meccanismi di controllo di flusso complessi come generatori e concorrenza strutturata (nello stile \lstinline{async-await})~\cite{cit:structured-asynchrony-with-algebraic-effects}.
+Inoltre, grazie all'utilizzo degli effetti algebrici è possibile implementare in \emph{user space} altre tecniche di controllo di flusso complesse come generatori e concorrenza strutturata (nello stile \lstinline{async-await})~\cite{cit:structured-asynchrony-with-algebraic-effects}.
 
-%In seguito è riportato un esempio di come sia possibile realizzare dei generatori semplicemente sfruttando la possibilità di definire effetti algebrici.
+Si consideri l'esempio dei generatori: numerosi linguaggi come JavaScript, TypeScript, Python e C\# hanno introdotto la possibilità di definire generatori tramite le cosiddette \emph{generator function}~\cite{cit:yield-statement-c-sharp,cit:yield-statement-javascript,cit:yield-statement-python} e sintassi ad hoc.
 
-%\subsubsection{Generatori}
-%Numerosi linguaggi come JavaScript, TypeScript, Python e C\# offrono supporto diretto per poter definire dei generatori tramite le cosiddette \emph{generator function}~\cite{cit:yield-statement-c-sharp,cit:yield-statement-javascript, cit:yield-statement-python}.
+Tuttavia, per poter aggiungere tale meccanismo, è richiesto un supporto diretto da parte del compilatore il quale dovrà trasformare il corpo delle funzioni in macchine a stati~\cite{cit:iterators-technical-implementation}. Inoltre, nell'implementare tali trasformazioni, è fondamentale prestare attenzione al modo in cui potrebbero interferire con altri meccanismi come le eccezioni e l'asincronia.
 
-%Considerando come esempio JavaScript è possibile definire una generator function come segue:
-%\begin{lstlisting}[language=javascript]
-%function* make-generator() {
-%  yield 1;
-%  yield 2;
-%  yield 3;
-%}
-%\end{lstlisting}
-%Quando una funzione definita in questo modo viene invocata il suo corpo non viene direttamente eseguito restituendo invece un generatore.
+Nel caso degli effetti non è necessaria alcuna estensione al linguaggio in quanto tutti questi meccanismi possono essere generalizzati da opportuni effetti algebrici e handler.
 
-%Ogni qualvolta sia richiesto un nuovo valore dal generatore, il codice contenuto nel corpo della funzione viene eseguito fino al raggiungere uno \lstinline{yield} restituendo il valore fornito. L'esecuzione viene nuovamente messa in pausa fino a quando non viene richiesto nuovamente un valore:
-%\begin{lstlisting}[language=javascript]
-%const gen = make-generator();
-%gen.next(); // returns 1
-%gen.next(); // returns 2
-%gen.next(); // returns 3
-%\end{lstlisting}
+Il compilatore quindi dovrà supportare e ottimizzare un singolo meccanismo -- quello degli effetti -- e tutti gli altri potranno essere definiti sulla base di questo come librerie.
 
-%La sintassi fornita da \lstinline{yield} è senz'altro utile per poter definire iteratori complessi in maniera semplice. L'implementazione di tale meccanismo in questi linguaggi richiede di definire nuove parole chiave -- generalmente \lstinline{yield} -- e uno specifico supporto da parte del compilatore che deve trasformare il codice della funzione in una macchina a stati~\cite{cit:iterators-technical-implementation}.
+\subsubsection{Effetto del non determinismo}
+Per mostrare il potere espressivo degli effetti algebrici prenderemo in considerazione un ultimo esempio: quello del non determinismo.
 
-%Gli effetti algebrici sono sufficientemente generali per poter definire i generatori nello stile di JavaScript come semplice libreria, senza richiedere supporto ad hoc da parte del compilatore:
+L'effetto della scelta non deterministica può essere modellato come segue:
+\begin{lstlisting}[language=koka]
+effect choice<a>
+  ctl or(one: a, other: a): a
+\end{lstlisting}
+L'effetto \lstinline{choice} rappresenta una computazione che può non deterministicamente scegliere una delle opzioni a disposizione.
+Per esempio, è possibile modellare il lancio di una moneta come:
+\begin{lstlisting}[language=koka]
+type coin
+  Heads
+  Tails
 
+fun flip()
+  Heads.or(Tails)
+\end{lstlisting}
+Il tipo inferito per \lstinline{flip} è \lstinline{() -> choice<coin> coin}. Questa funzione può essere utilizzata per accumulare i risultati di lanci di più monete in una lista:
+\begin{lstlisting}[language=koka]
+fun fill(n, action)
+  if n <= 0 then [] else
+    Cons(action(), fill(n - 1, action))
 
+fun flips(times)
+  fill(times) { flip() }
+\end{lstlisting}
+L'utilità di definire l'effetto del non determinismo in maniera astratta sta nella possibilità di poter scegliere la semantica più adatta allo specifico caso. In questo caso si possono realizzare diversi handler; per esempio un primo handler potrebbe restituire un risultato costante:
+\begin{lstlisting}[language=koka]
+fun constant-coin(coin: coin, computation)
+  handle(computation)
+    ctl or(_, _) -> resume(coin)
+\end{lstlisting}
+Questa funzione può essere utile per verificare il comportamento di funzioni che si basano sull'effetto del non determinismo e testarne i possibili percorsi di esecuzione in maniera deterministica.
+
+Un handler più ``tradizionale'' potrebbe invece interpretare l'effetto della scelta restituendo casualmente una delle due opzioni:
+\begin{lstlisting}[language=koka]
+fun real-coin(computation)
+  handle(computation)
+    ctl or(one, other) ->
+      resume(if random-bool() then one else other)
+\end{lstlisting}
+In questo caso si usa la funzione di libreria \lstinline{random-bool} che aggiunge l'effetto \lstinline{ndet} che permette di sfruttare un generatore di numeri pseudocasuali predefinito. È interessante osservare come un handler possa aggiungere effetti alla computazione che sta gestendo, nell'esempio viene rimosso l'effetto \lstinline{choice} sostituendolo con quello predefinito \lstinline{ndet}.
+
+Da questo punto di vista un handler può essere visto come una sorta di compilatore che traduce chiamate operazioni astratte in operazioni sempre più di basso livello fino ad ottenere una funzione eseguibile direttamente dal \lstinline{main} (vale a dire con il solo effetto \lstinline{io} che può essere gestito automaticamente dal compilatore).
+
+\subsubsection{Ripristinare l'esecuzione più volte}
+In tutti gli esempi mostrati fino ad ora l'esecuzione della funzione che ha invocato un effetto è stata ripristinata al più una sola volta.
+Tuttavia, \lstinline{resume} è una funzione e in quanto elemento di prima classe del linguaggio potrebbe essere invocata più volte, passata come argomento a una funzione, ecc.
+
+Riprendendo l'esempio del non determinismo, è possibile ripristinare la computazione più volte con tutte le possibili alternative fra cui viene effettuata la scelta:
+\begin{lstlisting}[language=koka]
+fun all-outcomes(computation)
+  handle(computation)
+    return(x) -> [x]
+    ctl or(one, other) -> resume(one) ++ resume(other)
+\end{lstlisting}
+In questo caso la computazione viene ripristinata una prima volta utilizzando come valore il primo fra cui scegliere, viene poi ripristinata una seconda volta utilizzando il secondo valore. I risultati ottenuti sono poi concatenati fra loro.
+
+Grazia alla possibilità di riprendere la computazione più volte con valori differenti è possibile accumulare tutti i possibili risultati del lancio di una moneta:
+\begin{lstlisting}[language=koka]
+fun main()
+  all-outcomes { 3.flips }
+  // [
+  //  [Heads, Heads, Heads],
+  //  [Heads, Heads, Tails],
+  //  [Heads, Tails, Heads],
+  //  ...
+  //  [Tails, Tails, Tails]
+  // ]
+\end{lstlisting}
+
+Si noti la semplicità con cui è possibile cambiare l'handler per modificare la semantica delle operazioni senza cambiare in alcun modo la definizione delle operazioni di base come \lstinline{flip} e \lstinline{flips}.
