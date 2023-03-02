@@ -1,1 +1,13 @@
 \chapter*{Abstract}
+
+La presenza di side effect arbitrari nel codice complica notevolmente la capacità di ragionare sulle sue proprietà ed effettuare refactoring.
+Per questo motivo, sono stati sviluppate diverse tecniche che possono essere adottate per rendere esplicita la presenza dei side effect nei tipi delle funzioni.
+
+L'approccio che ad oggi ha ottenuto maggior successo consiste nel modellare la presenza di side effect utilizzando le monadi.
+Questo meccanismo, inizialmente impiegato da Haskell per gestire input e output, è stato adottato in diversi linguaggi.
+
+Inoltre, per sopperire ad alcuni problemi legati all'uso delle semplici monadi, sono stati sviluppati ulteriori approcci più sofisticati come MTL e le free monad.
+Questi sistemi non solo permettono di tracciare la presenza di side effect ma, rendendo possibile definire cosa si intende per ``effetto'', diventano veri e propri strumenti di design e organizzazione del software.
+
+L'approccio monadico non è l'unico che possa essere adottato per la modellazione degli effetti. In particolare, gli effetti algebrici stanno ricevendo sempre maggior attenzione come possibile alternativa.
+Questi non solo permettono di modellare e tracciare effetti arbitrari, sono anche un meccanismo in grado di generalizzare diversi costrutti di controllo di flusso come eccezioni, generatori e concorrenza strutturata tramite \emph{async-await}.
