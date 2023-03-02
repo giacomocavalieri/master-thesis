@@ -28,7 +28,7 @@ La terza legge, garantisce che \lstinline{flatMap} sia associativa, dunque scriv
 Tuttavia, prima di poter generalizzare gli esempi precedenti è necessario capire come il concetto di monade possa essere implementato in un linguaggio di programmazione.
 
 \subsubsection{Encoding in Haskell}
-Come descritto in precedenza una monade è composta da tre elementi fondamentali: un costruttore di tipo e due funzioni \lstinline{return} e \lstinline{>>=}. In Haskell è possibile esprimere direttamente tale concetto tramite l'uso di una \emph{type class}, un meccanismo utilizzato per supportare il \emph{polimorfismo ad hoc}~\cite{cit:type-classes-in-haskell}:
+Come descritto in precedenza una monade è composta da tre elementi fondamentali: un costruttore di tipo e due funzioni \lstinline{return} e \lstinline{>>=}. In Haskell è possibile esprimere direttamente tale concetto tramite l'uso di una \emph{type class}\footnote{Per maggiori dettagli sul meccanismo delle type class si rimanda all'\Cref{app:haskell}}:
 \begin{lstlisting}[language=haskell]
 class Monad m where
   return :: a -> m a

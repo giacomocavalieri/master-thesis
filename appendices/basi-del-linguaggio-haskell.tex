@@ -1,0 +1,147 @@
+\chapter{Basi del linguaggio Haskell}
+\label{app:haskell}
+
+Haskell è un linguaggio di programmazione funzionale puro, basato su un modello di valutazione lazy e con inferenza di tipi statica.
+
+L'obiettivo di questa appendice è fornire alcuni elementi di base di Haskell per rendere chiari gli esempi riportati nei \Cref{chapter:side-effect-e-loro-modellazione,chapter:stack-di-monadi} al lettore che non abbia familiarità con il linguaggio.
+
+\section{Sintassi di base}
+\subsection{Definizione e invocazione di funzioni}
+Haskell adotta una sintassi simile a quella dei linguaggi nella famiglia ML. In particolare, per dichiarare una funzione è sufficiente indicarne il nome, una lista di argomenti e il corpo con l'implementazione:
+\begin{lstlisting}[language=haskell]
+exampleFunction arg1 arg2 = ... {* function body *}
+\end{lstlisting}
+
+Il type system di Haskell è basato sul type system di Hindley e Milner e, nella maggior parte dei casi, è in grado di inferire automaticamente il tipo delle funzioni senza bisogno di annotazioni.
+Per esempio, data la seguente funzione:
+\begin{lstlisting}[language=haskell]
+hello name = "Hello, " ++ name ++ "!"
+\end{lstlisting}
+Il tipo della inferito è \lstinline{String -> String}: la funzione prende in input una stringa e restituisce una stringa. L'operatore \lstinline{++} viene utilizzato per la concatenazione di stringhe e di liste.
+
+Se si volesse indicare esplicitamente il tipo di una funzione è possibile aggiungere un'annotazione nel seguente modo:
+\begin{lstlisting}[language=haskell]
+hello :: String -> String
+hello name = "Hello, " ++ name ++ "!"
+\end{lstlisting}
+
+Si consideri una funzione con più argomenti:
+\begin{lstlisting}[language=haskell]
+sum :: Int -> Int -> Int
+sum x y = x + y
+\end{lstlisting}
+In questo caso il tipo della funzione è \lstinline{Int -> Int -> Int}: i tipi degli argomenti sono separati da \lstinline{->} e l'ultimo tipo indicato è il tipo di ritorno della funzione. Quindi, la funzione \lstinline{sum} prende in input due argomenti (\lstinline{x} e \lstinline{y}) di tipo intero e restituisce un valore intero.
+
+Per poter invocare una funzione è sufficiente fornirle i parametri separandoli con degli spazi; a differenza di linguaggi come C e Scala l'invocazione di funzione non richiede la scrittura di parentesi tonde che ne racchiudano gli argomenti. Per esempio per invocare la funzione \lstinline{hello} è sufficiente scrivere \lstinline{hello "Haskell"} e il risultato della sua invocazione sarà \lstinline{"Hello, Haskell!"}.
+Invece, l'invocazione di \lstinline{sum} può avvenire passandole due argomenti di tipo intero: \lstinline{sum 1 2 = 3}.
+
+Inoltre, qualunque funzione abbia due soli argomenti può sempre essere invocata come se fosse un operatore infisso inserendola fra \lstinline{`}:
+\begin{lstlisting}[language=haskell]
+invokeSum =
+  let result1 = sum 1 2
+      result2 = 1 `sum` 2
+   in (result1, result2)
+\end{lstlisting}
+Le due invocazioni daranno lo stesso risultato. La sintassi \lstinline{let ... in ...} serve a definire dei valori locali al corpo di una funzione.
+Il risultato di un blocco \emph{let-in} è il valore indicato dopo la parola chiave \lstinline{in}; in questo caso sarà la tupla \lstinline{(result1, result2)}.
+
+\section{ADT e pattern matching}
+Haskell permette di definire ADT tramite la parola chiave \lstinline{data}; in maniera analoga alle enumerazioni Scala, un ADT può essere generico e i suoi costruttori avere campi differenti:
+\begin{lstlisting}[language=haskell]
+data Option a
+  = Some a
+  | None
+\end{lstlisting}
+A differenza di Scala, i tipi generici sono denotati con lettere minuscole e vengono semplicemente indicati dopo il nome del tipo. In questo caso è stato dichiarato un tipo \lstinline{Option} generico su un tipo \lstinline{a} con due costruttori:
+\begin{itemize}
+  \item Il costruttore \lstinline{Some} richiede un solo argomento di tipo \lstinline{a}
+  \item Il costruttore \lstinline{None} non richiede alcun argomento
+\end{itemize}
+
+Per poter accedere ai campi di un costruttore è necessario procedere per pattern matching, in Haskell questo è possibile con la parola chiave \lstinline{case}:
+\begin{lstlisting}[language=haskell]
+mapOption :: Option a -> (a -> b) -> Option b
+mapOption option f =
+  case option of
+    Some value -> Some (f value)
+    None -> None 
+\end{lstlisting}
+La funzione \lstinline{mapOption} prende in input un valore opzionale di tipo \lstinline{Option a} -- dove \lstinline{a} è un tipo generico -- e una funzione \lstinline{a -> b}. Nel corpo della funzione viene fatto pattern matching sul valore opzionale e, nel caso in cui corrisponda al costruttore \lstinline{Some}, viene applicata la funzione \lstinline{f} al valore contenuto al suo interno.
+
+Si confronti la funzione con l'equivalente versione Scala:
+\begin{lstlisting}[language=scala3]
+def mapOption[A, B](option: Option[A])(f: A => B): Option[B] =
+  match option
+    case Some(value) => Some(f(value))
+    case None => None
+\end{lstlisting}
+In Scala è necessario indicare anticipatamente quali sono i tipi generici della funzione mentre in Haskell è possibile utilizzarli senza una previa indicazione.
+
+Un esempio di utilizzo della funzione \lstinline{mapOption} potrebbe essere il seguente:
+\begin{lstlisting}[language=haskell]
+useMapOption =
+  mapOption (Some 1) (\value -> value + 1)
+\end{lstlisting}
+La sintassi \lstinline{\arg0 arg1 ... argn -> ...} permette di definire una funzione anonima.
+
+\section{Type classes}
+Haskell da supporto al \emph{polimorfismo ad hoc} tramite l'uso delle \emph{type classes}~\cite{cit:type-classes-in-haskell}.
+Una type class permette di specificare una serie di funzioni che devono essere definite per un tipo generico:
+\begin{lstlisting}[language=haskell]
+class Show s where
+  show :: s -> String
+\end{lstlisting}
+In questo caso è stata dichiarata la type class \lstinline{Show} e un qualunque tipo generico \lstinline{s} voglia implementarla deve fornire un'implementazione della funzione \lstinline{show} che trasforma un tipo \lstinline{s} in una stringa.
+
+Una type class può essere interpretata come un predicato espresso su un tipo: per esempio, la type class \lstinline{Show} può essere letta come \emph{``Dato un generico tipo \lstinline{s}, per questo vale il predicato \lstinline{Show} se esiste una funzione \lstinline{show} in grado di convertire \lstinline{s} in una stringa''}.
+
+Istanziare una type class equivale quindi a dimostrare che uno specifico tipo rispetta il predicato fornendo come dimostrazione l'implementazione delle funzioni definite nella type class.
+Riprendendo l'esempio di \lstinline{Show} è possibile definire un'istanza per il tipo \lstinline{Option String}:
+\begin{lstlisting}[language=haskell]
+instance Show (Option String) where
+  show option =
+    case option of
+      Some string -> "Some " ++ string
+      None -> "None"
+\end{lstlisting}
+Una volta fornita l'istanza per uno specifico tipo sarà possibile utilizzare la funzione \lstinline{show} su valori di quel tipo:
+\begin{lstlisting}[language=haskell]
+main = println (show (Some "Hello"))
+-- "Some Hello"
+\end{lstlisting}
+
+\subsection{Uso delle type class per fornire un contesto alle funzioni}
+In Haskell è possibile sfruttare il meccanismo delle type class per poter vincolare i tipi generici delle funzioni.
+Si consideri la seguente type class:
+\begin{lstlisting}[language=haskell]
+class Eq a where
+  (==) :: a -> a -> Bool
+\end{lstlisting}
+Se un tipo \lstinline{a} fornisce un'istanza di \lstinline{Eq} sarà possibile confrontarne gli elementi tramite la funzione \lstinline{==}. Il linguaggio fornisce una serie di implementazioni standard per alcuni tipi di base come \lstinline{Int} e \lstinline{String}.
+
+Si immagini di dover realizzare una funzione che permetta di confrontare due valori opzionali: questi sono uguali solo se sono entrambi \lstinline{None}, oppure nel caso in cui siano entrambi definiti e gli elementi contenuti al loro interno siano uguali:
+\begin{lstlisting}[language=haskell]
+areEqual :: Option a -> Option a -> Bool
+areEqual optional1 optional2 =
+  case (optional1, optional2) of
+    (None, None) -> True
+    (Just x, Just y) -> ...
+    _ -> False
+\end{lstlisting}
+Per poter confrontare i due valori \lstinline{x} e \lstinline{y} è necessario poter utilizzare una funzione come \lstinline{==}. Tuttavia, \lstinline{==} può essere definito solo per un tipo concreto che fornisca un'istanza della type class \lstinline{Eq}.
+
+Per poter implementare la funzione \lstinline{areEqual} è possibile esprimere un vincolo sul tipo generico \lstinline{a} nel seguente modo:
+\begin{lstlisting}[language=haskell]
+areEqual :: (Eq a) => Option a -> Option a -> Bool
+areEqual optional1 optional2 =
+  case (optional1, optional2) of
+    (None, None) -> True
+    (Just x, Just y) -> x == y
+    _ -> False
+\end{lstlisting}
+Si osservi come è cambiato il tipo della funzione: prima della lista dei tipi degli argomenti è stato specificato un \emph{vincolo} sul generico tipo \lstinline{a}. La notazione \lstinline{(Eq a) =>} impone che la funzione \lstinline{areEqual} possa essere invocata solo su valori opzionali parametrizzati su un tipo per cui sia disponibile un'istanza della classe \lstinline{Eq}.
+
+Riprendendo l'interpretazione delle type class come predicato si può interpretare leggere il vincolo come \emph{``se i valori di tipo \lstinline{a} rispettano il predicato \lstinline{Eq} allora è possibile definire una funzione \lstinline{areEqual} che confronta valori opzionali parametrizzati su \lstinline{a}''}.
+
+Si noti come, una volta imposto il vincolo, all'interno del corpo della funzione è possibile utilizzare la funzione \lstinline{==} per confrontare i valori \lstinline{x} e \lstinline{y} di tipo \lstinline{a}.
+
