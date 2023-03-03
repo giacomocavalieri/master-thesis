@@ -1,0 +1,7 @@
+\def\term#1{%
+  \ifcsname TERM#1\endcsname%
+    #1%
+  \else%
+    \emph{#1}%
+    \expandafter\gdef\csname TERM#1\endcsname{}%
+  \fi}

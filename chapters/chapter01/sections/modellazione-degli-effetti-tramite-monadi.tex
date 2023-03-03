@@ -1,5 +1,5 @@
 \section{Modellazione degli effetti tramite monadi}
-Osservando le soluzioni adottate nella Sezione precedente si può osservare come a queste sottende un meccanismo comune. Infatti in entrambi i casi è stata definita una funzione \lstinline{andThen} per permettere di combinare in sequenza più operazioni con side effect. Il risultato ottenuto è una descrizione dichiarativa della sequenza di operazioni da svolgere; il particolare meccanismo con cui le operazioni vengono concatenate -- gestione del fallimento prematuro, o passaggio implicito dello stato ad ogni passaggio -- viene delegato alla funzione \lstinline{andThen}.
+Osservando le soluzioni adottate nella sezione precedente si può osservare come a queste sottende un meccanismo comune. Infatti in entrambi i casi è stata definita una funzione \lstinline{andThen} per permettere di combinare in sequenza più operazioni con side effect. Il risultato ottenuto è una descrizione dichiarativa della sequenza di operazioni da svolgere; il particolare meccanismo con cui le operazioni vengono concatenate -- gestione del fallimento prematuro, o passaggio implicito dello stato ad ogni passaggio -- viene delegato alla funzione \lstinline{andThen}.
 
 Questo meccanismo può essere catturato dall'astrazione delle monadi.
 
@@ -28,16 +28,16 @@ La terza legge, garantisce che \lstinline{flatMap} sia associativa, dunque scriv
 Tuttavia, prima di poter generalizzare gli esempi precedenti è necessario capire come il concetto di monade possa essere implementato in un linguaggio di programmazione.
 
 \subsubsection{Encoding in Haskell}
-Come descritto in precedenza una monade è composta da tre elementi fondamentali: un costruttore di tipo e due funzioni \lstinline{return} e \lstinline{>>=}. In Haskell è possibile esprimere direttamente tale concetto tramite l'uso di una \emph{type class}\footnote{Per maggiori dettagli sul meccanismo delle type class si rimanda all'\Cref{app:haskell}}:
+Come descritto in precedenza una monade è composta da tre elementi fondamentali: un costruttore di tipo e due funzioni \lstinline{return} e \lstinline{>>=}. In Haskell è possibile esprimere direttamente tale concetto tramite l'uso di una \term{type class}\footnote{Per maggiori dettagli sul meccanismo delle \term{type class} si rimanda all'\Cref{app:haskell}}:
 \begin{lstlisting}[language=haskell]
 class Monad m where
   return :: a -> m a
   (>>=)  :: m a -> (a -> m b) -> m b
 \end{lstlisting}
 
-La dichiarazione di una \emph{type class} può essere interpretata come un predicato su un tipo o, come in questo caso, su un costruttore di tipi.
+La dichiarazione di una \term{type class} può essere interpretata come un predicato su un tipo o, come in questo caso, su un costruttore di tipi.
 Quindi, la precedente definizione può essere letta come: \emph{``Un generico costruttore di tipi \lstinline{m} è una monade se esistono due funzioni \lstinline{return} con tipo \lstinline{a -> m a} e \lstinline{>>=} con tipo \lstinline{m a -> (a -> m b)   -> m b}''}.
-Dato un concreto costruttore di tipi si può istanziare la \emph{type class} \lstinline{Monad} fornendo l'implementazione delle funzioni che questa dichiara:
+Dato un concreto costruttore di tipi si può istanziare la \term{type class} \lstinline{Monad} fornendo l'implementazione delle funzioni che questa dichiara:
 \begin{lstlisting}[language=haskell]
 instance Monad Maybe where
   return = Just
@@ -45,10 +45,10 @@ instance Monad Maybe where
   Just x  >>= f = f x
 \end{lstlisting}
 
-Interpretando la \emph{type class} come un predicato, definire un'istanza consiste nel provare che lo specifico tipo -- in questo caso \lstinline{Maybe} -- soddisfa tale predicato e viene fornita come dimostrazione l'implementazione delle funzioni \lstinline{return} e \lstinline{>>=}.
+Interpretando la \term{type class} come un predicato, definire un'istanza consiste nel provare che lo specifico tipo -- in questo caso \lstinline{Maybe} -- soddisfa tale predicato e viene fornita come dimostrazione l'implementazione delle funzioni \lstinline{return} e \lstinline{>>=}.
 
 \subsubsection{Encoding in Scala}
-In Scala è possibile codificare una \emph{type class} sfruttando il passaggio implicito di parametri~\cite{cit:type-classes-as-objects-and-implicits}. La definizione di una \emph{type class} si riduce quindi a indicare un'interfaccia:
+In Scala è possibile codificare una \term{type class} sfruttando il passaggio implicito di parametri~\cite{cit:type-classes-as-objects-and-implicits}. La definizione di una \term{type class} si riduce quindi a indicare un'interfaccia:
 \scalaFromFile{8}{10}{monads/Monad.scala}
 
 Potrà essere istanziata per uno specifico costruttore di tipi fornendo un'implementazione come istanza implicita~\cite{cit:scala-book-type-classes}:
@@ -106,7 +106,7 @@ Come descritto in precedenza, perché \lstinline{Option} sia effettivamente una 
 È possibile definire un'istanza di monade anche per l'esempio dello stato globale mutabile mostrato alla \Cref{gestione-della-lettura-e-modifica-di-uno-stato-globale}; per fare ciò può tornare utile definire prima un'apposita struttura che incapsula una funzione che prende in input lo stato e restituisce il risultato e lo stato aggiornato:
 \scalaFromFile{5}{5}{monads/State.scala}
 
-Un problema nel definire l'istanza di monade per \lstinline{State} sta nel fatto che questo è un costruttore di tipi che accetta in input \emph{due tipi} \lstinline{S} e \lstinline{A} -- quello dello stato manipolato e quello del risultato -- e restituisce un tipo \lstinline{State[S, A]}. Per poter essere un costruttore valido secondo la definizione di monade deve prendere in input un solo tipo; per ovviare a tale problema si può fissare uno dei due tipi e lasciare l'altro libero: in questo caso si è scelto di fissare il tipo dello stato \lstinline{S} e lasciare libero di variare il tipo del risultato\footnote{In Scala 3 si può ottenere questa applicazione parziale del costruttore di tipi utilizzando il meccanismo delle \emph{type lambda}~\cite{cit:scala-reference-type-lambdas}; quindi per fissare il tipo \lstinline{S} e lasciare libero \lstinline{A} in \lstinline{State} si può utilizzare la seguente sintassi: \lstinline{[A] =>> State[S, A]}. Nel codice riportato nell'esempio viene utilizzata una sintassi abbreviata che utilizza il carattere \lstinline{_} come segnaposto nella lambda a livello di tipi in maniera analoga a come viene utilizzato per le lambda a livello di termini~\cite{cit:scala-reference-wildcard-arguments-in-types}. Tale sintassi non è ancora stata adottata come default in Scala 3 ma verrà introdotta in futuro, al momento è disponibile utilizzando l'estensione del compilatore \lstinline{"-Ykind-projector:underscores"}~\cite{cit:scala-reference-kind-projector-migration}.}:
+Un problema nel definire l'istanza di monade per \lstinline{State} sta nel fatto che questo è un costruttore di tipi che accetta in input \emph{due tipi} \lstinline{S} e \lstinline{A} -- quello dello stato manipolato e quello del risultato -- e restituisce un tipo \lstinline{State[S, A]}. Per poter essere un costruttore valido secondo la definizione di monade deve prendere in input un solo tipo; per ovviare a tale problema si può fissare uno dei due tipi e lasciare l'altro libero: in questo caso si è scelto di fissare il tipo dello stato \lstinline{S} e lasciare libero di variare il tipo del risultato\footnote{In Scala 3 si può ottenere questa applicazione parziale del costruttore di tipi utilizzando il meccanismo delle \term{type lambda}~\cite{cit:scala-reference-type-lambdas}; quindi per fissare il tipo \lstinline{S} e lasciare libero \lstinline{A} in \lstinline{State} si può utilizzare la seguente sintassi: \lstinline{[A] =>> State[S, A]}. Nel codice riportato nell'esempio viene utilizzata una sintassi abbreviata che utilizza il carattere \lstinline{_} come segnaposto nella lambda a livello di tipi in maniera analoga a come viene utilizzato per le lambda a livello di termini~\cite{cit:scala-reference-wildcard-arguments-in-types}. Tale sintassi non è ancora stata adottata come default in Scala 3 ma verrà introdotta in futuro, al momento è disponibile utilizzando l'estensione del compilatore \lstinline{"-Ykind-projector:underscores"}~\cite{cit:scala-reference-kind-projector-migration}.}:
 \scalaFromFile{11}{18}{monads/State.scala}
 
 \begin{itemize}
@@ -129,18 +129,18 @@ incrementCounter.runState(2) // -> ("counter is: 3", 3)
 \end{lstlisting}
 
 \subsection{Zucchero sintattico per codice monadico}
-Osservando l'esempio precedente è possibile notare come la messa in sequenza delle operazioni tramite l'uso di \lstinline{flatMap} può rendere il codice più complesso da leggere: infatti, ad ogni concatenazione successiva aumenta il livello di annidamento del codice portando alla cosiddetta \emph{pyramid of doom}.
+Osservando l'esempio precedente è possibile notare come la messa in sequenza delle operazioni tramite l'uso di \lstinline{flatMap} può rendere il codice più complesso da leggere: infatti, ad ogni concatenazione successiva aumenta il livello di annidamento del codice portando alla cosiddetta \term{pyramid of doom}.
 Scrivere codice di questo genere diventerebbe impraticabile molto rapidamente anche per brevi sequenze di funzioni concatenate con \lstinline{flatMap}.
 
 Per questo motivo, linguaggi come Haskell e Scala forniscono dello zucchero sintattico che permette di scrivere codice monadico in modo più leggibile e con un aspetto più ``imperativo''.
 
-\subsubsection{\emph{For comprehension} in Scala}
+\subsubsection{\term{For comprehension} in Scala}
 \label{sec:for-comprehension-in-scala}
-Per risolvere questo problema, Scala fornisce la \emph{for comprehension}~\cite{cit:scala-book-control-structures}; per esempio la funzione \lstinline{incrementCounter} mostrata in precedenza può essere scritta in modo equivalente come segue:
+Per risolvere questo problema, Scala fornisce la \term{for comprehension}~\cite{cit:scala-book-control-structures}; per esempio la funzione \lstinline{incrementCounter} mostrata in precedenza può essere scritta in modo equivalente come segue:
 \scalaFromFile{30}{35}{monads/State.scala}
 
 Il codice appare come una sequenza di operazioni imperative. In realtà, il compilatore Scala traduce il codice in una sequenza di chiamate a \lstinline{flatMap} e \lstinline{pure}.
-Le regole adottate per il \emph{desugaring} possono essere descritte ricorsivamente come segue\footnote{In realtà nella \emph{for comprehension} sarebbe possibile utilizzare anche altre espressioni che non siano nella forma \lstinline{name <- expr} ma, per semplicità, non verranno considerate in questa sezione.}:
+Le regole adottate per il \term{desugaring} possono essere descritte ricorsivamente come segue\footnote{In realtà nella \emph{for comprehension} sarebbe possibile utilizzare anche altre espressioni che non siano nella forma \lstinline{name <- expr} ma, per semplicità, non verranno considerate in questa sezione.}:
 
 \begin{lstlisting}
 for {name <- expr} yield res = expr.map(name => res)
@@ -149,10 +149,10 @@ for {name <- expr; exprs} yield res =
   expr.flatMap(name => for {exprs} yield res)
 \end{lstlisting}
 
-La funzione \lstinline{map} utilizzata nel \emph{desugaring} di una singola espressione è semanticamente equivalente, per una monade, alla seguente composizione di di \lstinline{flatMap} e \lstinline{pure}: \lstinline{m.map(f) = m.flatMap(x => pure(f(x)))}.
+La funzione \lstinline{map} utilizzata nel \term{desugaring} di una singola espressione è semanticamente equivalente, per una monade, alla seguente composizione di di \lstinline{flatMap} e \lstinline{pure}: \lstinline{m.map(f) = m.flatMap(x => pure(f(x)))}.
 
-\subsubsection{\emph{Do notation} in Haskell}
-Haskell adotta una soluzione analoga fornendo la cosiddetta \emph{do notation}; il precedente codice Scala preso ad esempio potrebbe essere implementato analogamente in Haskell come segue:
+\subsubsection{\term{Do notation} in Haskell}
+Haskell adotta una soluzione analoga fornendo la cosiddetta \term{do notation}; il precedente codice Scala preso ad esempio potrebbe essere implementato analogamente in Haskell come segue:
 \begin{lstlisting}[language=haskell]
 incrementCounter = do
   counter <- get
@@ -181,7 +181,7 @@ incrementCounter =
 
 \subsection{Vantaggi nell'uso delle monadi}
 \subsubsection{Separazione del codice impuro dal codice puro}
-Un primo importante vantaggio sta nella possibilità di esprimere a livello di \emph{type system} quali funzioni presentano side effect e quali no. Questo è un aiuto fondamentale per il programmatore: infatti, per capire se una funzione è pura è sufficiente analizzarne il tipo, senza dover cercare di capirlo dal suo nome -- che potrebbe non rispecchiare l'effettivo comportamento della funzione -- o ispezionandone il corpo.
+Un primo importante vantaggio sta nella possibilità di esprimere a livello di \term{type system} quali funzioni presentano side effect e quali no. Questo è un aiuto fondamentale per il programmatore: infatti, per capire se una funzione è pura è sufficiente analizzarne il tipo, senza dover cercare di capirlo dal suo nome -- che potrebbe non rispecchiare l'effettivo comportamento della funzione -- o ispezionandone il corpo.
 Consideriamo come esempio le seguenti funzioni:
 \begin{lstlisting}[language=scala3]
 def incrementCounter: State[Int, ()] = ...

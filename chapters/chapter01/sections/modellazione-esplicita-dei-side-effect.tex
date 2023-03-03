@@ -51,7 +51,7 @@ def useSafeDivBy(n: Int): Int =
   \label{lettura-e-modifica-di-uno-stato-globale}
 
   Dal momento in cui una funzione legge una variabile globale perde la propria trasparenza referenziale: il suo risultato non dipende più dai soli valori passati in input ma da un nuovo input \emph{nascosto}, lo stato a cui accede.
-  La soluzione per rendere esplicita questa dipendenza è passare come parametri di tutti gli elementi necessari al funzionamento della funzione, senza affidarsi alla definizione in uno scope esterno di variabili globali a cui accedere implicitamente.
+  La soluzione per rendere esplicita questa dipendenza è passare come parametri di tutti gli elementi necessari al funzionamento della funzione, senza affidarsi alla definizione in uno \term{scope} esterno di variabili globali a cui accedere implicitamente.
 
   Questa semplice trasformazione permette di rimuovere il side effect che consiste nella lettura di uno stato globale.
   Sfortunatamente, non è sufficiente per modellare anche la \emph{modifica} di una variabile globale. In questo caso può essere utile tornare all'analogia con le funzioni matematiche.
@@ -129,10 +129,10 @@ def eighth(n: Int): Option[Int] =
       case None         => None
       case Some(fourth) => halve(fourth)
 \end{lstlisting}
-Nonostante la semplicità della funzione, si può osservare come il dover gestire in maniera esplicita il fallimento di ogni chiamata ad \lstinline{halve} renda il codice più verboso e meno leggibile. Nella funzione si mescolano la logica applicativa -- il dover dividere ripetutamente per due -- e la gestione del possibile fallimento della divisione intera -- il \emph{pattern matching} sul risultato.
+Nonostante la semplicità della funzione, si può osservare come il dover gestire in maniera esplicita il fallimento di ogni chiamata ad \lstinline{halve} renda il codice più verboso e meno leggibile. Nella funzione si mescolano la logica applicativa -- il dover dividere ripetutamente per due -- e la gestione del possibile fallimento della divisione intera -- il \term{pattern matching} sul risultato.
 
 Il problema può essere risolto osservando una struttura comune a tutti i passaggi: se uno qualunque dei risultati intermedi restituisce \lstinline{None} allora la funzione fallisce immediatamente restituendo \lstinline{None}, come se si fosse verificata un'eccezione; altrimenti, si prosegue continuando a dividere il valore ottenuto.
-Questo comportamento può essere fattorizzato in un'apposita funzione\footnote{In Scala per poter utilizzare \lstinline{andThen} come una funzione infissa questa deve essere dichiarata come \emph{extension method}~\cite{cit:scala-extension-methods} degli oggetti di tipo \lstinline{Option}.}:
+Questo comportamento può essere fattorizzato in un'apposita funzione\footnote{In Scala per poter utilizzare \lstinline{andThen} come una funzione infissa questa deve essere dichiarata come \term{extension method}~\cite{cit:scala-extension-methods} degli oggetti di tipo \lstinline{Option}.}:
 \begin{lstlisting}[language=scala3]
 extension [A](a: Option[A])
 	def andThen[B](f: A => Option[B]): Option[B] =
@@ -151,7 +151,7 @@ La funzione è solo interessata dalla logica applicativa: dividere tre volte il 
 \label{gestione-della-lettura-e-modifica-di-uno-stato-globale}
 
 Come già discusso, è possibile modificare una funzione che accede e modifica uno stato globale in una funzione pura; in modo che riceva lo stato globale come input e ne restituisca la nuova versione in output.
-Lo svantaggio di tale approccio sta nel fatto che il programmatore dovrà gestire manualmente il passaggio dello stato fra le diverse chiamate; ciò, oltre ad aumentare il \emph{boilerplate,} rende più probabile compiere errori come dimenticare di passare lo stato aggiornato a una chiamata successiva:
+Lo svantaggio di tale approccio sta nel fatto che il programmatore dovrà gestire manualmente il passaggio dello stato fra le diverse chiamate; ciò, oltre ad aumentare il \term{boilerplate}, rende più probabile compiere errori come dimenticare di passare lo stato aggiornato a una chiamata successiva:
 \begin{lstlisting}[language=scala3]
 ...
 val (res1, state1) = statefulFunction1(initialState)
@@ -182,4 +182,4 @@ statefulFunction1
   .apply(initialState)
 ...
 \end{lstlisting}
-La gestione del \emph{threading} dello stato fra una chiamata e la successiva è delegato ad \lstinline{andThen}; in questo modo è possibile indicare la sequenza di operazioni che si vogliono compiere e lasciare che il boilerplate relativo al passaggio dello stato fra una chiamata e la successiva venga gestito automaticamente.
+La gestione del \term{threading} dello stato fra una chiamata e la successiva è delegato ad \lstinline{andThen}; in questo modo è possibile indicare la sequenza di operazioni che si vogliono compiere e lasciare che il \term{boilerplate} relativo al passaggio dello stato fra una chiamata e la successiva venga gestito automaticamente.

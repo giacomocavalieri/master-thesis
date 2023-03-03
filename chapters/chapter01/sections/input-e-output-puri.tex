@@ -15,20 +15,20 @@ Tuttavia, dalla sola analisi del tipo della funzione \lstinline{sum : Int => Int
 
 Per comprendere come sia possibile tracciare tale side effect a livello di tipi verrà preso come esempio paradigmatico il linguaggio Haskell; successivamente verrà mostrato come le stesse intuizioni possano essere applicate in Scala.
 
-\subsection{Modello di valutazione \emph{lazy}}
-Haskell è un linguaggio funzionale con strategia di valutazione \emph{lazy} (anche detta \emph{call-by-need}): ciò significa che gli argomenti delle funzioni vengono valutati solo se strettamente necessario e non sono valutati prima di essere passati alla funzione. Si consideri per esempio la seguente funzione:
+\subsection{Modello di valutazione \term{lazy}}
+Haskell è un linguaggio funzionale con strategia di valutazione \term{lazy} (anche detta \term{call-by-need}): ciò significa che gli argomenti delle funzioni vengono valutati solo se strettamente necessario e non sono valutati prima di essere passati alla funzione. Si consideri per esempio la seguente funzione:
 \begin{lstlisting}[language=haskell]
 lazy :: Int -> Int -> Int
 lazy x y = x * 3
 \end{lstlisting}
-Quando la funzione viene chiamata, anziché valutare i suoi argomenti prima di eseguire il corpo della funzione, vengono allocati due \emph{thunk} che rappresentano le espressioni da valutare. Sarà poi il corpo della funzione, in base al bisogno, a stabilire di quali \emph{thunk} forzare la valutazione. Nell'esempio specifico valutato solo il \emph{thunk} del primo argomento. Si considerino le possibili chiamate alla funzione \lstinline{lazy}:
+Quando la funzione viene chiamata, anziché valutare i suoi argomenti prima di eseguire il corpo della funzione, vengono allocati due \term{thunk} che rappresentano le espressioni da valutare. Sarà poi il corpo della funzione, in base al bisogno, a stabilire di quali \term{thunk} forzare la valutazione. Nell'esempio specifico valutato solo il \term{thunk} del primo argomento. Si considerino le possibili chiamate alla funzione \lstinline{lazy}:
 \begin{lstlisting}[language=haskell]
 lazy (2 + 3) (expensiveFunction 2)
 lazy (2 + 3) (1 + undefined)
 \end{lstlisting}
-Nel primo esempio il \emph{thunk} che rappresenta l'espressione \lstinline{expensiveFunction 2} non verrà mai valutato; allo stesso modo nella seconda chiamata il \emph{thunk} dell'espressione \lstinline{1 + undefined}\footnote{In Haskell il valore \lstinline{undefined} è un valore speciale che comporta il crash dell'applicazione nel momento in cui viene valutato. In questo caso, dato che si trova in un \emph{thunk} che verrà scartato senza essere valutato non verrà sollevata alcuna eccezione.} non sarà valutato; il risultato sarà 15 in entrambi i casi.
+Nel primo esempio il \term{thunk} che rappresenta l'espressione \lstinline{expensiveFunction 2} non verrà mai valutato; allo stesso modo nella seconda chiamata il \term{thunk} dell'espressione \lstinline{1 + undefined}\footnote{In Haskell il valore \lstinline{undefined} è un valore speciale che comporta il crash dell'applicazione nel momento in cui viene valutato. In questo caso, dato che si trova in un \term{thunk} che verrà scartato senza essere valutato non verrà sollevata alcuna eccezione.} non sarà valutato; il risultato sarà 15 in entrambi i casi.
 
-Grazie a questa strategia di valutazione è possibile definire direttamente operatori con \emph{short-circuiting} come \lstinline{&&} e \lstinline{||}:
+Grazie a questa strategia di valutazione è possibile definire direttamente operatori con \term{short-circuiting} come \lstinline{&&} e \lstinline{||}:
 \begin{lstlisting}[language=haskell]
 (&&) :: Bool -> Bool -> Bool
 x && y = case x of
@@ -40,12 +40,12 @@ x || y = case x of
   True  -> True
   False -> y
 \end{lstlisting}
-Le due funzioni hanno una struttura simile: inizialmente viene forzata la valutazione del primo argomento tramite \emph{pattern matching} sul suo valore. In seguito viene restituito il secondo argomento o un valore predefinito in base al risultato del pattern matching. In entrambi i casi non viene forzata la valutazione del secondo argomento attuando la logica di \emph{short-circuiting} che ci si potrebbe aspettare dagli operatori logici \lstinline{&&} e \lstinline{||}: il risultato di \lstinline{False && undefined} sarà \lstinline{False} e il programma non terminerà con un'eccezione dato che l'espressione \lstinline{undefined} non sarà valutata.
+Le due funzioni hanno una struttura simile: inizialmente viene forzata la valutazione del primo argomento tramite \term{pattern matching} sul suo valore. In seguito viene restituito il secondo argomento o un valore predefinito in base al risultato del pattern matching. In entrambi i casi non viene forzata la valutazione del secondo argomento attuando la logica di \term{short-circuiting} che ci si potrebbe aspettare dagli operatori logici \lstinline{&&} e \lstinline{||}: il risultato di \lstinline{False && undefined} sarà \lstinline{False} e il programma non terminerà con un'eccezione dato che l'espressione \lstinline{undefined} non sarà valutata.
 
-\subsubsection{Incompatibilità di \emph{laziness} e side effect}
-Un aspetto negativo della strategia \emph{lazy} è che può diventare estremamente complesso capire l'ordine con il quale le espressioni vengono valutate. Infatti, come mostrato negli esempi precedenti la valutazione dei \emph{thunk} viene forzata solo quando strettamente necessario. Per questo motivo sarebbe pressoché impossibile riuscire a compiere in una sequenza prevedibile i side effect delle funzioni~\cite{cit:tackling-the-awkward-squad}.
+\subsubsection{Incompatibilità di \term{laziness} e side effect}
+Un aspetto negativo della strategia \term{lazy} è che può diventare estremamente complesso capire l'ordine con il quale le espressioni vengono valutate. Infatti, come mostrato negli esempi precedenti la valutazione dei \term{thunk} viene forzata solo quando strettamente necessario. Per questo motivo sarebbe pressoché impossibile riuscire a compiere in una sequenza prevedibile i side effect delle funzioni~\cite{cit:tackling-the-awkward-squad}.
 
-È proprio questa caratteristica che ha fatto sì che Haskell rimanesse un linguaggio puro e ha portato all'invenzione dell'input e output monadico: ``forse il più grande beneficio della \emph{laziness} non è la \emph{laziness} in sè, quanto il fatto che ci abbia forzato a rimanere puri, motivando così una grande quantità di lavoro sulle monadi''\footnote{Traduzione dal testo originale: ``[...] perhaps the biggest single benefit of laziness is not laziness per se, but rather that laziness kept us pure, and thereby motivated a great deal of productive work on monads [...]''~\cite{cit:a-history-of-haskell-being-lazy-with-class}}.
+È proprio questa caratteristica che ha fatto sì che Haskell rimanesse un linguaggio puro e ha portato all'invenzione dell'input e output monadico: ``forse il più grande beneficio della \term{laziness} non è la \term{laziness} in sè, quanto il fatto che ci abbia forzato a rimanere puri, motivando così una grande quantità di lavoro sulle monadi''\footnote{Traduzione dal testo originale: ``[...] perhaps the biggest single benefit of laziness is not laziness per se, but rather that laziness kept us pure, and thereby motivated a great deal of productive work on monads [...]''~\cite{cit:a-history-of-haskell-being-lazy-with-class}}.
 
 \subsection{I/O monadico in Haskell}
 \label{sub:io-monadico-haskell}
@@ -58,8 +58,8 @@ echo = do
   line <- getLine
   putStrLn line
 \end{lstlisting}
-Partendo dal tipo della funzione si può comprendere come questa rappresenti una computazione che una volta eseguita restituisce un valore di tipo \lstinline{()} e che può effettuare I/O. La funzione è implementata mettendo in sequenza due operazioni più semplici: prima viene letta una riga dallo \emph{standard input} e il contenuto letto viene stampato sullo \emph{standard output} tale e quale.
-È interessante osservare come la \emph{do notation} nasconda l'applicazione di \lstinline{>>=} e \lstinline{pure} dando al codice un tipico aspetto imperativo. Nonostante l'apparente ``imperatività'' è fondamentale ricordare che i valori di tipo \lstinline{IO} -- come \lstinline{getLine} e \lstinline{putStrLn} -- non sono funzioni che provocano side effect ma descrivono i side effect che devono avere luogo. L'equivalente versione senza zucchero sintattico è:
+Partendo dal tipo della funzione si può comprendere come questa rappresenti una computazione che una volta eseguita restituisce un valore di tipo \lstinline{()} e che può effettuare I/O. La funzione è implementata mettendo in sequenza due operazioni più semplici: prima viene letta una riga dallo \term{standard input} e il contenuto letto viene stampato sullo \term{standard output} tale e quale.
+È interessante osservare come la \term{do notation} nasconda l'applicazione di \lstinline{>>=} e \lstinline{pure} dando al codice un tipico aspetto imperativo. Nonostante l'apparente ``imperatività'' è fondamentale ricordare che i valori di tipo \lstinline{IO} -- come \lstinline{getLine} e \lstinline{putStrLn} -- non sono funzioni che provocano side effect ma descrivono i side effect che devono avere luogo. L'equivalente versione senza zucchero sintattico è:
 \begin{lstlisting}[language=haskell]
 echo :: IO ()
 echo = getLine >>= putStrLn
@@ -70,10 +70,10 @@ Il punto d'ingresso di ogni programma Haskell è la funzione \lstinline{main}:
 main :: IO ()
 main = echo
 \end{lstlisting}
-Quindi un programma non è altro che una struttura dati immutabile che \emph{descrive} la sequenza di operazioni che il \emph{runtime system} del linguaggio deve eseguire a tempo d'esecuzione.
+Quindi un programma non è altro che una struttura dati immutabile che \emph{descrive} la sequenza di operazioni che il \term{runtime system} del linguaggio deve eseguire a tempo d'esecuzione.
 
 \subsubsection{Separazione di codice puro e impuro}
-Grazie all'approccio appena mostrato non è possibile mescolare inavvertitamente codice puro e codice con side effect -- proprio come per i casi di eccezioni e stato mutabile mostrati in precedenza. Per esempio, consideriamo come potrebbe essere riscritta la funzione impura mostrata all'inizio della sezione; semplicemente leggere un valore intero da standard input non è possibile:
+Grazie all'approccio appena mostrato non è possibile mescolare inavvertitamente codice puro e codice con side effect -- proprio come per i casi di eccezioni e stato mutabile mostrati in precedenza. Per esempio, consideriamo come potrebbe essere riscritta la funzione impura mostrata all'inizio della sezione; semplicemente leggere un valore intero da \term{standard input} non è possibile:
 \begin{lstlisting}[language=haskell]
 readInt :: IO Int
 readInt = fmap read getLine
@@ -161,8 +161,8 @@ retry :: Monad m
 L'implementazione è tralasciata in quanto identica a quanto riportato nell'esempio di codice mostrato in precedenza: l'unico cambiamento necessario per rendere la funzione più generica è stato quello di sostituire nel tipo \lstinline{IO} con una generica monade \lstinline{m}.
 
 \subsection{I/O monadico in Scala}
-In Haskell la monade \lstinline{IO} deve essere implementata come un tipo di dato opaco con un supporto speciale del compilatore. Haskell infatti è un linguaggio puro con una modalità di valutazione \emph{lazy} che, come mostrato in precedenza, è incompatibile con la presenza di side effect.
-In Scala non è necessario un supporto diretto del compilatore in quanto è già possibile definire computazioni che svolgono side effect; perciò una semplice implementazione\footnote{L'implementazione vuole unicamente mostrare come si possa immaginare l'implementazione della monade \lstinline{IO} in un linguaggio come Scala. Tuttavia, un'implementazione simile non è \emph{stack safe:} interpretare un'azione \lstinline{IO} ottenuta componendo molti blocchi di base può portare a un errore di \emph{stack overflow}. Questo problema può essere risolto complicando l'implementazione della monade sfruttando una tecnica nota come \emph{trampolining}~\cite{cit:stackless-scala-with-free-monads} ed è l'approccio adottato da librerie come Cats Effect~\cite{cit:cats-effect-stack-safety}.} della monade \lstinline{IO} potrebbe essere la seguente:
+In Haskell la monade \lstinline{IO} deve essere implementata come un tipo di dato opaco con un supporto speciale del compilatore. Haskell infatti è un linguaggio puro con una modalità di valutazione \term{lazy} che, come mostrato in precedenza, è incompatibile con la presenza di side effect.
+In Scala non è necessario un supporto diretto del compilatore in quanto è già possibile definire computazioni che svolgono side effect; perciò una semplice implementazione\footnote{L'implementazione vuole unicamente mostrare come si possa immaginare l'implementazione della monade \lstinline{IO} in un linguaggio come Scala. Tuttavia, un'implementazione simile non è \term{stack safe}: interpretare un'azione \lstinline{IO} ottenuta componendo molti blocchi di base può portare a un errore di \term{stack overflow}. Questo problema può essere risolto complicando l'implementazione della monade sfruttando una tecnica nota come \term{trampolining}~\cite{cit:stackless-scala-with-free-monads} ed è l'approccio adottato da librerie come Cats Effect~\cite{cit:cats-effect-stack-safety}.} della monade \lstinline{IO} potrebbe essere la seguente:
 \scalaFromFile{7}{14}{monads/IO.scala}
 \begin{itemize}
   \item \lstinline{IO} è un costruttore di tipi che preso in input un valore di tipo \lstinline{A} restituisce un valore di tipo \lstinline{IO[A]}. Un valore con questo tipo rappresenta una computazione che, quando eseguita, può effettuare input o output e restituisce un valore di tipo \lstinline{A}
