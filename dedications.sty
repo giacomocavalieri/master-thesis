@@ -1,0 +1,24 @@
+% !TeX root = main.tex
+\newenvironment{dedication}
+{%
+  \clearpage%
+  \if@twoside%
+    \ifodd\c@page%
+      % do nothing
+    \else%
+      \hbox{}%
+      \thispagestyle{empty}%
+      \newpage%
+    \fi%
+  \fi%
+  \pagenumbering{gobble}%
+  \thispagestyle{empty}%
+  \vspace*{\stretch{1}}%
+  \itshape%
+  \raggedleft%
+}
+{\par%
+  \vspace{\stretch{3}}%
+  \cleardoublepage%
+  \pagenumbering{arabic}%
+}
