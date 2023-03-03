@@ -1,7 +1,7 @@
 \chapter{Basi del linguaggio Haskell}
 \label{app:haskell}
 
-Haskell è un linguaggio di programmazione funzionale puro, basato su un modello di valutazione lazy e con inferenza di tipi statica.
+Haskell è un linguaggio di programmazione funzionale puro, basato su un modello di valutazione \term{lazy} e con inferenza di tipi statica.
 
 L'obiettivo di questa appendice è fornire alcuni elementi di base di Haskell per rendere chiari gli esempi riportati nei \Cref{chapter:side-effect-e-loro-modellazione,chapter:stack-di-monadi} al lettore che non abbia familiarità con il linguaggio.
 
@@ -12,7 +12,7 @@ Haskell adotta una sintassi simile a quella dei linguaggi nella famiglia ML. In 
 exampleFunction arg1 arg2 = ... {* function body *}
 \end{lstlisting}
 
-Il type system di Haskell è basato sul type system di Hindley e Milner e, nella maggior parte dei casi, è in grado di inferire automaticamente il tipo delle funzioni senza bisogno di annotazioni.
+Il \term{type system} di Haskell è basato sul \term{type system} di Hindley e Milner e, nella maggior parte dei casi, è in grado di inferire automaticamente il tipo delle funzioni senza bisogno di annotazioni.
 Per esempio, data la seguente funzione:
 \begin{lstlisting}[language=haskell]
 hello name = "Hello, " ++ name ++ "!"
@@ -85,17 +85,17 @@ useMapOption =
 La sintassi \lstinline{\arg0 arg1 ... argn -> ...} permette di definire una funzione anonima.
 
 \section{Type classes}
-Haskell da supporto al \emph{polimorfismo ad hoc} tramite l'uso delle \emph{type classes}~\cite{cit:type-classes-in-haskell}.
-Una type class permette di specificare una serie di funzioni che devono essere definite per un tipo generico:
+Haskell dà supporto al \emph{polimorfismo ad hoc} tramite l'uso delle \term{type classes}~\cite{cit:type-classes-in-haskell}.
+Una \term{type class} permette di specificare una serie di funzioni che devono essere definite per un tipo generico:
 \begin{lstlisting}[language=haskell]
 class Show s where
   show :: s -> String
 \end{lstlisting}
-In questo caso è stata dichiarata la type class \lstinline{Show} e un qualunque tipo generico \lstinline{s} voglia implementarla deve fornire un'implementazione della funzione \lstinline{show} che trasforma un tipo \lstinline{s} in una stringa.
+In questo caso è stata dichiarata la \term{type class} \lstinline{Show} e un qualunque tipo generico \lstinline{s} voglia implementarla deve fornire un'implementazione della funzione \lstinline{show} che trasforma un tipo \lstinline{s} in una stringa.
 
-Una type class può essere interpretata come un predicato espresso su un tipo: per esempio, la type class \lstinline{Show} può essere letta come \emph{``Dato un generico tipo \lstinline{s}, per questo vale il predicato \lstinline{Show} se esiste una funzione \lstinline{show} in grado di convertire \lstinline{s} in una stringa''}.
+Una \term{type class} può essere interpretata come un predicato espresso su un tipo: per esempio, la \term{type class} \lstinline{Show} può essere letta come \emph{``Dato un generico tipo \lstinline{s}, per questo vale il predicato \lstinline{Show} se esiste una funzione \lstinline{show} in grado di convertire \lstinline{s} in una stringa''}.
 
-Istanziare una type class equivale quindi a dimostrare che uno specifico tipo rispetta il predicato fornendo come dimostrazione l'implementazione delle funzioni definite nella type class.
+Istanziare una \term{type class} equivale quindi a dimostrare che uno specifico tipo rispetta il predicato fornendo come dimostrazione l'implementazione delle funzioni definite nella \term{type class}.
 Riprendendo l'esempio di \lstinline{Show} è possibile definire un'istanza per il tipo \lstinline{Option String}:
 \begin{lstlisting}[language=haskell]
 instance Show (Option String) where
@@ -111,7 +111,7 @@ main = println (show (Some "Hello"))
 \end{lstlisting}
 
 \subsection{Uso delle type class per fornire un contesto alle funzioni}
-In Haskell è possibile sfruttare il meccanismo delle type class per poter vincolare i tipi generici delle funzioni.
+In Haskell è possibile sfruttare il meccanismo delle \term{type class} per poter vincolare i tipi generici delle funzioni.
 Si consideri la seguente type class:
 \begin{lstlisting}[language=haskell]
 class Eq a where
@@ -128,7 +128,7 @@ areEqual optional1 optional2 =
     (Just x, Just y) -> ...
     _ -> False
 \end{lstlisting}
-Per poter confrontare i due valori \lstinline{x} e \lstinline{y} è necessario poter utilizzare una funzione come \lstinline{==}. Tuttavia, \lstinline{==} può essere definito solo per un tipo concreto che fornisca un'istanza della type class \lstinline{Eq}.
+Per poter confrontare i due valori \lstinline{x} e \lstinline{y} è necessario poter utilizzare una funzione come \lstinline{==}. Tuttavia, \lstinline{==} può essere definito solo per un tipo concreto che fornisca un'istanza della \term{type class} \lstinline{Eq}.
 
 Per poter implementare la funzione \lstinline{areEqual} è possibile esprimere un vincolo sul tipo generico \lstinline{a} nel seguente modo:
 \begin{lstlisting}[language=haskell]
