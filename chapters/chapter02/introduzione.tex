@@ -1,5 +1,5 @@
 Nel capitolo precedente si è mostrato come sia possibile implementare semplici monadi per poter modellare la presenza di diversi side effect.
 Tuttavia, seguendo tale approccio non è evidente come sia possibile gestire contemporaneamente più side effect. Infatti ogni monade descritta permette di modellare un singolo side effect per volta: uno stato mutabile per \lstinline{State}, la possibilità di fallimenti con \lstinline{Option} e la capacità di effettuare input e output con \lstinline{IO}.
 
-In questo capitolo verrà introdotto il concetto di \emph{monad transformer}: un meccanismo che permette di unire monadi elementari combinandone le caratteristiche.
+In questo capitolo verrà introdotto il concetto di \term{monad transformer}: un meccanismo che permette di unire monadi elementari combinandone le caratteristiche.
 

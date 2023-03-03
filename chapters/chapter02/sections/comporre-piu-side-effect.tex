@@ -1,36 +1,36 @@
 \section{Problemi nel comporre più side effect}
 
-Per rendere evidenti le problematiche dell'approccio mostrato nel capitolo precedente verrà preso ad esempio il parsing monadico di stringhe.
-Nell'implementare un'istanza di monade per un parser si potrà osservare come il codice sia essenzialmente una ripetizione di quello di alcune monadi di base già descritte.
+Per rendere evidenti le problematiche dell'approccio mostrato nel capitolo precedente verrà preso ad esempio il \term{parsing} monadico di stringhe.
+Nell'implementare un'istanza di monade per un \term{parser} si potrà osservare come il codice sia essenzialmente una ripetizione di quello di alcune monadi di base già descritte.
 
 \subsection{Parsing monadico}
 \label{sec:parsing-monadico}
-Un parser può essere modellato come una funzione che consuma una stringa (o una sua porzione) producendo un risultato come un AST. Nel caso in cui la stringa non sia conforme al linguaggio descritto dal parser questo processo potrebbe fallire senza produrre alcun valore.
-Chiaramente la modellazione riportata è una semplificazione che cattura solamente l'essenza di un parser tralasciando altri aspetti come la possibilità di restituire più risultati -- nel caso in cui la grammatica del parser sia ambigua -- o di indicare la posizione nella stringa dove si è verificato un errore.
+Un \term{parser} può essere modellato come una funzione che consuma una stringa (o una sua porzione) producendo un risultato come un AST. Nel caso in cui la stringa non sia conforme al linguaggio descritto dal \term{parser} questo processo potrebbe fallire senza produrre alcun valore.
+Chiaramente la modellazione riportata è una semplificazione che cattura solamente l'essenza di un \term{parser} tralasciando altri aspetti come la possibilità di restituire più risultati -- nel caso in cui la grammatica del \term{parser} sia ambigua -- o di indicare la posizione nella stringa dove si è verificato un errore.
 
-Nella definizione riportata, per quanto semplice, è possibile individuare due tipologie di side effect già incontrate in precedenza: la stringa su cui opera il parser è uno stato mutabile e l'operazione di parsing potrebbe fallire.
-Il modello di parser così descritto può essere rappresentato tramite un'apposita classe:
+Nella definizione riportata, per quanto semplice, è possibile individuare due tipologie di side effect già incontrate in precedenza: la stringa su cui opera il \term{parser} è uno stato mutabile e l'operazione di \term{parsing} potrebbe fallire.
+Il modello di \term{parser} così descritto può essere rappresentato tramite un'apposita classe:
 \scalaFromFile{5}{5}{monads/Parser.scala}
-Un parser è modellato come una funzione che prende in input la stringa da consumare e restituisce il risultato del parsing che consiste nella coppia composta dalla porzione non consumata della stringa e dal risultato vero e proprio. Inoltre, dato che il processo di parsing potrebbe fallire, il risultato viene modellato come un valore opzionale.
+Un \term{parser} è modellato come una funzione che prende in input la stringa da consumare e restituisce il risultato del \term{parsing} che consiste nella coppia composta dalla porzione non consumata della stringa e dal risultato vero e proprio. Inoltre, dato che il processo di \term{parsing} potrebbe fallire, il risultato viene modellato come un valore opzionale.
 
-Per esempio un parser che fallisce sempre può essere definito come:
+Per esempio un \term{parser} che fallisce sempre può essere definito come:
 \scalaFromFile{19}{19}{monads/Parser.scala}
-Un parser che fallisce in caso di stringhe vuote e altrimenti ne consuma il primo carattere restituendolo come risultato può essere implementato come:
+Un \term{parser} che fallisce in caso di stringhe vuote e altrimenti ne consuma il primo carattere restituendolo come risultato può essere implementato come:
 \scalaFromFile{21}{22}{monads/Parser.scala}
 
 È possibile definire per la classe \lstinline{Parser} un'istanza di monade che rispetta le leggi monadiche:
 \scalaFromFile{8}{17}{monads/Parser.scala}
 
 \begin{itemize}
-  \item \lstinline{pure} è l'operazione di costruzione di un parser che non attua alcun side effect: restituisce il valore \lstinline{a} senza consumare la stringa e senza fallire
-  \item \lstinline{flatMap} permette di concatenare fra loro dei parser ottenendo il seguente comportamento: se uno dei parser fallisce allora fallisce l'intera sequenza, altrimenti verranno usati i due parser in sequenza e il secondo consumerà la stringa rimanente non consumata dal primo
+  \item \lstinline{pure} è l'operazione di costruzione di un \term{parser} che non attua alcun side effect: restituisce il valore \lstinline{a} senza consumare la stringa e senza fallire
+  \item \lstinline{flatMap} permette di concatenare fra loro dei parser ottenendo il seguente comportamento: se uno dei \term{parser} fallisce allora fallisce l'intera sequenza, altrimenti verranno usati i due \term{parser} in sequenza e il secondo consumerà la stringa rimanente non consumata dal primo
 \end{itemize}
 
-Grazie a quest'interfaccia monadica è possibile definire parser complessi in maniera modulare, combinando fra loro blocchi elementari tramite l'uso di \lstinline{flatMap}~\cite{cit:monadic-parsing-in-haskell}. Per esempio un parser che consuma esattamente due caratteri dalla testa di una stringa può essere definito come:
+Grazie a quest'interfaccia monadica è possibile definire \term{parser} complessi in maniera modulare, combinando fra loro blocchi elementari tramite l'uso di \lstinline{flatMap}~\cite{cit:monadic-parsing-in-haskell}. Per esempio un \term{parser} che consuma esattamente due caratteri dalla testa di una stringa può essere definito come:
 \scalaFromFile{28}{32}{monads/Parser.scala}
-Per combinare fra loro parser non è necessario conoscere i dettagli implementativi della classe \lstinline{Parser} ma è sufficiente sapere che questo è una monade. In questo modo se l'implementazione di \lstinline{Parser} dovesse cambiare -- come verrà mostrato in seguito -- non sarà necessario riscrivere i parser ottenuti combinando elementi di base in questo modo.
+Per combinare fra loro \term{parser} non è necessario conoscere i dettagli implementativi della classe \lstinline{Parser} ma è sufficiente sapere che questo è una monade. In questo modo se l'implementazione di \lstinline{Parser} dovesse cambiare -- come verrà mostrato in seguito -- non sarà necessario riscrivere i parser ottenuti combinando elementi di base in questo modo.
 
-Inoltre, poiché \lstinline{Parser} è una monade, è possibile sfruttare tutte le funzioni generiche definite in precedenza per le monadi. L'esempio precedente può essere generalizzato ad un parser che consuma esattamente $n$ caratteri dalla testa di una stringa:
+Inoltre, poiché \lstinline{Parser} è una monade, è possibile sfruttare tutte le funzioni generiche definite in precedenza per le monadi. L'esempio precedente può essere generalizzato ad un \term{parser} che consuma esattamente $n$ caratteri dalla testa di una stringa:
 \scalaFromFile{24}{25}{monads/Parser.scala}
 
 \subsection{Duplicazione di codice}
@@ -41,7 +41,7 @@ final case class Parser[A](
 final case class State[S, A](
   run:   S      =>        (A, S))
 \end{lstlisting}
-Ciò non dovrebbe stupire: come descritto in precedenza, \lstinline{Parser} gestisce uno stato mutabile e può fallire nel processo di parsing. Dovendo ottenere questi effetti la struttura della monade \lstinline{Parser} presenterà delle similarità con quella di \lstinline{State} e \lstinline{Option}. Ciò è ancora più evidente se si osservano le implementazioni di \lstinline{pure} e \lstinline{flatMap}. La funzione \lstinline{pure} non fa altro che applicare l'effetto neutro sia di \lstinline{State} che di \lstinline{Option}:
+Ciò non dovrebbe stupire: come descritto in precedenza, \lstinline{Parser} gestisce uno stato mutabile e può fallire nel processo di \term{parsing}. Dovendo ottenere questi effetti la struttura della monade \lstinline{Parser} presenterà delle similarità con quella di \lstinline{State} e \lstinline{Option}. Ciò è ancora più evidente se si osservano le implementazioni di \lstinline{pure} e \lstinline{flatMap}. La funzione \lstinline{pure} non fa altro che applicare l'effetto neutro sia di \lstinline{State} che di \lstinline{Option}:
 \begin{lstlisting}[language=scala3]
 def pure[A](a: A): Option[A] = Some(a)
 def pure[A](a: A): State[S, A] = State(s => (a, s))
@@ -49,11 +49,11 @@ def pure[A](a: A): Parser[A] = Parser(s => Some((a, s)))
 \end{lstlisting}
 Anche nel caso di \lstinline{flatMap} è presente una ripetizione della logica di base che contraddistingue \lstinline{State} e \lstinline{Option}:
 \scalaFromFile{11}{17}{monads/Parser.scala}
-Il \emph{pattern matching} più esterno attua la logica di \emph{short circuiting} della monade \lstinline{Option}, restituendo il valore \lstinline{None} nel caso in cui il parsing fallisca. Mentre la gestione dello stato -- in questo caso il passaggio della nuova stringa \lstinline{string1} al secondo parser -- è analoga al threading effettuato dalla monade \lstinline{State}.
+Il \term{pattern matching} più esterno attua la logica di \term{short-circuiting} della monade \lstinline{Option}, restituendo il valore \lstinline{None} nel caso in cui il \term{parsing} fallisca. Mentre la gestione dello stato -- in questo caso il passaggio della nuova stringa \lstinline{string1} al secondo \term{parser} -- è analoga al \term{threading} effettuato dalla monade \lstinline{State}.
 
 L'implementazione di \lstinline{Parser} presenta quindi una significativa duplicazione di codice: l'istanza di monade è essenzialmente ottenuta combinando le due implementazioni di \lstinline{State} e \lstinline{Option}. Il problema scaturisce dalla necessità di dover combinare più side effect in un'unica monade andando a replicare la struttura delle monadi di base che forniscono gli effetti desiderati.
 
-Per rendere ancora più evidente il problema si immagini di dover estendere il parser aggiungendo la possibilità di effettuare logging su standard output. In questo caso la monade \lstinline{Parser} dovrebbe fornire anche le funzionalità della monade \lstinline{IO}:
+Per rendere ancora più evidente il problema si immagini di dover estendere il \term{parser} aggiungendo la possibilità di effettuare \term{logging} su \term{standard output}. In questo caso la monade \lstinline{Parser} dovrebbe fornire anche le funzionalità della monade \lstinline{IO}:
 \begin{lstlisting}[language=scala3]
 final case class Parser[A](
   parse: String => (() => Option[(A, String)]))
@@ -69,4 +69,4 @@ def flatMap[B](f: A => Parser[B]): Parser[B] =
 \end{lstlisting}
 L'implementazione di \lstinline{flatMap} è ulteriormente complicata dalla necessità di dover gestire l'esecuzione delle computazioni con side effect; inoltre, si può nuovamente notare come l'implementazione consiste nella combinazione delle implementazioni delle tre monadi viste in precedenza: \lstinline{State}, \lstinline{IO} e \lstinline{Option}.
 
-Una soluzione ideale consentirebbe di definire \lstinline{Parser} come una combinazione di monadi elementari, ciascuna delle quali fornisce la possibilità di gestire uno specifico effetto senza doverne implementare nuovamente la logica. Per risolvere tale problema è possibile sfruttare il concetto di \emph{monad transformer} che permette di comporre in maniera modulare più monadi per gestire molteplici effetti contemporaneamente.
+Una soluzione ideale consentirebbe di definire \lstinline{Parser} come una combinazione di monadi elementari, ciascuna delle quali fornisce la possibilità di gestire uno specifico effetto senza doverne implementare nuovamente la logica. Per risolvere tale problema è possibile sfruttare il concetto di \term{monad transformer} che permette di comporre in maniera modulare più monadi per gestire molteplici effetti contemporaneamente.
