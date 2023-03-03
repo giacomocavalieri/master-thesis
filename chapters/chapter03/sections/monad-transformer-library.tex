@@ -1,13 +1,13 @@
 \section{Monad Transformer Library}
 
-\emph{Monad Transformer Library}\footnote{D'ora in avanti abbreviato in MTL} è una libreria Haskell nata con l'obiettivo di semplificare la gestione di stack di monad transformer~\cite{cit:mtl} permettendo di comporre in maniera modulare computazioni che modellano la presenza di side effect.
-Questa libreria è diventata nel tempo uno standard \emph{de facto} per la realizzazione di sistemi complessi nell'ecosistema di Haskell: circa il 30\% dei pacchetti presenti su Hackage\footnote{Hackage è l'archivio di software open source della comunità Haskell utilizzato per pubblicare librerie e programmi.} ne dipendono direttamente~\cite{cit:which-monads-haskell-developers-use-an-exploratory-study} ed è il sesto pacchetto più utilizzato su Stackage\footnote{Stackage è un'infrastruttura utilizzata per mantenere degli \emph{snapshot} di pacchetti Hackage compatibili fra loro per ottenere delle \emph{build} stabili.}~\cite{cit:evolution-of-a-haskell-repository-and-its-use-of-monads-an-exploratory-study-of-stackage}.
+\emph{Monad Transformer Library}\footnote{D'ora in avanti abbreviato in MTL} è una libreria Haskell nata con l'obiettivo di semplificare la gestione di \term{stack} di monad transformer~\cite{cit:mtl} permettendo di comporre in maniera modulare computazioni che modellano la presenza di side effect.
+Questa libreria è diventata nel tempo uno standard \emph{de facto} per la realizzazione di sistemi complessi nell'ecosistema di Haskell: circa il 30\% dei pacchetti presenti su Hackage\footnote{Hackage è l'archivio di software open source della comunità Haskell utilizzato per pubblicare librerie e programmi.} ne dipendono direttamente~\cite{cit:which-monads-haskell-developers-use-an-exploratory-study} ed è il sesto pacchetto più utilizzato su Stackage\footnote{Stackage è un'infrastruttura utilizzata per mantenere degli \term{snapshot} di pacchetti Hackage compatibili fra loro per ottenere delle \term{build} stabili.}~\cite{cit:evolution-of-a-haskell-repository-and-its-use-of-monads-an-exploratory-study-of-stackage}.
 
 L'approccio di MTL è stato poi adottato anche in altri linguaggi; per esempio in Scala nell'ecosistema di Typelevel è stata realizzata la libreria Cats MTL~\cite{cit:cats-mtl}.
 
 \subsection{Idea alla base di MTL}
 L'obiettivo di MTL è di permettere la descrizione di computazioni con side effect in maniera flessibile, modulare e facilmente componibile, con la possibilità di cambiare senza difficoltà l'implementazione sottostante utilizzata per gestire i side effect.
-Questo obiettivo può essere raggiunto sfruttando nuovamente il meccanismo delle \emph{type class} per definire \emph{famiglie} di effetti, ciascuna delle quali è caratterizzata da una serie di primitive che permettono di esprimere le operazioni che possono essere effettuate~\cite{cit:functional-programming-with-overloading-and-higher-order-polymorphism}.
+Questo obiettivo può essere raggiunto sfruttando nuovamente il meccanismo delle \term{type class} per definire \emph{famiglie} di effetti, ciascuna delle quali è caratterizzata da una serie di primitive che permettono di esprimere le operazioni che possono essere effettuate~\cite{cit:functional-programming-with-overloading-and-higher-order-polymorphism}.
 
 \subsubsection{Modifica di uno stato mutabile}
 Nello stile di MTL il side effect del cambiamento di uno stato mutabile può essere catturato dalla seguente interfaccia:
@@ -16,19 +16,19 @@ L'interfaccia descrive, per un generico costruttore di tipi \lstinline{M[_]}, le
 Sfruttando il meccanismo dei parametri impliciti di Scala è possibile definire una funzione che accetta come parametro il contesto \lstinline{M[_]} che implementa l'interfaccia \lstinline{State}:
 \scalaFromFile{30}{36}{monads/mtl/State.scala}
 
-Inoltre, è possibile modificare la funzione per rendere in maniera più ``dichiarativa'' i side effect che \lstinline{M[_]} deve avere. Innanzitutto, è necessario definire il seguente \emph{type alias}:
+Inoltre, è possibile modificare la funzione per rendere in maniera più ``dichiarativa'' i side effect che \lstinline{M[_]} deve avere. Innanzitutto, è necessario definire il seguente \term{type alias}:
 \scalaFromFile{6}{6}{monads/mtl/State.scala}
-In questo modo, sfruttando lo zucchero sintattico che Scala offre per definire \emph{context bounds}~\cite{cit:context-bounds}, è possibile modificare la firma della funzione precedente:
+In questo modo, sfruttando lo zucchero sintattico che Scala offre per definire \term{context bound}~\cite{cit:context-bounds}, è possibile modificare la firma della funzione precedente:
 \begin{lstlisting}[language=scala3]
 def update[S, M[_]: Monad: HasState[S]](f: S => S): M[Unit] = ???
 \end{lstlisting}
-Nella definizione del generico \lstinline{M[_]} è presente una lista di \emph{type class} che ne descrivono le funzionalità; la definizione può essere letta come: \emph{``Dato un qualunque \lstinline{M} che sia una monade e abbia uno stato di tipo \lstinline{S}''}.
-Infine, si può aggiungere al \emph{companion object} di \lstinline{State} un metodo che permetta di ottenere il parametro passato implicitamente:
+Nella definizione del generico \lstinline{M[_]} è presente una lista di \term{type class} che ne descrivono le funzionalità; la definizione può essere letta come: \emph{``Dato un qualunque \lstinline{M} che sia una monade e abbia uno stato di tipo \lstinline{S}''}.
+Infine, si può aggiungere al \term{companion object} di \lstinline{State} un metodo che permetta di ottenere il parametro passato implicitamente:
 \scalaFromFile{11}{13}{monads/mtl/State.scala}
 In questo modo il corpo della funzione potrà essere implementato come:
 \scalaFromFile{38}{42}{monads/mtl/State.scala}
 
-Dunque, \lstinline{M[_]} può essere interpretato come il generico ``contesto'' all'interno del quale si svolge la computazione descritta; i \emph{context bounds} permettono di vincolare il tipo \lstinline{M} indicando i side effect che dev'essere possibile svolgere all'interno di tale contesto.
+Dunque, \lstinline{M[_]} può essere interpretato come il generico ``contesto'' all'interno del quale si svolge la computazione descritta; i \term{context bound} permettono di vincolare il tipo \lstinline{M} indicando i side effect che dev'essere possibile svolgere all'interno di tale contesto.
 
 \subsubsection{Fallimento di una computazione}
 In maniera analoga a quanto mostrato per lo stato mutabile, è possibile definire in astratto il side effect del fallimento di una computazione:
@@ -37,7 +37,7 @@ Anche in questo l'interfaccia definisce per un generico contesto \lstinline{M[_]
 
 Un'operazione che richiede tale side effect può ricevere implicitamente in input una generica monade \lstinline{M[_]} che implementi tale interfaccia:
 \scalaFromFile{29}{33}{monads/mtl/Fail.scala}
-Anche in questo caso è possibile sfruttare lo zucchero sintattico di Scala per definire in maniera concisa il \emph{context bound}:
+Anche in questo caso è possibile sfruttare lo zucchero sintattico di Scala per definire in maniera concisa il \term{context bound}:
 \scalaFromFile{11}{12}{monads/mtl/Fail.scala}
 \scalaFromFile{35}{40}{monads/mtl/Fail.scala}
 
@@ -47,56 +47,56 @@ Il grande vantaggio offerto da MTL sta nella possibilità di combinare fra loro 
 \scalaFromFile{68}{73}{monads/mtl/MTL.scala}
 Si possono osservare alcuni aspetti interessanti:
 \begin{itemize}
-  \item La computazione sfrutta due diversi effetti che sono resi espliciti tramite l'uso dei \emph{context bound}: la definizione del tipo generico \lstinline{M[_]} può essere letta come \emph{``Dato un qualunque \lstinline{M} che permetta di modificare uno stato di tipo \lstinline{S}, che permetta di far fallire la computazione e che sia una monade''}. Mentre i primi due requisiti sono fondamentali per poter utilizzare i side effect, richiedere che \lstinline{M} sia una monade ha lo scopo di poter accedere all'operazione di \lstinline{flatMap} per mettere in sequenza più operazioni
-  \item Non viene concretizzato il tipo che permetterà di interpretare i diversi effetti, tutta la definizione è basata su un generico \lstinline{M[_]}; la semantica delle operazioni potrà essere stabilita in un secondo momento in maniera indipendente. Perciò, a differenza dei transformer, la descrizione della computazione e di come questa verrà eseguita sono disaccoppiate
+  \item La computazione sfrutta due diversi effetti che sono resi espliciti tramite l'uso dei \term{context bound}: la definizione del tipo generico \lstinline{M[_]} può essere letta come \emph{``Dato un qualunque \lstinline{M} che permetta di modificare uno stato di tipo \lstinline{S}, che permetta di far fallire la computazione e che sia una monade''}. Mentre i primi due requisiti sono fondamentali per poter utilizzare i side effect, richiedere che \lstinline{M} sia una monade ha lo scopo di poter accedere all'operazione di \lstinline{flatMap} per mettere in sequenza più operazioni
+  \item Non viene concretizzato il tipo che permetterà di interpretare i diversi effetti, tutta la definizione è basata su un generico \lstinline{M[_]}; la semantica delle operazioni potrà essere stabilita in un secondo momento in maniera indipendente. Perciò, a differenza dei \term{transformer}, la descrizione della computazione e di come questa verrà eseguita sono disaccoppiate
 \end{itemize}
 
-Inoltre viene eliminata la rigidità data dai monad transformer nel comporre operazioni con tipi differenti: in un contesto \lstinline{M[_]} è possibile eseguire operazioni che richiedono entrambi gli effetti, solo uno di essi o nessuno di essi. Nell'esempio precedente viene utilizzata la funzione \lstinline{divide} che richiede solo la capacità di fallire; ciò è possibile dato che è uno degli effetti forniti nel contesto della funzione \lstinline{effect}. Non è necessario applicare operazioni di \emph{lifting} nè modificare artificialmente il tipo di ritorno delle funzioni per semplificarne la composizione come veniva fatto nel caso dei transformer.
+Inoltre viene eliminata la rigidità data dai \term{monad transformer} nel comporre operazioni con tipi differenti: in un contesto \lstinline{M[_]} è possibile eseguire operazioni che richiedono entrambi gli effetti, solo uno di essi o nessuno di essi. Nell'esempio precedente viene utilizzata la funzione \lstinline{divide} che richiede solo la capacità di fallire; ciò è possibile dato che è uno degli effetti forniti nel contesto della funzione \lstinline{effect}. Non è necessario applicare operazioni di \term{lifting} nè modificare artificialmente il tipo di ritorno delle funzioni per semplificarne la composizione come veniva fatto nel caso dei \term{transformer}.
 
 \subsection{Interpretazione della computazione}
 Una computazione descritta secondo lo stile MTL definisce in astratto quali sono le operazioni che dovranno essere eseguite; quindi, per poterla interpretare è necessario fornire un tipo concreto che implementi tutte le operazioni richieste.
-L'implementazione viene sempre fornita come istanza di una \emph{type class} in maniera analoga a quanto fatto per le monadi.
-Per esempio il transformer \lstinline{OptionT} può essere usato come meccanismo concreto per interpretare computazioni che possono fallire:
+L'implementazione viene sempre fornita come istanza di una \term{type class} in maniera analoga a quanto fatto per le monadi.
+Per esempio il \term{transformer} \lstinline{OptionT} può essere usato come meccanismo concreto per interpretare computazioni che possono fallire:
 \scalaFromFile{14}{15}{monads/mtl/Fail.scala}
-Può essere utile riprendere l'interpretazione delle \emph{type class} come predicati: fornire un'istanza equivale a dimostrare che \lstinline{OptionT} può fallire e la dimostrazione è data dall'implementazione del metodo \lstinline{fail}. Tuttavia, come già descritto in precedenza, \lstinline{OptionT} non è l'unica monade che permette di modellare una computazione che fallisca; il fallimento può essere modellato anche nella monade \lstinline{IO} tramite l'uso di eccezioni:
+Può essere utile riprendere l'interpretazione delle \term{type class} come predicati: fornire un'istanza equivale a dimostrare che \lstinline{OptionT} può fallire e la dimostrazione è data dall'implementazione del metodo \lstinline{fail}. Tuttavia, come già descritto in precedenza, \lstinline{OptionT} non è l'unica monade che permette di modellare una computazione che fallisca; il fallimento può essere modellato anche nella monade \lstinline{IO} tramite l'uso di eccezioni:
 \scalaFromFile{17}{18}{monads/mtl/Fail.scala}
 
 Una volta definite tali istanze sarà possibile sfruttarle per interpretare una qualunque computazione che richieda il side effect del fallimento:
 \scalaFromFile{42}{45}{monads/mtl/Fail.scala}
 Utilizzare un diverso interprete per la computazione si riduce a indicare quale monade utilizzare come concreta implementazione del contesto \lstinline{M[_]}. Nel primo caso viene utilizzata la monade \lstinline{IO} e, se la computazione dovesse fallire, verrà sollevata un'eccezione; nel secondo caso viene utilizzato \lstinline{OptionT} e in caso di fallimento il risultato sarà \lstinline{None}.
 
-L'istanza per l'effetto della modifica di uno stato è simile a quella del fallimento; in questo caso si mostra come il transformer \lstinline{StateT} permetta di ottenere tale effetto:
+L'istanza per l'effetto della modifica di uno stato è simile a quella del fallimento; in questo caso si mostra come il \term{transformer} \lstinline{StateT} permetta di ottenere tale effetto:
 \scalaFromFile{15}{18}{monads/mtl/State.scala}
 
 \subsubsection{Integrazione di stack di monadi e MTL}
 Le istanze fornite fino a questo momento permettono di ottenere semplici effetti ma non sono sufficienti per interpretare computazioni che necessitino di più effetti contemporaneamente: per esempio il semplice \lstinline{OptionT} non può essere utilizzato per interpretare computazioni che richiedono uno stato mutabile.
-Una computazione simile richiede necessariamente uno stack di monadi che abbia al proprio interno una monade in grado di gestire il cambiamento di stato (come per esempio \lstinline{StateT}), in quel caso l'intero stack potrà essere sfruttato per interpretare la computazione:
+Una computazione simile richiede necessariamente uno \term{stack} di monadi che abbia al proprio interno una monade in grado di gestire il cambiamento di stato (come per esempio \lstinline{StateT}), in quel caso l'intero \term{stack} potrà essere sfruttato per interpretare la computazione:
 \scalaFromFile{21}{25}{monads/mtl/State.scala}
 In questo caso la definizione dell'istanza è più complessa:
 \begin{itemize}
-  \item L'istanza viene definita per un generico transformer \lstinline{T} e una generica monade \lstinline{M}; se \lstinline{M} può gestire uno stato mutabile di tipo \lstinline{S}, allora anche \lstinline{T} con \lstinline{M} al proprio interno potrà farlo
-  \item Per poter ottenere lo stato globale, \lstinline{T} delega alla monade \lstinline{M} l'operazione di \lstinline{get} che viene poi inserita all'interno del transformer tramite \lstinline{lift}. L'operazione di \lstinline{set} è implementata in maniera analoga
+  \item L'istanza viene definita per un generico \term{transformer} \lstinline{T} e una generica monade \lstinline{M}; se \lstinline{M} può gestire uno stato mutabile di tipo \lstinline{S}, allora anche \lstinline{T} con \lstinline{M} al proprio interno potrà farlo
+  \item Per poter ottenere lo stato globale, \lstinline{T} delega alla monade \lstinline{M} l'operazione di \lstinline{get} che viene poi inserita all'interno del \term{transformer} tramite \lstinline{lift}. L'operazione di \lstinline{set} è implementata in maniera analoga
 \end{itemize}
 
-Le due istanze \lstinline{stateHasState} e \lstinline{transformerHasState} appena mostrate permettono di ottenere un'istanza di \lstinline{State} per un qualunque stack di monadi che abbia \lstinline{StateT} al proprio interno: \lstinline{stateHasState} funge da caso base per la ricorsione mentre \lstinline{transformerHasState} permette di applicare tutti i \lstinline{lift} necessari automaticamente indipendentemente dalla composizione dello stack di monadi.
+Le due istanze \lstinline{stateHasState} e \lstinline{transformerHasState} appena mostrate permettono di ottenere un'istanza di \lstinline{State} per un qualunque \term{stack} di monadi che abbia \lstinline{StateT} al proprio interno: \lstinline{stateHasState} funge da caso base per la ricorsione mentre \lstinline{transformerHasState} permette di applicare tutti i \lstinline{lift} necessari automaticamente indipendentemente dalla composizione dello \term{stack} di monadi.
 
-Si consideri il seguente stack: \lstinline{Transformer1[Transformer2[StateT[Int, IO, _], _], _]} (si supponga che \lstinline{Transformer1} e \lstinline{Transformer2} siano due monad transformer). Il compilatore Scala potrà derivare in automatico un'istanza di \lstinline{HasState[Int]} per l'intero stack secondo il seguente procedimento:
+Si consideri il seguente \term{stack}: \lstinline{Transformer1[Transformer2[StateT[Int, IO, _], _], _]} (si supponga che \lstinline{Transformer1} e \lstinline{Transformer2} siano due \term{monad transformer}). Il compilatore Scala potrà derivare in automatico un'istanza di \lstinline{HasState[Int]} per l'intero \term{stack} secondo il seguente procedimento:
 \begin{enumerate}
   \item \lstinline{StateT[Int, IO, _]} ha un'istanza di \lstinline{State} che può essere ottenuta tramite \lstinline{stateHasState}
-  \item Poiché \lstinline{Transformer2} è un transformer e \lstinline{StateT[Int, IO, _]} è una monade con un'istanza di \lstinline{State} allora anche \lstinline{Transformer2[StateT[Int, IO, _], _]} ha un'istanza di \lstinline{State} che può essere sintetizzata grazie a \lstinline{transformerHasState}
-  \item Poiché \lstinline{Transformer1} è un transformer e \lstinline{Transformer2[StateT[Int, IO, _], _]} è una monade con un'istanza di \lstinline{State} -- generata al passaggio precedente -- allora anche \lstinline{Transformer1[Transformer2[StateT[Int, IO, _], _], _]} ha un'istanza di \lstinline{State} che può essere sintetizzata grazie a \lstinline{transformerHasState}
+  \item Poiché \lstinline{Transformer2} è un \term{transformer} e \lstinline{StateT[Int, IO, _]} è una monade con un'istanza di \lstinline{State} allora anche \lstinline{Transformer2[StateT[Int, IO, _], _]} ha un'istanza di \lstinline{State} che può essere sintetizzata grazie a \lstinline{transformerHasState}
+  \item Poiché \lstinline{Transformer1} è un \term{transformer} e \lstinline{Transformer2[StateT[Int, IO, _], _]} è una monade con un'istanza di \lstinline{State} -- generata al passaggio precedente -- allora anche \lstinline{Transformer1[Transformer2[StateT[Int, IO, _], _], _]} ha un'istanza di \lstinline{State} che può essere sintetizzata grazie a \lstinline{transformerHasState}
 \end{enumerate}
 
-Nel concreto una chiamata a \lstinline{get} in questo stack sarà interpretata come \lstinline{StateT.get.lift[Transformer2].lift[Transformer1]}; tutti i \lstinline{lift} saranno applicati automaticamente grazie alle istanze generate dal compilatore.
+Nel concreto una chiamata a \lstinline{get} in questo \term{stack} sarà interpretata come \lstinline{StateT.get.lift[Transformer2].lift[Transformer1]}; tutti i \lstinline{lift} saranno applicati automaticamente grazie alle istanze generate dal compilatore.
 
-Il caso di fallimento è analogo a quanto osservato per \lstinline{State}; se un transformer ha al proprio interno una monade che permette di ottenere tale side effect allora può a sua volta fornire un'istanza di \lstinline{Fail}:
+Il caso di fallimento è analogo a quanto osservato per \lstinline{State}; se un \term{transformer} ha al proprio interno una monade che permette di ottenere tale side effect allora può a sua volta fornire un'istanza di \lstinline{Fail}:
 \scalaFromFile{21}{24}{monads/mtl/Fail.scala}
 
 Una volta definite tali istanze una computazione complessa come \lstinline{effects} mostrata nella \Cref{sub:composizione-di-piu-effetti} può essere interpretata specificando uno stack contenente i transformer necessari:
 \scalaFromFile{77}{88}{monads/mtl/MTL.scala}
-Il compilatore fornirà implicitamente le istanze necessarie a interpretare la computazione. A seconda dello stack utilizzato si potrà dare una diversa interpretazione degli effetti specificati:
+Il compilatore fornirà implicitamente le istanze necessarie a interpretare la computazione. A seconda dello \term{stack} utilizzato si potrà dare una diversa interpretazione degli effetti specificati:
 \begin{itemize}
   \item Nel primo risultato ogni modifica allo stato prima del fallimento della computazione sarebbe comunque valida: infatti, il tipo di ritorno non incapsula anche lo stato \lstinline{Int} all'interno di \lstinline{Option}
   \item Nel secondo caso lo stato è gestito in maniera ``transazionale'': se la computazione fallisce allora lo stato non viene modificato
-  \item Nel terzo caso l'interruzione della computazione viene ottenuta tramite le eccezioni e interpretarla potrebbe comportare il fallimento del programma a \emph{runtime}
+  \item Nel terzo caso l'interruzione della computazione viene ottenuta tramite le eccezioni e interpretarla potrebbe comportare il fallimento del programma a \term{runtime}
 \end{itemize}

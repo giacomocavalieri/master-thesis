@@ -1,23 +1,23 @@
 \section{MTL come effect system}
 
-MTL può essere visto come un primo esempio di effect system: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
+MTL può essere visto come un primo esempio di \term{effect system}: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
 
-Per esempio, il meccanismo delle eccezioni di Java rappresenta un rudimentale effect system che permette di tracciare una sola tipologia di side effect: il lancio di un'eccezione~\cite[p.~985]{cit:design-concepts-in-programming-languages}.
-Anche in Scala, tramite l'uso delle \emph{capability}~\cite{cit:scala-3-reference-canthrow}, è stato definito un sistema di effetti che permette di verificare staticamente la presenza di eccezioni~\cite{cit:safer-exceptions-for-scala}. Attualmente è possibile abilitare questo meccanismo di cattura delle eccezioni come feature sperimentale; tuttavia, diverse ricerche sono attualmente in atto per permettere l'utilizzo delle \emph{capability} per gestire qualunque tipologia di effetto~\cite{cit:effects-capabilities-and-boxes-from-scope-based-reasoning-to-type-based-reasoning-and-back,cit:caprese}.
+Per esempio, il meccanismo delle eccezioni di Java rappresenta un rudimentale \term{effect system} che permette di tracciare una sola tipologia di side effect: il lancio di un'eccezione~\cite[p.~985]{cit:design-concepts-in-programming-languages}.
+Anche in Scala, tramite l'uso delle \term{capability}~\cite{cit:scala-3-reference-canthrow}, è stato definito un sistema di effetti che permette di verificare staticamente la presenza di eccezioni~\cite{cit:safer-exceptions-for-scala}. Attualmente è possibile abilitare questo meccanismo di cattura delle eccezioni come feature sperimentale; tuttavia, diverse ricerche sono attualmente in atto per permettere l'utilizzo delle \term{capability} per gestire qualunque tipologia di effetto~\cite{cit:effects-capabilities-and-boxes-from-scope-based-reasoning-to-type-based-reasoning-and-back,cit:caprese}.
 
 La versione originale della libreria MTL include diverse classi per trattare un'ampia gamma di side effect comuni: il fallimento di una computazione, la lettura di uno stato immutabile, la modifica di uno stato mutabile, ecc.
 
-Tuttavia, l'approccio MTL è molto generale e permette di definire in \emph{user space} quali sono gli effetti rilevanti per un determinato dominio applicativo, lasciando ampia libertà al programmatore di scegliere il livello di astrazione più adatto.
-Un effect system può diventare quindi uno strumento di design per la realizzazione di sistemi orientati agli effetti.
+Tuttavia, l'approccio MTL è molto generale e permette di definire in \term{user space} quali sono gli effetti rilevanti per un determinato dominio applicativo, lasciando ampia libertà al programmatore di scegliere il livello di astrazione più adatto.
+Un \term{effect system} può diventare quindi uno strumento di design per la realizzazione di sistemi orientati agli effetti.
 
 \subsection{Definizione di effetti arbitrari}
 \label{sec:mtl-effetti-arbitrari}
-È possibile definire \emph{type class} per classi di effetti arbitrari e al livello di granularità più adatto al problema da risolvere. Si immagini di dover realizzare una porzione di codice che necessita di interfacciarsi con un database contenente degli utenti; ai fini dell'esempio un utente viene modellato in maniera semplificata come:
+È possibile definire \term{type class} per classi di effetti arbitrari e al livello di granularità più adatto al problema da risolvere. Si immagini di dover realizzare una porzione di codice che necessita di interfacciarsi con un database contenente degli utenti; ai fini dell'esempio un utente viene modellato in maniera semplificata come:
 \scalaFromFile{11}{12}{monads/mtl/Design.scala}
 
 Le operazioni che si vogliono implementare sono il recupero di un utente in base al suo identificativo, il salvataggio di un utente e la sua cancellazione.
 
-Sicuramente tali operazioni potrebbero essere descritte direttamente all'interno della monade \lstinline{IO}, stabilendo una connessione con il database ed eseguendo le query SQL corrispondenti. Tuttavia, tale approccio rende più difficile la realizzazione di test unitari: nell'esecuzione delle query queste cercheranno di stabilire una connessione con il database e potrebbero alterarne lo stato se non opportunamente gestite. Una soluzione comunemente adottata consiste nell'attuare \emph{dependency injection} simulando il comportamento del database senza effettivamente stabilire una connessione, oppure connettendo i test a un database di test separato da quello in produzione.
+Sicuramente tali operazioni potrebbero essere descritte direttamente all'interno della monade \lstinline{IO}, stabilendo una connessione con il database ed eseguendo le query SQL corrispondenti. Tuttavia, tale approccio rende più difficile la realizzazione di test unitari: nell'esecuzione delle query queste cercheranno di stabilire una connessione con il database e potrebbero alterarne lo stato se non opportunamente gestite. Una soluzione comunemente adottata consiste nell'attuare \term{dependency injection} simulando il comportamento del database senza effettivamente stabilire una connessione, oppure connettendo i test a un database di test separato da quello in produzione.
 
 \subsubsection{Definizione degli effetti}
 Secondo lo stile MTL vengono innanzitutto definite le operazioni rilevanti per il dominio: primitive astratte che definiscono le operazioni che si possono eseguire sul database. La codifica mostrata in precedenza per gli effetti del fallimento e dello stato mutabile può essere utilizzata anche in questo caso:
@@ -28,14 +28,14 @@ Lo scopo di \lstinline{updateOrDelete} è di permettere di aggiornare un utente 
 Tale funzione è definita in astratto per un qualunque tipo \lstinline{M[_]} che permetta di ottenere le operazioni di \lstinline{UserStore}.
 
 \subsubsection{Interpretazione in un ambiente di produzione}
-Il vantaggio dato dall'encoding MTL delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
-Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo stack utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga la connessione al database:
+Il vantaggio dato dall'\term{encoding} MTL delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
+Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo \term{stack} utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga la connessione al database:
 \scalaFromFile{54}{55}{monads/mtl/Design.scala}
 In questo caso l'interprete adottato per un ambiente di produzione può manipolare uno stato -- nell'esempio chiamato \lstinline{Runtime} -- che contiene la connessione al database.
 
-Una volta stabilito lo stack da utilizzare è sufficiente definire un'istanza di \lstinline{UserStore}:
+Una volta stabilito lo \term{stack} da utilizzare è sufficiente definire un'istanza di \lstinline{UserStore}:
 \scalaFromFile{57}{63}{monads/mtl/Design.scala}
-L'implementazione recupera la connessione a partire dal runtime e la sfrutta per comunicare con il database, l'effettiva implementazione in questo caso non è rilevante ed è stata tralasciata.
+L'implementazione recupera la connessione a partire dal \term{runtime} e la sfrutta per comunicare con il database, l'effettiva implementazione in questo caso non è rilevante ed è stata tralasciata.
 
 L'idea fondamentale sta nella possibilità di disaccoppiare la \emph{descrizione} della logica applicativa dalla sua effettiva \emph{interpretazione}. Modificare l'interprete non comporta cambiamenti nelle funzioni descritte in astratto e viceversa.
 

@@ -1,10 +1,10 @@
 \section{Problemi nell'uso dei monad transformers}
 
-Per quanto i transformer possano essere uno strumento efficace per modellare la presenza di diversi side effect, il loro utilizzo è generalmente associato a una serie di problematiche che possono rendere il codice poco leggibile e difficile da mantenere.
+Per quanto i \term{transformer} possano essere uno strumento efficace per modellare la presenza di diversi side effect, il loro utilizzo è generalmente associato a una serie di problematiche che possono rendere il codice poco leggibile e difficile da mantenere.
 
 \subsection{Lifting manuale delle operazioni}
-Come mostrato negli esempi riportati al capitolo precedente, perché un transformer possa sfruttare gli effetti della monade che va ad arricchire deve ricorrere all'operazione di \emph{lifting}. Questa operazione permette di portare all'interno del transformer un valore dalla monade base senza aggiungere ulteriori side effect.
-Dunque, scrivendo codice monadico all'interno di un transformer il programmatore si troverà spesso a dover ricorrere all'operazione di lifting:
+Come mostrato negli esempi riportati al capitolo precedente, perché un \term{transformer} possa sfruttare gli effetti della monade che va ad arricchire deve ricorrere all'operazione di \term{lifting}. Questa operazione permette di portare all'interno del \term{transformer} un valore dalla monade base senza aggiungere ulteriori side effect.
+Dunque, scrivendo codice monadico all'interno di un \term{transformer} il programmatore si troverà spesso a dover ricorrere all'operazione di \term{lifting}:
 \begin{lstlisting}[language=scala3]
 def manualLifting: StateT[Int, OptionT[IO, _], String] =
   for
@@ -12,14 +12,14 @@ def manualLifting: StateT[Int, OptionT[IO, _], String] =
     _ <- OptionT.fail[IO, Any].lift[StateTFixS[Int]]
   yield "result"
 \end{lstlisting}
-Il tipo che descrive tutti i side effect della funzione \lstinline{manualLifting} è \lstinline{StateT[Int, OptionT[IO, _], String]}; alla base dello stack si trova la monade \lstinline{IO} a cui viene aggiunta la possibilità di fallimento grazie al transformer \lstinline{OptionT} e di modificare uno stato mutabile.
-Per poter eseguire l'operazione di stampa in output il cui tipo è \lstinline{IO[Unit]} è quindi necessario trasformarla in un valore compatibile con lo stack utilizzato. In questo caso la prima operazione di \emph{lifting} trasforma il tipo in \lstinline{OptionT[IO, Unit]}; l'operazione è applicata un'ultima volta per portare il valore nello stack descritto.
+Il tipo che descrive tutti i side effect della funzione \lstinline{manualLifting} è \lstinline{StateT[Int, OptionT[IO, _], String]}; alla base dello \term{stack} si trova la monade \lstinline{IO} a cui viene aggiunta la possibilità di fallimento grazie al \term{transformer} \lstinline{OptionT} e di modificare uno stato mutabile.
+Per poter eseguire l'operazione di stampa in output il cui tipo è \lstinline{IO[Unit]} è quindi necessario trasformarla in un valore compatibile con lo \term{stack} utilizzato. In questo caso la prima operazione di \term{lifting} trasforma il tipo in \lstinline{OptionT[IO, Unit]}; l'operazione è applicata un'ultima volta per portare il valore nello \term{stack} descritto.
 
 Come è possibile osservare il codice è molto verboso e introduce la necessità di inserire diverse chiamate a \lstinline{lift} il cui unico scopo è quello di far combaciare i tipi delle operazioni.
-Il risultato sarà un codice poco leggibile dove la logica applicativa viene offuscata dalla presenza di numerose operazioni di \emph{lifting}.
-Infatti, specialmente in stack composti da diversi transformer, è necessario ricorrere a più operazioni di \emph{lifting} per ogni singola azione con side effect. Questo comporta un significativo sbilanciamento fra le porzioni di codice effettivamente rilevanti -- che codificano la logica applicativa -- e il boilerplate necessario per poter utilizzare correttamente lo stack di monadi.
+Il risultato sarà un codice poco leggibile dove la logica applicativa viene offuscata dalla presenza di numerose operazioni di \term{lifting}.
+Infatti, specialmente in \term{stack} composti da diversi \term{transformer}, è necessario ricorrere a più operazioni di \term{lifting} per ogni singola azione con side effect. Questo comporta un significativo sbilanciamento fra le porzioni di codice effettivamente rilevanti -- che codificano la logica applicativa -- e il \term{boilerplate} necessario per poter utilizzare correttamente lo \term{stack} di monadi.
 
-Inoltre, il codice scritto utilizzando uno specifico stack di monadi sarà ``viscoso'': opporrà maggiore resistenza al cambiamento della struttura dello stack di monadi comportando la riscrittura di diverse porzioni di codice. Per esempio, aggiungendo o rimuovendo un ulteriore transformer allo stack utilizzato sarà necessario aggiungere o rimuovere da ogni operazione la chiamata al metodo \lstinline{lift}. Immaginando di rimuovere il transformer \lstinline{StateT} dalla funzione \lstinline{manualLifting} mostrata in precedenza il codice dovrà essere trasformato in:
+Inoltre, il codice scritto utilizzando uno specifico \term{stack} di monadi sarà ``viscoso'': opporrà maggiore resistenza al cambiamento della struttura dello \term{stack} di monadi comportando la riscrittura di diverse porzioni di codice. Per esempio, aggiungendo o rimuovendo un ulteriore \term{transformer} allo \term{stack} utilizzato sarà necessario aggiungere o rimuovere da ogni operazione la chiamata al metodo \lstinline{lift}. Immaginando di rimuovere il \term{transformer} \lstinline{StateT} dalla funzione \lstinline{manualLifting} mostrata in precedenza il codice dovrà essere trasformato in:
 \begin{lstlisting}[language=scala3]
 def manualLifting: OptionT[IO, String] =
   for
@@ -29,7 +29,7 @@ def manualLifting: OptionT[IO, String] =
 \end{lstlisting}
 In questo caso il cambiamento nel tipo di ritorno della funzione ha comportato il dover modificare tutte le operazioni coinvolte rimuovendo le chiamate a \lstinline{lift}.
 
-Anche il semplice riordinare gli elementi dello stack di monadi comporta la necessità di apportare modifiche al codice. Sempre riprendendo l'esempio di \lstinline{manualLifting} si immagini di dover cambiare lo stack di monadi in modo da avere un tipo \lstinline{OptionT[StateT[Int, IO, _], String]}. In questo caso il codice dovrà essere modificato come segue:
+Anche il semplice riordinare gli elementi dello \term{stack} di monadi comporta la necessità di apportare modifiche al codice. Sempre riprendendo l'esempio di \lstinline{manualLifting} si immagini di dover cambiare lo \term{stack} di monadi in modo da avere un tipo \lstinline{OptionT[StateT[Int, IO, _], String]}. In questo caso il codice dovrà essere modificato come segue:
 \begin{lstlisting}[language=scala3]
   def manualLifting: OptionT[StateT[Int, IO, _], String] =
     for
@@ -37,10 +37,10 @@ Anche il semplice riordinare gli elementi dello stack di monadi comporta la nece
       _ <- OptionT.fail[StateT[Int, IO, _], Any]
     yield "result"
 \end{lstlisting}
-Si noti come sia stato necessario modificare l'ordine nelle annotazioni dei tipi del \emph{lifting} relativo all'operazione di stampa in output.
+Si noti come sia stato necessario modificare l'ordine nelle annotazioni dei tipi del \term{lifting} relativo all'operazione di stampa in output.
 
 \subsection{Principio di privilegio minimo}
-Una possibile soluzione al dover intervallare operazioni relative alla logica applicativa con le operazioni di \emph{lifting} può consistere nel fissare lo stack da utilizzare. Una volta stabiliti i side effect di cui l'applicazione avrà bisogno -- e quindi quale stack di monadi sia necessario utilizzare -- si può realizzare primitive di base che restituiscano valori all'interno di tale stack e comporre queste per ottenere programmi complessi. Si consideri il seguente esempio: si vuole realizzare un programma che legga un file CSV, ne parsi il contenuto e calcoli la somma dei valori contenuti in una specifica colonna. Immaginando un'API per poter effettuare parsing di file CSV il risultato potrebbe essere il seguente:
+Una possibile soluzione al dover intervallare operazioni relative alla logica applicativa con le operazioni di \term{lifting} può consistere nel fissare lo \term{stack} da utilizzare. Una volta stabiliti i side effect di cui l'applicazione avrà bisogno -- e quindi quale \term{stack} di monadi sia necessario utilizzare -- si può realizzare primitive di base che restituiscano valori all'interno di tale \term{stack} e comporre queste per ottenere programmi complessi. Si consideri il seguente esempio: si vuole realizzare un programma che legga un file CSV, ne parsi il contenuto e calcoli la somma dei valori contenuti in una specifica colonna. Immaginando un'API per poter effettuare parsing di file CSV il risultato potrebbe essere il seguente:
 \begin{lstlisting}[language=scala3]
   type App = OptionT[IO, _]
   def mainAction: App[Int] = for
@@ -49,21 +49,21 @@ Una possibile soluzione al dover intervallare operazioni relative alla logica ap
     column  <- csv.getIntColumn("column") // : App[List[Int]]
   yield column.sum
 \end{lstlisting}
-La logica applicativa viene espressa in maniera concisa e leggibile. Ciò è reso possibile dal fatto che ogni operazione intermedia restituisce un valore all'interno della monade \lstinline{App} e quindi non è necessario effettuare \emph{lifting} delle operazioni per permettere ai tipi di combaciare.
+La logica applicativa viene espressa in maniera concisa e leggibile. Ciò è reso possibile dal fatto che ogni operazione intermedia restituisce un valore all'interno della monade \lstinline{App} e quindi non è necessario effettuare \term{lifting} delle operazioni per permettere ai tipi di combaciare.
 
-Questo vantaggio dal punto di vista della leggibilità del codice viola però il principio di privilegio minimo: il programmatore, per poter esprimere in maniera concisa la logica applicativa, è costretto a incapsulare ogni valore intermedio all'interno dell'intero stack di monadi dell'applicazione anche qualora ciò non sia necessario. Per esempio, l'operazione di parsing del contenuto del file potrebbe fallire nel caso in cui questo sia mal formato; tuttavia, il parsing non richiede di effettuare operazioni di input e output. Nonostante ciò, \lstinline{parseCSV} -- per poter essere composto con le altre operazioni -- restituisce un valore di tipo \lstinline{OptionT[IO, CSV]}. Vale a dire che l'operazione di \emph{parsing} potrebbe potenzialmente effettuare input e output anche se dal punto di vista logico ciò non ha senso.
+Questo vantaggio dal punto di vista della leggibilità del codice viola però il \emph{principio di privilegio minimo}: il programmatore, per poter esprimere in maniera concisa la logica applicativa, è costretto a incapsulare ogni valore intermedio all'interno dell'intero \term{stack} di monadi dell'applicazione anche qualora ciò non sia necessario. Per esempio, l'operazione di \term{parsing} del contenuto del file potrebbe fallire nel caso in cui questo sia mal formato; tuttavia, il \term{parsing} non richiede di effettuare operazioni di input e output. Nonostante ciò, \lstinline{parseCSV} -- per poter essere composto con le altre operazioni -- restituisce un valore di tipo \lstinline{OptionT[IO, CSV]}. Vale a dire che l'operazione di \term{parsing} potrebbe potenzialmente effettuare input e output anche se dal punto di vista logico ciò non ha senso.
 Lo stesso ragionamento vale per la chiamata al metodo \lstinline{getIntColumn} che per esempio potrebbe fallire nel caso in cui non sia presente una colonna col nome desiderato; non c'è alcun motivo per cui tale operazione dovrebbe poter effettuare operazioni di input e output.
 
-Dunque, il tipo di ciascuna delle funzioni intermedie è meno generale di quanto non sia effettivamente necessario per esprimerne il comportamento. Le operazioni \lstinline{parseCSV} e \lstinline{getIntColumn} non effettuano input e output ma il tipo di ritorno non lo impedisce; solo un'analisi dell'implementazione del corpo delle funzioni può permettere di capire se svolgono o meno uno dei determinati effetti previsti dallo stack di monadi utilizzato.
+Dunque, il tipo di ciascuna delle funzioni intermedie è meno generale di quanto non sia effettivamente necessario per esprimerne il comportamento. Le operazioni \lstinline{parseCSV} e \lstinline{getIntColumn} non effettuano input e output ma il tipo di ritorno non lo impedisce; solo un'analisi dell'implementazione del corpo delle funzioni può permettere di capire se svolgono o meno uno dei determinati effetti previsti dallo \term{stack} di monadi utilizzato.
 
 \subsection{Violazione dell'incapsulamento}
-Un ulteriore problema che deriva dall'uso dei monad transformer sta nel fatto che il codice che utilizza tali stack di monadi è fortemente legato alla specifica modellazione del side effect che viene utilizzata. Essenzialmente viene violato il principio di incapsulamento per cui sarebbe necessario programmare basandosi su un'interfaccia piuttosto che su una specifica implementazione~\cite[p.~94]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.
+Un ulteriore problema che deriva dall'uso dei \term{monad transformer} sta nel fatto che il codice che utilizza tali \term{stack} di monadi è fortemente legato alla specifica modellazione del side effect che viene utilizzata. Essenzialmente viene violato il \emph{principio di incapsulamento} per cui sarebbe necessario programmare basandosi su un'interfaccia piuttosto che su una specifica implementazione~\cite[p.~94]{cit:clean-code-a-handbook-of-agile-software-craftsmanship}.
 
-Nell'esempio mostrato in precedenza la possibilità di fallimento viene espressa tramite l'uso del transformer \lstinline{OptionT}. Vale a dire che, una volta interpretata, se la computazione dovesse fallire ritornerà un valore \lstinline{None}. In questo modo, il programma è legato alla specifica modellazione del side effect del fallimento che viene fornita dal transformer \lstinline{OptionT}.
+Nell'esempio mostrato in precedenza la possibilità di fallimento viene espressa tramite l'uso del transformer \lstinline{OptionT}. Vale a dire che, una volta interpretata, se la computazione dovesse fallire ritornerà un valore \lstinline{None}. In questo modo, il programma è legato alla specifica modellazione del side effect del fallimento che viene fornita dal \term{transformer} \lstinline{OptionT}.
 In circostanze differenti si potrebbe voler modificare il modo in cui un side effect viene implementato. Per esempio, nel caso del side effect del fallimento, si potrebbe sfruttare la monade \lstinline{IO} per descrivere una computazione che fallisca con un'eccezione una volta interpretata:
 \begin{lstlisting}[language=scala3]
 def fail[A]: IO[A] = IO(() => throw Exception())
 \end{lstlisting}
-Questo è un possibile modo di ottenere il side effect del fallimento sfruttando direttamente la monade \lstinline{IO} senza dover ricorrere al transformer \lstinline{OptionT}. Nella descrizione della logica applicativa non importa quale sia la concreta implementazione utilizzata per descrivere tale side effect; l'aspetto rilevante è che il fallimento comporti l'interruzione della computazione.
+Questo è un possibile modo di ottenere il side effect del fallimento sfruttando direttamente la monade \lstinline{IO} senza dover ricorrere al \term{transformer} \lstinline{OptionT}. Nella descrizione della logica applicativa non importa quale sia la concreta implementazione utilizzata per descrivere tale side effect; l'aspetto rilevante è che il fallimento comporti l'interruzione della computazione.
 
-Codificare le operazioni in maniera diretta sfruttando uno specifico stack di monadi crea un accoppiamento fra la descrizione della logica applicativa e la sua effettiva implementazione.
+Codificare le operazioni in maniera diretta sfruttando uno specifico \term{stack} di monadi crea un accoppiamento fra la descrizione della logica applicativa e la sua effettiva implementazione.
