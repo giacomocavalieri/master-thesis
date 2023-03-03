@@ -3,13 +3,13 @@
 \subsection{Interpretazione delle istruzioni di un programma}
 I valori di tipo \lstinline{Program} mostrati fino ad ora non sono altro che degli AST che rappresentano sotto forma di struttura dati un programma monadico.
 Questa struttura dati può essere attraversata e interpretata per assegnare una semantica alle istruzioni di cui si compone.
-Prima di poter definire come interpretare un programma monadico è necessario definire come interpretarne le singole istruzioni; perciò si introduce il concetto di interprete\footnote{Questo concetto è noto in letteratura come trasformazione naturale\cite{cit:monad-transformers-and-modular-algebraic-effects}. Nella trattazione si preferisce utilizzare il termine ``interprete''  in quanto rende in maniera efficace il suo utilizzo nell'interpretazione delle operazioni di una free monad.}:
+Prima di poter definire come interpretare un programma monadico è necessario definire come interpretarne le singole istruzioni; perciò si introduce il concetto di interprete\footnote{Questo concetto è noto in letteratura come trasformazione naturale\cite{cit:monad-transformers-and-modular-algebraic-effects}. Nella trattazione si preferisce utilizzare il termine ``interprete''  in quanto rende in maniera efficace il suo utilizzo nell'interpretazione delle operazioni di una \term{free monad}.}:
 \scalaFromFile{4}{7}{monads/free/lib/Interpreter.scala}
 Un interprete, dato un generico insieme di istruzioni \lstinline{F} permette di trasformare -- tramite il metodo \lstinline{apply} -- una qualunque istruzione di tipo \lstinline{F[A]} in un valore \lstinline{G[A]}. Il tipo \lstinline{G[_]} è generico e potrebbe per esempio essere un secondo insieme di istruzioni o una monade.
 
-Per esempio, è possibile definire un interprete che trasforma le istruzioni dello \lstinline{StateDSL} in azioni concrete all'interno del transformer \lstinline{StateT}:
+Per esempio, è possibile definire un interprete che trasforma le istruzioni dello \lstinline{StateDSL} in azioni concrete all'interno del \term{transformer} \lstinline{StateT}:
 \scalaFromFile{25}{30}{monads/free/State.scala}
-L'interprete si limita a tradurre le istruzioni di \lstinline{Get} e \lstinline{Set} nelle corrispondenti operazioni del transformer.
+L'interprete si limita a tradurre le istruzioni di \lstinline{Get} e \lstinline{Set} nelle corrispondenti operazioni del \term{transformer}.
 
 \subsection{Interpretazione di un'intero programma}
 È possibile sfruttare gli interpreti che traducono singole istruzioni per interpretare interi programmi definiti all'interno della monade \lstinline{Program}.
@@ -47,7 +47,7 @@ extension [I[_], A](program: Program[I, A])
         program.andThen(x => g(x).andThen(f)).next
 \end{lstlisting}
 
-I diversi casi del pattern matching coprono tutte le possibili conformazioni di un programma:
+I diversi casi del \term{pattern matching} coprono tutte le possibili conformazioni di un programma:
 \begin{itemize}
   \item Se il programma restituisce un valore questo viene mappato nella vista corrispondente
   \item Se il programma esegue un'istruzione questa viene inserita nella vista come prossima istruzione e la continuazione si limita a restituire il valore dell'istruzione
@@ -67,38 +67,38 @@ La funzione ottiene la prima istruzione da eseguire e nel caso in cui sia una \l
 \label{sec:poor-man}
 È possibile sfruttare la possibilità di ispezionare l'AST di un programma descritto in questo modo per realizzare interpreti più complessi.
 
-Questa sezione riprende l'eccellente esempio mostrato in~\cite{cit:a-poor-mans-concurrency-monad} e illustra come sia possibile implementare una \emph{``poor man's concurrency monad''} utilizzando la free monad appena mostrata.
+Questa sezione riprende l'eccellente esempio mostrato in~\cite{cit:a-poor-mans-concurrency-monad} e illustra come sia possibile implementare una \emph{``poor man's concurrency monad''} utilizzando la \term{free monad} appena mostrata.
 In particolare, la possibilità di accedere alla continuazione che determina come deve procedere la computazione rende piuttosto semplice l'implementazione di una forma di concorrenza in \emph{user space}.
 
 Il linguaggio preso in considerazione è il seguente:
 \scalaFromFile{9}{15}{monads/free/PoorManConcurrency.scala}
-Le operazioni mostrate sono sufficienti per descrivere un meccanismo di \emph{multithreading} cooperativo:
+Le operazioni mostrate sono sufficienti per descrivere un meccanismo di \term{multithreading} cooperativo:
 \begin{itemize}
-  \item \lstinline{Fork} permette di creare un nuovo thread che esegue il programma specificato
-  \item \lstinline{YieldControl} permette a un thread di segnalare esplicitamente allo scheduler di voler mettere in pausa la propria esecuzione lasciando il controllo ad altri thread
-  \item \lstinline{Stop} permette a un thread di terminare prematuramente la propria esecuzione
+  \item \lstinline{Fork} permette di creare un nuovo \term{thread} che esegue il programma specificato
+  \item \lstinline{YieldControl} permette a un \term{thread} di segnalare esplicitamente allo \term{scheduler} di voler mettere in pausa la propria esecuzione lasciando il controllo ad altri \term{thread}
+  \item \lstinline{Stop} permette a un \term{thread} di terminare prematuramente la propria esecuzione
   \item \lstinline{Perform} viene utilizzato come meccanismo per eseguire una qualunque azione con side effect; la funzione che produce il valore di tipo \lstinline{A} può eseguire side effect arbitrari
 \end{itemize}
 
-È possibile definire alcuni \emph{smart constructor} per permettere di costruire più semplicemente un programma concorrente:
+È possibile definire alcuni \term{smart constructor} per permettere di costruire più semplicemente un programma concorrente:
 \scalaFromFile{17}{22}{monads/free/PoorManConcurrency.scala}
 Un esempio di programma ottenuto a partire da queste operazioni di base potrebbe essere il seguente:
 \scalaFromFile{59}{68}{monads/free/PoorManConcurrency.scala}
 
 Per poter stabilire l'effettiva semantica delle operazioni ed eseguire il programma è necessario definire una funzione che lo interpreti.
 
-In questo esempio il comportamento desiderato è quello di realizzare uno scheduler che esegua i thread in maniera cooperativa: un thread esegue le proprie operazioni ininterrotto fino a quando non termina o rende esplicito il voler cedere il controllo tramite una chiamata a \lstinline{yield}. Solo in seguito a una chiamata a \lstinline{yield} lo scheduler stabilirà il nuovo thread da mandare in esecuzione mettendo in pausa l'esecuzione di quello attualmente attivo.
-Il metodo per eseguire un programma secondo questa politica di scheduling è il seguente:
+In questo esempio il comportamento desiderato è quello di realizzare uno \term{scheduler} che esegua i \term{thread} in maniera cooperativa: un \term{thread} esegue le proprie operazioni ininterrotto fino a quando non termina o rende esplicito il voler cedere il controllo tramite una chiamata a \lstinline{yield}. Solo in seguito a una chiamata a \lstinline{yield} lo \term{scheduler} stabilirà il nuovo \term{thread} da mandare in esecuzione mettendo in pausa l'esecuzione di quello attualmente attivo.
+Il metodo per eseguire un programma secondo questa politica di \term{scheduling} è il seguente:
 \scalaFromFile{25}{33}{monads/free/PoorManConcurrency.scala}
-Per semplificare l'implementazione dello scheduler, questo utilizza una coda in cui si trovano i thread da eseguire e nel momento in cui avviene lo \lstinline{yield} il thread corrente viene messo in fondo alla coda e viene dato il controllo al thread in testa alla coda.
+Per semplificare l'implementazione dello \term{scheduler}, questo utilizza una coda in cui si trovano i \term{thread} da eseguire e nel momento in cui avviene lo \lstinline{yield} il \term{thread} corrente viene messo in fondo alla coda e viene dato il controllo a quello in testa alla coda.
 
 L'intera logica di esecuzione delle istruzioni è codificata nella funzione mostrata al \Cref{lst:run-instructions}.
 A seconda dell'istruzione che viene eseguita, il comportamento è il seguente:
 \begin{itemize}
-  \item \lstinline{Perform}: viene eseguita l'azione incapsulata nel costruttore e il risultato ottenuto è dato come input alla continuazione per ottenere il programma che contiene la continuazione del thread corrente. Questo programma viene inserito in testa alla coda dei thread da eseguire in quanto la semantica scelta stabilisce che un thread possa essere interrotto solo se esegue esplicitamente \lstinline{yield}. Si noti come sarebbe possibile modificare questa politica interrompendo con \emph{preemption} un thread ad ogni operazione: sarebbe sufficiente inserire il programma che rappresenta la continuazione in fondo alla coda così da dare precedenza ad altri thread
-  \item \lstinline{Stop}: interrompe l'esecuzione del thread. In questo caso non viene aggiunta alcuna continuazione alla lista di thread da eseguire. Si noti inoltre un aspetto interessante: poiché \lstinline{Stop} ha tipo \lstinline{ConcurrentDSL[Nothing]}, in questo ramo del pattern matching la continuazione necessiterebbe di un valore di tipo \lstinline{Nothing} per poter generare il programma che rappresenta la continuazione del thread corrente. Poiché non c'è modo di produrre un valore concreto di tipo \lstinline{Nothing}\footnote{Tecnicamente sarebbe possibile creare un valore di tipo \lstinline{Nothing} (per esempio \lstinline{???} o una qualunque eccezione) ma questo comporterebbe una terminazione anomala del programma o la sua divergenza senza poter eseguire in ogni caso la continuazione} è impossibile ottenere la continuazione e l'unica operazione sensata è quella di terminare l'esecuzione del thread
-  \item \lstinline{YieldControl}: in questo caso la continuazione del thread corrente viene messa in fondo alla lista dei thread
-  \item \lstinline{Fork}: è l'unica operazione che permette di accrescere il numero di programmi contenuti nella lista dei thread da eseguire. La continuazione del thread corrente viene messa in cima alla lista in modo che possa continuare l'esecuzione mentre il thread di cui è stato effettuato il fork viene messo in fondo
+  \item \lstinline{Perform}: viene eseguita l'azione incapsulata nel costruttore e il risultato ottenuto è dato come input alla continuazione per ottenere il programma che contiene la continuazione del \term{thread} corrente. Questo programma viene inserito in testa alla coda dei \term{thread} da eseguire in quanto la semantica scelta stabilisce che un \term{thread} possa essere interrotto solo se esegue esplicitamente \lstinline{yield}. Si noti come sarebbe possibile modificare questa politica interrompendo con \term{preemption} un \term{thread} ad ogni operazione: sarebbe sufficiente inserire il programma che rappresenta la continuazione in fondo alla coda così da dare precedenza ad altri \term{thread}
+  \item \lstinline{Stop}: interrompe l'esecuzione del \term{thread}. In questo caso non viene aggiunta alcuna continuazione alla lista di \term{thread} da eseguire. Si noti inoltre un aspetto interessante: poiché \lstinline{Stop} ha tipo \lstinline{ConcurrentDSL[Nothing]}, in questo ramo del \term{pattern matching} la continuazione necessiterebbe di un valore di tipo \lstinline{Nothing} per poter generare il programma che rappresenta la continuazione del \term{thread} corrente. Poiché non c'è modo di produrre un valore concreto di tipo \lstinline{Nothing}\footnote{Tecnicamente sarebbe possibile creare un valore di tipo \lstinline{Nothing} (per esempio \lstinline{???} o una qualunque eccezione) ma questo comporterebbe una terminazione anomala del programma o la sua divergenza senza poter eseguire in ogni caso la continuazione} è impossibile ottenere la continuazione e l'unica operazione sensata è quella di terminare l'esecuzione del \term{thread}
+  \item \lstinline{YieldControl}: in questo caso la continuazione del \term{thread} corrente viene messa in fondo alla lista dei \term{thread}
+  \item \lstinline{Fork}: è l'unica operazione che permette di accrescere il numero di programmi contenuti nella lista dei \term{thread} da eseguire. La continuazione del \term{thread} corrente viene messa in cima alla lista in modo che possa continuare l'esecuzione mentre il \term{thread} di cui è stato effettuato il \term{fork} viene messo in fondo
 \end{itemize}
 
 \begin{figure}[htp]
@@ -126,8 +126,3 @@ A seconda dell'istruzione che viene eseguita, il comportamento è il seguente:
               runThreads(newThreads)
   \end{lstlisting}
 \end{figure}
-
-
-
-
-

@@ -1,10 +1,10 @@
 \section{Implementazione di una Free Monad}
 
-L'AST descritto tramite una free monad ha l'obiettivo di catturare la struttura sintattica di una computazione monadica~\cite{cit:programming-monads-operationally-with-unimo}.
+L'AST descritto tramite una \term{free monad} ha l'obiettivo di catturare la struttura sintattica di una computazione monadica~\cite{cit:programming-monads-operationally-with-unimo}.
 Come già descritto in precedenza, l'interfaccia delle monadi permette di descrivere una computazione come una sequenza di passi successivi che, una volta terminati, restituiscono un valore.
 
-In seguito verrà formalizzata tale definizione arrivando in maniera graduale alla definizione di una free monad.
-L'encoding adottato è quello delle cosiddette \emph{Free Operational Monads}~\cite{cit:programming-monads-operationally-with-unimo}; tuttavia esistono svariate tecniche per ottenere risultati analoghi~\cite{cit:data-types-a-la-carte,cit:freer-monads-more-extensible-effects,cit:fusion-for-free}.
+In seguito verrà formalizzata tale definizione arrivando in maniera graduale alla definizione di una \term{free monad}.
+L'\term{encoding} adottato è quello delle cosiddette \term{Free Operational Monad}~\cite{cit:programming-monads-operationally-with-unimo}; tuttavia esistono svariate tecniche per ottenere risultati analoghi~\cite{cit:data-types-a-la-carte,cit:freer-monads-more-extensible-effects,cit:fusion-for-free}.
 
 \subsection{Descrizione astratta di un programma monadico}
 \subsubsection{Istruzioni di un programma monadico}
@@ -28,7 +28,7 @@ Un valore di tipo \lstinline{StateDSL[S, A]} rappresenta una singola istruzione 
 \end{itemize}
 
 \subsubsection{Esecuzione di istruzioni in un programma monadico}
-Come descritto all'inizio del capitolo una free monad cattura in una struttura dati la struttura sintattica di un programma monadico.
+Come descritto all'inizio del capitolo una \term{free monad} cattura in una struttura dati la struttura sintattica di un programma monadico.
 Un tipo di dato che rappresenti l'AST di un programma monadico deve quindi permettere di rappresentare l'esecuzione di una singola istruzione.
 
 Per disaccoppiare l'AST dallo specifico tipo di istruzioni eseguite un programma verrà definito in maniera generica rispetto alle istruzioni che può eseguire:
@@ -37,7 +37,7 @@ enum Program[I[_], A]: ...
 \end{lstlisting}
 Il tipo generico \lstinline{I} rappresenta il set di istruzioni che possono essere eseguite dal programma, mentre \lstinline{A} rappresenta il tipo del valore di ritorno ottenuto dalla sua esecuzione. Per esempio, un valore di tipo \lstinline{Program[StateDSL[Int, _], String]} rappresenterà un programma monadico che può eseguire operazioni su uno stato di tipo \lstinline{Int} e restituisce un valore di tipo \lstinline{String}.
 
-Per poter costruire un programma che esegue una singola istruzione può essere definito un caso ad hoc dell'enumerazione e un corrispondente \emph{smart constructor}:
+Per poter costruire un programma che esegue una singola istruzione può essere definito un caso ad hoc dell'enumerazione e un corrispondente \term{smart constructor}:
 \begin{lstlisting}[language=scala3]
 enum Program[I[_], A]:
   case Instruction[I[_], A](instruction: I[A])
@@ -84,7 +84,7 @@ Anche l'AST di \lstinline{Program} deve esprimere questo concetto per poter catt
 \scalaFromFile{9}{16}{monads/free/lib/Free.scala}
 Il costruttore \lstinline{Then} permette di catturare la messa in sequenza di operazioni monadiche: il primo argomento è il primo programma da eseguire che produrrà un valore di tipo \lstinline{A}; il secondo argomento è una continuazione che, preso il valore prodotto dal primo programma, restituisce un secondo programma da eseguire.
 
-È possibile definire un \emph{extension method} per rendere più facile la costruzione di programmi complessi:
+È possibile definire un \term{extension method} per rendere più facile la costruzione di programmi complessi:
 \begin{lstlisting}[language=scala3]
 extension [I[_], A](program: Program[I, A])
   def andThen[B](continuation: A => Program[I, B]) =
@@ -104,7 +104,7 @@ def program[S](f: S => S): Program[StateDSL[S, _], String] =
 
 È possibile osservare come \lstinline{Program} rispetti per costruzione l'interfaccia delle monadi, indipendentemente dal tipo di istruzioni che utilizza: i costruttori \lstinline{Result} e \lstinline{Then} equivalgono rispettivamente alle operazioni \lstinline{pure} e \lstinline{flatMap}:
 \scalaFromFile{36}{41}{monads/free/lib/Free.scala}
-In questo modo è possibile definire programmi nella monade \lstinline{Program} sfruttando lo zucchero sintattico della \emph{for comprehension}; l'esempio precedente può essere riscritto in maniera più chiara come:
+In questo modo è possibile definire programmi nella monade \lstinline{Program} sfruttando lo zucchero sintattico della \term{for comprehension}; l'esempio precedente può essere riscritto in maniera più chiara come:
 \begin{lstlisting}[language=scala3]
 def program[S](f: S => S): Program[StateDSL[S, _], String] =
   for

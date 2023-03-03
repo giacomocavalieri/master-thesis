@@ -1,5 +1,5 @@
 \section{Free monad come effect system}
-Il meccanismo delle free monad introdotto in questo capitolo è sicuramente un esempio di effect system in quanto permette di descrivere e interpretare effetti arbitrati. Inoltre, è stato mostrato come sia possibile modellare separatamente e comporre fra loro DSL che descrivono effetti pertinenti a domini differenti.
+Il meccanismo delle \term{free monad} introdotto in questo capitolo è sicuramente un esempio di \term{effect system} in quanto permette di descrivere e interpretare effetti arbitrati. Inoltre, è stato mostrato come sia possibile modellare separatamente e comporre fra loro DSL che descrivono effetti pertinenti a domini differenti.
 
 I programmi realizzati tramite l'uso di questo meccanismo non sono altro che strutture dati che descrivono in maniera astratta quali effetti devono avere luogo. L'interpretazione degli effetti avviene in un secondo momento e può assegnare un significato alle diverse istruzioni in base alle necessità del contesto in cui si sta lavorando.
 
@@ -7,30 +7,30 @@ I programmi realizzati tramite l'uso di questo meccanismo non sono altro che str
 \label{sec:free-effetti-arbitrari}
 Anche in questo caso, così come per l'approccio MTL, è possibile definire qualunque tipo di effetto sia ritenuto rilevante ai fini della computazione; la scelta del livello di dettaglio con cui questi vengono descritti è lasciato a discrezione dell'autore del DSL.
 
-In seguito viene ripreso l'esempio mostrato per MTL nella \Cref{sec:mtl-effetti-arbitrari} reimplementandolo in maniera analoga nello stile delle free monad. Gli effetti da modellare sono il recupero di un utente, il salvataggio e la cancellazione:
+In seguito viene ripreso l'esempio mostrato per MTL nella \Cref{sec:mtl-effetti-arbitrari} reimplementandolo in maniera analoga nello stile delle \term{free monad}. Gli effetti da modellare sono il recupero di un utente, il salvataggio e la cancellazione:
 \scalaFromFile{9}{12}{monads/free/UserStore.scala}
-Il DSL è analogo a quanto definito per MTL; una differenza importante sta nella necessità, nel caso delle free monad, di dover definire dei costruttori per ogni operazione del DSL:
+Il DSL è analogo a quanto definito per MTL; una differenza importante sta nella necessità, nel caso delle \term{free monad}, di dover definire dei costruttori per ogni operazione del DSL:
 \scalaFromFile{14}{22}{monads/free/UserStore.scala}
 
 Come già mostrato in precedenza, è possibile codificare programmi complessi in termini delle operazioni di base. La logica applicativa sarà basata sull'interfaccia astratta definita dall'insieme di operazioni che compongono il DSL:
 \scalaFromFile{33}{37}{monads/free/UserStore.scala}
-L'implementazione è essenzialmente identica a quella mostrata per l'esempio di MTL; l'unica sostanziale differenza sta nel tipo di ritorno delle funzioni. Da un lato MTL richiede di definire una generica monade \lstinline{M} all'interno della quale sarà incapsulato il valore di ritorno; l'approccio delle free monad, invece, restituisce un valore di tipo \lstinline{Program} parametrizzato su un generico DSL \lstinline{I}.
+L'implementazione è essenzialmente identica a quella mostrata per l'esempio di MTL; l'unica sostanziale differenza sta nel tipo di ritorno delle funzioni. Da un lato MTL richiede di definire una generica monade \lstinline{M} all'interno della quale sarà incapsulato il valore di ritorno; l'approccio delle \term{free monad}, invece, restituisce un valore di tipo \lstinline{Program} parametrizzato su un generico DSL \lstinline{I}.
 L'implementazione di \lstinline{Program} fa si che questo sia automaticamente una monade; la firma del metodo non dovrà quindi occuparsi di specificare alcun vincolo di questo tipo.
 
 Nell'approccio MTL è necessario indicare esplicitamente il rispetto dell'interfaccia di monade per poter mettere in sequenza le diverse operazioni tramite l'uso di \lstinline{flatMap}. In questo caso, invece, una volta che un'operazione è stata incapsulata all'interno di \lstinline{Program} il programmatore guadagna automaticamente la possibilità di combinarla in sequenza con altri programmi.
 
 \subsubsection{Interpretazione e testing dei programmi}
-Potendo definire interpreti arbitrari per le istruzioni di un programma è piuttosto facile realizzare dei \emph{mock} che permettono di testare effetti complessi senza dover complicare significativamente il processo di testing della logica applicativa.
+Potendo definire interpreti arbitrari per le istruzioni di un programma è piuttosto facile realizzare dei \term{mock} che permettono di testare effetti complessi senza dover complicare significativamente il processo di test della logica applicativa.
 
 A differenza dell'approccio MTL, l'interpretazione può essere definita come un'analisi della sequenza di istruzioni del programma.
 In questo caso, quindi, non è necessario introdurre esplicitamente il concetto di monade che rimane un dettaglio implementativo sfruttato da \lstinline{Program}.
 
-Nel caso di MTL, poiché il vincolo di monade è reso esplicito all'interno della firma del metodo, per implementare un interprete è necessario avere un tipo di dato che rispetti l'istanza di monade introducendo la complessità di dover lavorare esplicitamente con i monad transformer.
+Nel caso di MTL, poiché il vincolo di monade è reso esplicito all'interno della firma del metodo, per implementare un interprete è necessario avere un tipo di dato che rispetti l'istanza di monade introducendo la complessità di dover lavorare esplicitamente con i \term{monad transformer}.
 In questo caso, invece, l'interpretazione può essere implementata come una semplice funzione ricorsiva che di passo in passo assegna semantica all'istruzione corrente e interpreta la continuazione.
 
 Si consideri per esempio la funzione \lstinline{updateAge} già mostrata nel caso di MTL:
 \scalaFromFile{47}{52}{monads/free/UserStore.scala}
-Al \Cref{lst:mock-free} è possibile osservare l'implementazione di un interprete che implementa il \emph{mock} di un database in memoria e testa la corretta implementazione della logica applicativa.
+Al \Cref{lst:mock-free} è possibile osservare l'implementazione di un interprete che implementa il \term{mock} di un database in memoria e testa la corretta implementazione della logica applicativa.
 
 \begin{figure}
   \begin{lstlisting}[language=scala3, label={lst:mock-free}, caption={Esempio di un interprete di test per un programma che usa lo il DSL per l'accesso a un database di utenti. In questo caso l'uso di una mappa degli utenti permette di testare semplicemente la logica applicativa delle operazioni senza dover ricorrere a un vero e proprio database}]
