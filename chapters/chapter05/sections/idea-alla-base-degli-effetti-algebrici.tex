@@ -3,7 +3,7 @@
 Nella teoria elaborata da Plotkin e Power, un effetto viene modellato tramite un insieme di operazioni e una serie di equazioni che ne descrivono le proprietà~\cite{cit:handling-algebraic-effects,cit:computational-effects-and-operations-an-overview}.
 
 Le operazioni di un effetto determinano le modalità con cui questo può verificarsi; possono quindi essere considerate come dei costruttori di un effetto~\cite{cit:algebraic-operations-and-generic-effects}.
-Per poter interpretare un effetto e assegnarvi semantica vengono invece utilizzati degli appositi \emph{handler}, o distruttori. Questi specificano come l'esecuzione del programma deve proseguire al verificarsi di ciascuna operazione di uno specifico effetto.
+Per poter interpretare un effetto e assegnarvi semantica vengono invece utilizzati degli appositi \term{handler}, o distruttori. Questi specificano come l'esecuzione del programma deve proseguire al verificarsi di ciascuna operazione di uno specifico effetto.
 
 \subsection{Modellazione degli effetti}
 \subsubsection{Fallimento di una computazione}
@@ -16,14 +16,14 @@ effect failure
 \end{lstlisting}
 La dichiarazione permette di definire un effetto chiamato \lstinline{failure} con una sola operazione \lstinline{fail()}. Questa operazione non prende in input alcun valore e restituisce un valore di un qualsiasi tipo. In automatico sarà generata una funzione \lstinline{fail} con tipo \lstinline{forall<a> () -> failure a}.
 
-Grazie all'inferenza dell'effect system, una funzione che fa uso di \lstinline{fail} nel proprio corpo avrà automaticamente fra i propri effetti quello del fallimento:
+Grazie all'inferenza dell'\term{effect system}, una funzione che fa uso di \lstinline{fail} nel proprio corpo avrà automaticamente fra i propri effetti quello del fallimento:
 \begin{lstlisting}[language=koka]
 fun div(n, m)
   match m
     0 -> fail()
     _ -> n / m
 \end{lstlisting}
-Il tipo inferito per \lstinline{div} sarà \lstinline{(n : int, m : int) -> failure int}. Semplicemente osservando il tipo della funzione è possibile capire che questa potrebbe fallire; l'effect system fa in modo che non sia possibile ignorare questo aspetto.
+Il tipo inferito per \lstinline{div} sarà \lstinline{(n : int, m : int) -> failure int}. Semplicemente osservando il tipo della funzione è possibile capire che questa potrebbe fallire; l'\term{effect system} fa in modo che non sia possibile ignorare questo aspetto.
 
 \subsubsection{Lettura e scrittura di uno stato mutabile}
 Seguendo la stessa strategia evidenziata per l'effetto del fallimento è possibile definire un effetto per modellare la presenza di uno stato mutabile:
@@ -56,16 +56,16 @@ Per questo motivo il tipo di \lstinline{update} combina sia l'effetto dello stat
 \subsection{Interpretazione degli effetti}
 Fino a questo momento gli effetti sono stati descritti in maniera astratta definendo una serie di operazioni; queste definiscono un'interfaccia attraverso la quale è possibile generare l'effetto desiderato.
 
-Per poter dare una semantica alle operazioni di un effetto è necessario definire un \emph{handler}. Gli handler, detti anche distruttori, sono un meccanismo duale rispetto alle operazioni: mentre l'invocazione di quest'ultime arricchisce il tipo di una funzione aggiungendovi effetti, gli handler permettono di ``scaricare'' gli effetti dal tipo di una funzione.
+Per poter dare una semantica alle operazioni di un effetto è necessario definire un \term{handler}. Gli handler, detti anche distruttori, sono un meccanismo duale rispetto alle operazioni: mentre l'invocazione di quest'ultime arricchisce il tipo di una funzione aggiungendovi effetti, gli \term{handler} permettono di ``scaricare'' gli effetti dal tipo di una funzione.
 
-In generale, un handler in grado di dare semantica alle operazioni dell'effetto \lstinline{e1} sarà una funzione che prende in input una computazione con tale effetto e lo rimuove dalla lista dei suoi effetti.
+In generale, un \term{handler} in grado di dare semantica alle operazioni dell'effetto \lstinline{e1} sarà una funzione che prende in input una computazione con tale effetto e lo rimuove dalla lista dei suoi effetti.
 
 \subsubsection{Interpretazione degli effetti come eccezioni}
-Per poter definire un handler in Koka viene utilizzata la parola chiave \lstinline{handle} a cui viene passata come argomento la computazione della quale devono essere gestiti gli effetti.
+Per poter definire un \term{handler} in Koka viene utilizzata la parola chiave \lstinline{handle} a cui viene passata come argomento la computazione della quale devono essere gestiti gli effetti.
 
-Il corpo di un handler viene definito tramite pattern matching sulle possibili operazioni dell'effetto che si sta interpretando.
+Il corpo di un \term{handler} viene definito tramite \term{pattern matching} sulle possibili operazioni dell'effetto che si sta interpretando.
 
-Operativamente, quando viene invocata un'operazione il risultato è simile al sollevamento di un'eccezione in un linguaggio come Java o Scala: il normale flusso di controllo viene interrotto e il controllo passa all'handler più vicino in grado di gestire lo specifico effetto.
+Operativamente, quando viene invocata un'operazione il risultato è simile al sollevamento di un'eccezione in un linguaggio come Java o Scala: il normale flusso di controllo viene interrotto e il controllo passa all'\term{handler} più vicino in grado di gestire lo specifico effetto.
 
 Per esempio, considerando la funzione \lstinline{div} mostrata in precedenza, una possibile gestione del fallimento potrebbe essere la seguente:
 \begin{lstlisting}[language=koka]
@@ -74,7 +74,7 @@ fun main()
     ctl fail() -> println("Exception: divided by zero")
 \end{lstlisting}
 
-Nel caso in cui venga chiamata l'operazione \lstinline{fail} il controllo della computazione sarà interrotto e l'handler eseguirà la porzione di codice associata all'operazione \lstinline{fail}.
+Nel caso in cui venga chiamata l'operazione \lstinline{fail} il controllo della computazione sarà interrotto e l'\term{handler} eseguirà la porzione di codice associata all'operazione \lstinline{fail}.
 
 In questo caso un blocco \lstinline|handle(...){...}| può essere assimilato al blocco \lstinline{try-catch} di linguaggi che supportano le eccezioni.
 Per esempio, si potrebbe gestire il fallimento restituendo un valore di default in caso di eccezione:
@@ -87,10 +87,10 @@ Il tipo di \lstinline{default} è \lstinline{forall<a,e> (value : a, computation
 \begin{itemize}
   \item La computazione restituisce un valore di tipo \lstinline{a} e potrebbe avere, fra gli altri effetti, anche quello del fallimento
   \item \lstinline{value} è un valore di default con lo stesso tipo del valore di ritorno di \lstinline{computation} che viene restituito in caso di fallimento
-  \item Il risultato non ha più l'effetto del fallimento fra i propri effetti in quanto tutte le sue operazioni (in questo caso solo \lstinline{fail}) sono state gestite nell'handler. Rimangono comunque i possibili altri effetti \lstinline{e} della computazione in quanto l'handler gestisce solo le operazioni del fallimento
+  \item Il risultato non ha più l'effetto del fallimento fra i propri effetti in quanto tutte le sue operazioni (in questo caso solo \lstinline{fail}) sono state gestite nell'\term{handler}. Rimangono comunque i possibili altri effetti \lstinline{e} della computazione in quanto l'handler gestisce solo le operazioni del fallimento
 \end{itemize}
 
-In caso si verifichi l'effetto del fallimento la computazione viene interrotta e l'handler restituisce immediatamente il valore di default; in caso contrario il risultato sarà quello restituito normalmente dalla computazione:
+In caso si verifichi l'effetto del fallimento la computazione viene interrotta e l'\term{handler} restituisce immediatamente il valore di default; in caso contrario il risultato sarà quello restituito normalmente dalla computazione:
 \begin{lstlisting}[language=koka]
 fun main()
   default(-1, { div(10, 0) }).println // -1
@@ -98,16 +98,16 @@ fun main()
 \end{lstlisting}
 
 \subsubsection{Cattura del risultato di una computazione}
-Un handler può anche gestire esplicitamente il caso in cui una computazione termini normalmente senza chiamare alcuna operazione.
+Un \term{handler} può anche gestire esplicitamente il caso in cui una computazione termini normalmente senza chiamare alcuna operazione.
 
-In Koka questo viene fatto aggiungendo un ramo al pattern matching:
+In Koka questo viene fatto aggiungendo un ramo al \term{pattern matching}:
 \begin{lstlisting}[language=koka]
 fun to-option(computation)
   handle(computation)
     return(value) -> Some(value)
     ctl fail()    -> Empty
 \end{lstlisting}
-Il ramo \lstinline{return(value)} viene utilizzato se la computazione gestita dall'handler termina senza chiamare l'operazione di \lstinline{fail}; in questo caso alla variabile \lstinline{value} viene assegnato il valore di ritorno della computazione.
+Il ramo \lstinline{return(value)} viene utilizzato se la computazione gestita dall'\term{handler} termina senza chiamare l'operazione di \lstinline{fail}; in questo caso alla variabile \lstinline{value} viene assegnato il valore di ritorno della computazione.
 
 La funzione quindi permette di rimuovere l'effetto del fallimento di una funzione trasformando il suo valore di ritorno in un valore opzionale:
 \begin{lstlisting}[language=koka]
@@ -116,7 +116,7 @@ fun main()
   to-option { div(10, 2) } // Some(5)
 \end{lstlisting}
 
-Se non viene specificato il caso \lstinline{return} -- come negli esempi mostrati in precedenza -- allora l'handler restituisce semplicemente il valore della computazione.
+Se non viene specificato il caso \lstinline{return} -- come negli esempi mostrati in precedenza -- allora l'\term{handler} restituisce semplicemente il valore della computazione.
 
 \subsubsection{Definizione di strutture di controllo}
 Grazie a questo meccanismo è possibile definire funzioni più complicate.
@@ -132,7 +132,7 @@ fun finalizer(fin, computation)
     ctl fail() -> ()
   fin()
 \end{lstlisting}
-La computazione viene gestita dall'handler il quale ignora il valore di ritorno e, in caso di eccezione, restituisce \lstinline{()}. In entrambi i casi, dopo la gestione della computazione viene eseguita la funzione di finalizzazione:
+La computazione viene gestita dall'\term{handler} il quale ignora il valore di ritorno e, in caso di eccezione, restituisce \lstinline{()}. In entrambi i casi, dopo la gestione della computazione viene eseguita la funzione di finalizzazione:
 \begin{lstlisting}[language=koka]
 fun main()
   with finalizer { print("Finalizer") }
@@ -143,9 +143,9 @@ fun main()
 In questo caso l'output sarà \lstinline{"Start,5,Finalizer"} in quanto l'operazione di divisione per 0 comporta il fallimento della computazione.
 
 \subsection{Interpretazione degli effetti come eccezioni ripristinabili}
-Si consideri adesso l'esempio dello stato: un handler per l'effetto \lstinline{state} dovrà stabilire come dare semantica alle operazioni di \lstinline{get} e \lstinline{set}.
+Si consideri adesso l'esempio dello stato: un \term{handler} per l'effetto \lstinline{state} dovrà stabilire come dare semantica alle operazioni di \lstinline{get} e \lstinline{set}.
 
-In questo però pensare agli effetti come semplici eccezioni risulta essere limitante. Per capire il problema, si osservi la seguente computazione che ricorre all'effetto dello stato:
+In questo caso, pensare agli effetti come semplici eccezioni risulta essere limitante. Per capire il problema, si osservi la seguente computazione che ricorre all'effetto dello stato:
 \begin{lstlisting}[language=koka]
 fun increment-counter()
   val counter: int = get()
@@ -157,7 +157,7 @@ Se la chiamata all'operazione \lstinline{get} si limitasse a interrompere l'esec
 In realtà, gli effetti sono un meccanismo più generale delle semplici eccezioni. Infatti, non solo possono permettere di interrompere il normale flusso d'esecuzione del codice (come mostrato negli esempi per il side effect del fallimento) ma possono anche ripristinare il flusso d'esecuzione nel punto in cui è stata invocata un'operazione.
 
 \subsubsection{Ripristino del flusso di controllo}
-Quando viene chiamata l'operazione di un effetto e il flusso di controllo viene passato all'handler, questo ha la possibilità di far riprendere la normale esecuzione della funzione utilizzando la funzione \lstinline{resume}.
+Quando viene chiamata l'operazione di un effetto e il flusso di controllo viene passato all'\term{handler}, questo ha la possibilità di far riprendere la normale esecuzione della funzione utilizzando la funzione \lstinline{resume}.
 
 Il tipo della funzione \lstinline{resume} cambierà in base all'effetto invocato. Si consideri per esempio l'effetto di leggere valori di configurazione:
 \begin{lstlisting}[language=koka]
@@ -172,16 +172,16 @@ fun print-config()
   println("Int is: " ++ n.show)
 \end{lstlisting}
 
-Quindi, quando si verifica l'effetto \lstinline{get-name}, per poter riprendere la normale computazione è necessario fornire in un qualche modo una stringa che è il valore di ritorno atteso dalla funzione \lstinline{get-name}. In maniera analoga, quando si verifica l'effetto \lstinline{get-int} sarà necessario fornire un valore intero per poter far riprendere la computazione.
+Quindi, quando si verifica l'effetto \lstinline{get-name}, per poter riprendere la normale computazione è necessario fornire in un qualche modo una stringa che sarà il valore di ritorno atteso dalla funzione \lstinline{get-name}. In maniera analoga, quando si verifica l'effetto \lstinline{get-int} sarà necessario fornire un valore intero per poter far riprendere la computazione.
 
-Un handler per questo effetto potrebbe, per esempio, fornire sempre gli stessi valori:
+Un \term{handler} per questo effetto potrebbe, per esempio, fornire sempre gli stessi valori:
 \begin{lstlisting}[language=koka]
 fun constant-config(computation)
   handle(computation)
     ctl get-name() -> resume("Koka")
     ctl get-int()  -> resume(11)
 \end{lstlisting}
-A seconda del ramo del pattern matching sarà presente in scope una funzione \lstinline{resume} con tipo differente: nel primo caso richiede una stringa mentre nel secondo un valore intero.
+A seconda del ramo del \term{pattern matching} sarà presente in scope una funzione \lstinline{resume} con tipo differente: nel primo caso richiede una stringa mentre nel secondo un valore intero.
 L'effetto in entrambi i casi è quello di riprendere il normale flusso di esecuzione dando come valore di ritorno dell'operazione il valore passato alla funzione \lstinline{resume}:
 \begin{lstlisting}[language=koka]
 fun main()
@@ -193,7 +193,7 @@ fun main()
 
 \subsubsection{Handler per lo stato mutabile}
 Tornando all'esempio dello stato mutabile, è possibile osservare come, per riprendere la computazione in seguito ad una chiamata a \lstinline{get}, sia necessario fornire un valore del tipo dello stato.
-Un possibile handler potrebbe essere il seguente:
+Un possibile \term{handler} potrebbe essere il seguente:
 \begin{lstlisting}[language=koka]
 fun initial-state(initial-state, computation)
   var state := initial-state
@@ -208,10 +208,10 @@ fun initial-state(initial-state, computation)
 La funzione utilizza internamente una variabile per tenere traccia dello stato attuale: quando viene chiamato \lstinline{get} l'esecuzione viene ripresa con il valore attuale dello stato; invece alla chiamata di \lstinline{set} si modifica lo stato attuale e poi viene fatta ripartire la computazione fornendo alla funzione \lstinline{resume} il valore \lstinline{()} -- vale a dire il tipo di ritorno atteso dalla funzione \lstinline{set}.
 
 \subsubsection{Uso delle variabili in Koka}
-È possibile osservare come, per poter implementare l'handler per lo stato mutabile, si sia fatto uso di una variabile.
+È possibile osservare come, per poter implementare l'\term{handler} per lo stato mutabile, si sia fatto uso di una variabile.
 Questo potrebbe apparire strano data la natura funzionale di Koka, tuttavia il linguaggio introduce la possibilità di utilizzare variabili con alcune limitazioni che permettono di mantenere il codice puro.
 
-La scelta di Koka è quella di permettere la definizione di variabili all'interno del corpo di una funzione a condizione che queste non escano dallo scope lessicale della funzione all'interno della quale sono dichiarate. Per esempio il seguente codice risulterebbe in un errore da parte del compilatore:
+La scelta di Koka è quella di permettere la definizione di variabili all'interno del corpo di una funzione a condizione che queste non escano dallo \term{scope} lessicale della funzione all'interno della quale sono dichiarate. Per esempio il seguente codice risulterebbe in un errore da parte del compilatore:
 \begin{lstlisting}[language=koka]
 fun variable()
   var x:= 0
@@ -241,4 +241,4 @@ fun fibonacci(n)
     x := temp
   x
 \end{lstlisting}
-I controlli del type system di Koka garantiscono che le variabili non possano sopravvivere oltre lo scope sintattico della funzione all'interno della quale sono dichiarate. Per questo la funzione \lstinline{fibonacci}, nonostante la mutazione di una variabile, sarà comunque considerata una funzione pura con tipo \lstinline{(int) -> <> int}.
+I controlli del \term{type system} di Koka garantiscono che le variabili non possano sopravvivere oltre lo scope sintattico della funzione all'interno della quale sono dichiarate. Per questo la funzione \lstinline{fibonacci}, nonostante la mutazione di una variabile, sarà comunque considerata una funzione pura con tipo \lstinline{(int) -> <> int}.

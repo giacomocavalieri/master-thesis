@@ -3,32 +3,29 @@ Gli effetti algebrici rappresentano un'alternativa interessante all'utilizzo del
 
 Nella definizione di una monade l'attenzione viene posta sulle operazioni di \lstinline{pure} e \lstinline{flatMap} dovendo indicare come può avvenire la concatenazione delle computazioni e sono queste definizioni a dare semantica alle diverse istruzioni.
 
-L'approccio degli effetti, al contrario, si concentra direttamente sulla definizione e interpretazione delle operazioni tramite l'uso di handler. L'attenzione è posta su come interpretare ciascun effetto e non su come devono essere concatenate le operazioni.
+L'approccio degli effetti, al contrario, si concentra direttamente sulla definizione e interpretazione delle operazioni tramite l'uso di \term{handler}. L'attenzione è posta su come interpretare ciascun effetto e non su come devono essere concatenate le operazioni.
+Sotto questo punto di vista, gli effetti algebrici presentano una forte similarità con le \term{free monad}: in entrambi i casi si definisce una serie di istruzioni che devono essere interpretate per dare semantica al programma.
 
-Sotto questo punto di vista, gli effetti algebrici presentano una forte similarità con le free monad: in entrambi i casi si definisce una serie di istruzioni che devono essere interpretate per dare semantica al programma.
-
-Nel caso delle free monad il programmatore non deve definire esplicitamente il metodo \lstinline{flatMap} -- e quindi come concatenare le operazioni -- che viene fornito automaticamente dall'uso del tipo \lstinline{Program}.
+Nel caso delle \term{free monad} il programmatore non deve definire esplicitamente il metodo \lstinline{flatMap} -- e quindi come concatenare le operazioni -- che viene fornito automaticamente dall'uso del tipo \lstinline{Program}.
 Anche in quel caso l'interpretazione di un programma avviene interpretandone le singole istruzioni.
 
 \subsection{Boilerplate ed inferenza}
-Un aspetto sotto il quale le free monad e gli effetti algebrici differiscono sta nella quantità di boilerplate necessaria per poter utilizzare ciascun approccio.
+Un aspetto sotto il quale le \term{free monad} e gli effetti algebrici differiscono sta nella quantità di \term{boilerplate} necessaria per poter utilizzare ciascun approccio.
 
-Nel caso delle free monad è necessario definire, per ciascuna delle operazioni di uno specifico linguaggio degli smart constructor. Si consideri nuovamente l'esempio dello stato mutabile:
+Nel caso delle \term{free monad} è necessario definire, per ciascuna delle operazioni di uno specifico linguaggio degli \term{smart constructor}. Si consideri nuovamente l'esempio dello stato mutabile:
 \scalaFromFile{7}{9}{monads/free/State.scala}
 \scalaFromFile{15}{17}{monads/free/State.scala}
 
 Inoltre, è stato necessario prestare particolare attenzione nella realizzazione di un meccanismo che permettesse di usare insiemi di istruzioni differenti in una stessa funzione.
-
 Per rendere possibile questa combinazione è stato descritto il meccanismo delle iniezioni che, sfruttando il passaggio di istanze implicite, permettono di unire operazioni di più effetti in un linguaggio composto.
 
-Nel caso di Koka la definizione di un effetto è minimale e non richiede alcun boilerplate:
+Nel caso di Koka la definizione di un effetto è minimale e non richiede alcun \term{boilerplate}:
 \begin{lstlisting}[language=koka]
 effect state<s>
   ctl get(): s
   ctl set(new-state: s): ()
 \end{lstlisting}
-
-Inoltre, l'effect system permette di tracciare automaticamente tutti i side effect delle funzioni e non è necessario alcun passo aggiuntivo per poter combinare funzioni che presentano side effect differenti:
+Inoltre, l'\term{effect system} permette di tracciare automaticamente tutti i side effect delle funzioni e non è necessario alcun passo aggiuntivo per poter combinare funzioni che presentano side effect differenti:
 \begin{lstlisting}[language=koka]
 fun mixed-side-effects()
   println("Side effect!")
@@ -36,7 +33,7 @@ fun mixed-side-effects()
 \end{lstlisting}
 Il tipo della funzione viene inferito come \lstinline{() -> <console, failure> ()}. Il meccanismo è estremamente semplice da spiegare: tutti i side effect delle singole funzioni invocate dentro al corpo di una funzione sono accumulati nel suo tipo.
 
-Si faccia il confronto con l'equivalente versione Scala che fa uso di free monad dove le annotazioni di tipo sono necessarie:
+Si faccia il confronto con l'equivalente versione Scala che fa uso di \term{free monad} dove le annotazioni di tipo sono necessarie:
 \begin{lstlisting}[language=scala3]
 def mixedSideEffects[I[_]: With[ConsoleDSL]: With[FailDSL]]() =
   for
@@ -44,10 +41,10 @@ def mixedSideEffects[I[_]: With[ConsoleDSL]: With[FailDSL]]() =
     _ <- fail()
   yield ()
 \end{lstlisting}
-Per poter comprendere l'esempio un programmatore deve essere a conoscenza di meccanismi del linguaggio non banali come il passaggio di istanze implicite, i context bound e gli \emph{higher-kinded types}.
+Per poter comprendere l'esempio un programmatore deve essere a conoscenza di meccanismi del linguaggio non banali come il passaggio di istanze implicite, i \term{context bound} e gli \term{higher-kinded types}.
 
-Il problema sorge dal fatto che linguaggi come Scala non sono stati pensati per tracciare gli effetti delle funzioni come elementi di prima classe nel proprio type system.
-È quindi necessario implementare un'infrastruttura -- come MTL e free monad -- in termini di funzionalità preesistenti del linguaggio che permetta di arricchirlo con le funzionalità desiderate.
+Il problema sorge dal fatto che linguaggi come Scala non sono stati pensati per tracciare gli effetti delle funzioni come elementi di prima classe nel proprio \term{type system}.
+È quindi necessario implementare un'infrastruttura -- come MTL e \term{free monad} -- in termini di funzionalità preesistenti del linguaggio che permetta di arricchirlo con le funzionalità desiderate.
 Per esempio, durante la trattazione si è fatto uso estensivo di istanze implicite e passaggio di parametri implicito per poter codificare le monadi e vincolare gli effetti di una funzione.
 
 Chiaramente, poiché il linguaggio non nasce con tale obiettivo, la semplicità di utilizzo non potrà essere paragonabile a quella di un linguaggio pensato appositamente per tracciare i side effect come Koka.
@@ -62,7 +59,7 @@ def flatMapExample: State[Int, Unit] =
     }
   }
 \end{lstlisting}
-Il codice risultante è generalmente poco leggibile e per questo motivo viene fornito lo zucchero sintattico della for comprehension:
+Il codice risultante è generalmente poco leggibile e per questo motivo viene fornito lo zucchero sintattico della \term{for comprehension}:
 \begin{lstlisting}[language=scala3]
 def forComprehensionExample: State[Int, Unit] =
   for
@@ -80,9 +77,9 @@ fun direct-style(f)
   set(f(get()))
 \end{lstlisting}
 
-Le operazioni \lstinline{set} e \lstinline{get} non sono altro che normali funzioni arricchite da annotazioni relative ai side effect: il codice risultante è esattamente quello che potrebbe scrivere un programmatore ``imperativo'' che non è mai stato esposto al concetto di effetti.
+Le operazioni \lstinline{set} e \lstinline{get} non sono altro che normali funzioni arricchite da annotazioni relative ai side effect: il codice risultante è esattamente quello che potrebbe scrivere un programmatore ``imperativo'' che non è mai stato esposto al concetto degli effetti algebrici.
 
-La differenza chiave sta nel fatto che Koka traccia automaticamente gli effetti delle funzioni. L'effect system può essere visto come una sorta di rete di sicurezza che guida il programmatore nella corretta gestione degli effetti.
+La differenza chiave sta nel fatto che Koka traccia automaticamente gli effetti delle funzioni. L'\term{effect system} può essere visto come una sorta di rete di sicurezza che guida il programmatore nella corretta gestione degli effetti.
 
-Allo stesso tempo viene ridotto il carico cognitivo e non è aggiunto alcun overhead sintattico come nel caso della for comprehension.
+Allo stesso tempo viene ridotto il carico cognitivo e non è aggiunto alcun overhead sintattico come nel caso della \term{for comprehension}.
 Questo è un vantaggio da non sottovalutare in quanto rende il linguaggio più semplice da leggere e scrivere riducendone la barriera d'adozione.

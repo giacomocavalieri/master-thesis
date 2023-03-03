@@ -1,12 +1,12 @@
 \section{Il linguaggio Koka}
-Prima di poter proseguire nella trattazione degli effetti è necessario dare un'introduzione al linguaggio di riferimento utilizzato per gli esempi che saranno riportati: Koka.
+Prima di poter proseguire nella trattazione degli effetti algebrici è necessario dare un'introduzione al linguaggio di riferimento utilizzato per gli esempi che saranno riportati: Koka.
 
 Koka è un linguaggio di ricerca con supporto agli effetti algebrici; alcune delle sue caratteristiche chiave sono:
 \begin{itemize}
-  \item Tipizzazione statica e \emph{type inference}
-  \item Supporto agli effetti algebrici e \emph{effect inference} per minimizzare la necessità di annotazioni
-  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, tipi di dato algebrici, effetti algebrici e handler
-  \item Uso del metodo Perceus~\cite{cit:perceus-garbage-free-reference-counting-with-reuse} per gestire automaticamente la memoria tramite \emph{reference counting}. Questa tecnica elimina il bisogno di avere un \emph{garbage collector} o un \emph{runtime system} ottenendo ottime prestazioni. Inoltre, l'uso di Perceus rende possibile programmare secondo uno stile che i suoi autori definiscono \emph{Functional But In Place}: grazie all'analisi del \emph{reference counter} è possibile ottimizzare algoritmi puramente funzionali -- che utilizzano strutture dati immutabili -- in modo tale da eseguire mutazioni \emph{in place} in maniera trasparente al programmatore~\cite{cit:koka-benchmarks}
+  \item Tipizzazione statica e \term{type inference}
+  \item Supporto agli effetti algebrici e \term{effect inference} per minimizzare la necessità di annotazioni
+  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, tipi di dato algebrici, effetti algebrici e \term{handler}
+  \item Uso del metodo Perceus~\cite{cit:perceus-garbage-free-reference-counting-with-reuse} per gestire automaticamente la memoria tramite \term{reference counting}. Questa tecnica elimina il bisogno di avere un \term{garbage collector} o un \term{runtime system} ottenendo ottime prestazioni. Inoltre, l'uso di Perceus rende possibile programmare secondo uno stile che i suoi autori definiscono \emph{Functional But In Place}: grazie all'analisi del \term{reference counter} è possibile ottimizzare algoritmi puramente funzionali -- che utilizzano strutture dati immutabili -- in modo tale da eseguire mutazioni \term{in place} in maniera trasparente al programmatore~\cite{cit:koka-benchmarks}
 \end{itemize}
 
 \subsection{Sintassi di base}
@@ -23,7 +23,7 @@ Nell'esempio viene chiamata la funzione \lstinline{repeat} con due argomenti: un
 
 La sintassi Koka è molto simile a quella di linguaggio come C e Java; tuttavia, il linguaggio adotta una serie di regole e zucchero sintattico per rendere la sintassi più concisa.
 
-In particolare, secondo la regola della \emph{brace elision}, ogni blocco di codice indentato viene automaticamente considerato come compreso fra parentesi graffe. Dunque, come in linguaggi come Python e Haskell, gli spazi bianchi sono significativi.
+In particolare, secondo la regola della \term{brace elision}, ogni blocco di codice indentato viene automaticamente considerato come compreso fra parentesi graffe. Dunque, come in linguaggi come Python e Haskell, gli spazi bianchi sono significativi.
 
 Sfruttando questo zucchero sintattico è possibile riscrivere l'esempio come:
 \begin{lstlisting}[language=koka]
@@ -33,7 +33,7 @@ fun main()
   )
 \end{lstlisting}
 
-Inoltre, in Koka -- così come in Swift e Kotlin -- è disponibile zucchero sintattico per semplificare la scrittura delle \emph{trailing lambda}: qualora l'ultimo argomento di una funzione sia una funzione anonima, questa può seguire direttamente la chiamata a funzione.
+Inoltre, in Koka -- così come in Swift e Kotlin -- è disponibile zucchero sintattico per semplificare la scrittura delle \term{trailing lambda}: qualora l'ultimo argomento di una funzione sia una funzione anonima, questa può seguire direttamente la chiamata a funzione.
 
 L'esempio precedente può quindi essere riscritto come:
 \begin{lstlisting}[language=koka]
@@ -47,7 +47,7 @@ fun main()
   repeat(10)
     println("Hello, Koka!")
 \end{lstlisting}
-Grazie a queste regole è semplice definire funzioni che appaiano simili a keyword del linguaggio e costrutti di controllo di flusso che normalmente richiederebbero un supporto diretto del compilatore.
+Grazie a queste regole è semplice definire funzioni che appaiano simili a \term{keyword} del linguaggio e costrutti di controllo di flusso che normalmente richiederebbero un supporto diretto del compilatore.
 Per esempio la funzione \lstinline{for} potrebbe essere implementata come:
 \begin{lstlisting}[language=koka]
 fun for(start: int, end, action)
@@ -58,7 +58,7 @@ fun for(start: int, end, action)
 fun main()
   for(1, 10, fn(i) { println(i) })
 \end{lstlisting}
-Poiché Koka attua \emph{Tail Call Optimization} il codice generato sarà stack safe e simile a quello di un classico ciclo \lstinline{for}.
+Poiché Koka attua \term{Tail Call Optimization} il codice generato sarà stack safe e simile a quello di un classico ciclo \lstinline{for}.
 
 \subsubsection{La parola chiave \lstinline{with}}
 Un'altra regola sintattica che verrà utilizzata frequentemente negli esempi a seguire è l'uso della parola chiave \lstinline{with}. Questa permette di eliminare l'annidamento di funzioni che prendono in input delle funzioni anonime:
@@ -109,7 +109,7 @@ type optional<a>
   Some(value: a)
   Empty
 \end{lstlisting}
-Avendo a disposizione un valore di tipo \lstinline{optional}, questo potrebbe essere uno qualunque dei due costruttori. L'unico modo per poter determinare quale dei costruttori sia e accedere ai suoi campi è tramite pattern matching.
+Avendo a disposizione un valore di tipo \lstinline{optional}, questo potrebbe essere uno qualunque dei due costruttori. L'unico modo per poter determinare quale dei costruttori sia e accedere ai suoi campi è tramite \term{pattern matching}.
 
 Si consideri per esempio la funzione \lstinline{map} che, preso in input un valore opzionale e una funzione \lstinline{f}, la applica al suo contenuto se questo è definito:
 \begin{lstlisting}[language=koka]
@@ -123,12 +123,12 @@ fun main()
   option.map(fn(i) { i + 2 }) // Some(3)
 \end{lstlisting}
 
-Si noti come non è stato necessario annotare il tipo dei parametri della funzione \lstinline{map}, nè il suo tipo di ritorno: l'algoritmo di inferenza di Koka si basa sul type system di Hindley e Milner ed è quasi sempre possibile inferire automaticamente il tipo più generico possibile per le funzioni senza necessità di inserire annotazioni.
+Si noti come non è stato necessario annotare il tipo dei parametri della funzione \lstinline{map}, nè il suo tipo di ritorno: l'algoritmo di inferenza di Koka si basa sul \term{type system} di Hindley e Milner ed è quasi sempre possibile inferire automaticamente il tipo più generico possibile per le funzioni senza necessità di inserire annotazioni.
 
 In questo caso il tipo della funzione viene inferito essere \lstinline{forall<a,b> (option : optional<a>, f : (a) -> b) -> optional<b>}.
 
 \subsection{Effect system}
-Koka dispone anche di un \emph{effect system} basato sui \emph{row types}~\cite{cit:koka-programming-with-row-polymorphic-effect-types} che permette di tracciare staticamente tutti i side effect che può avere una funzione.
+Koka dispone anche di un \term{effect system} basato sui \term{row types}~\cite{cit:koka-programming-with-row-polymorphic-effect-types} che permette di tracciare staticamente tutti i side effect che può avere una funzione.
 
 In generale una funzione avrà come tipo $(\tau_1, \dots, \tau_n) \rightarrow \langle\epsilon_1,\dots,\epsilon_m\rangle\ \tau'$ a indicare che prende come argomenti i valori di tipo $\tau_1, \dots, \tau_n$, produce un valore $\tau'$ e può avere i side effect $\epsilon_1,\dots,\epsilon_m$.
 
@@ -162,7 +162,7 @@ In questo caso l'azione deve essere una funzione generica sui side effect che pu
 Poiché \lstinline{repeat} invoca la funzione \lstinline{action} nel proprio corpo allora avrà i suoi stessi side effect. Complessivamente il tipo inferito sarà: \lstinline{forall<a,e> (n : int, action : () -> e a) -> e ()}. È reso esplicito nel tipo della funzione che, se questa viene invocata con un'azione che presenta dei side effect \lstinline{e}, allora avrà gli stessi effetti.
 
 \subsubsection{Accumulazione degli effetti}
-Se una funzione utilizza al proprio interno funzioni che possono avere side effect differenti, questi sono automaticamente accumulati nel tipo risultante della funzione. Si consideri il seguente esempio:
+Se una funzione utilizza al proprio interno funzioni che possono avere side effect differenti, questi sono automaticamente accumulati nel tipo risultante. Si consideri il seguente esempio:
 \begin{lstlisting}[language=koka]
 fun log-action(action)
   println("invoking action")
@@ -174,5 +174,5 @@ fun log-action(action)
 
 Complessivamente, \lstinline{log-action} deve presentare non solo tutti i possibili side effect della generica funzione presa come parametro ma anche il side effect dell'interazione con la console dovuto all'uso di \lstinline{println}.
 
-Il tipo inferito per la funzione sarà quindi \lstinline{forall<a,e> (action: () -> e a) -> <console|e> ()}. È possibile osservare come la funzione include nei propri effetti sia il concreto effetto \lstinline{console} che tutti i possibili generici effetti \lstinline{e} del proprio parametro.
+Il tipo inferito sarà quindi \lstinline{forall<a,e> (action: () -> e a) -> <console|e> ()}. È possibile osservare come la funzione include nei propri effetti sia il concreto effetto \lstinline{console} che tutti i possibili generici effetti \lstinline{e} del proprio parametro.
 La notazione \lstinline{<e1|e>} serve a indicare che una funzione può avere tutti gli effetti \lstinline{e1} e anche tutti i generici effetti \lstinline{e}.
