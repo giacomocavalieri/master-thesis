@@ -11,3 +11,6 @@ Questi sistemi non solo permettono di tracciare la presenza di side effect ma, r
 
 L'approccio monadico non è l'unico che possa essere adottato per la modellazione degli effetti. In particolare, gli effetti algebrici stanno ricevendo sempre maggior attenzione come possibile alternativa.
 Questi non solo permettono di modellare e tracciare effetti arbitrari, sono anche un meccanismo in grado di generalizzare diversi costrutti di controllo di flusso come eccezioni, generatori e concorrenza strutturata tramite \term{async-await}.
+
+L'obiettivo di questa tesi è effettuare una rassegna degli approcci sopra elencati: partendo da una descrizione del concetto di monade verrà mostrato come sia possibile implementare MTL e \term{free monad} nel linguaggio di programmazione Scala.
+Infine, utilizzando il linguaggio Koka, sarà mostrato l'approccio basato su effetti algebrici. Inoltre, la trattazione sarà accompagnata da numerosi esempi che mostrano come ciascun approccio si presti ad essere utilizzato per tracciare e modellare i side effect delle funzioni.
