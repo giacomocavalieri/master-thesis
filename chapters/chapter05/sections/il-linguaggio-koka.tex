@@ -5,7 +5,7 @@ Koka è un linguaggio di ricerca con supporto agli effetti algebrici; alcune del
 \begin{itemize}
   \item Tipizzazione statica e \term{type inference}
   \item Supporto agli effetti algebrici e \term{effect inference} per minimizzare la necessità di annotazioni
-  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, tipi di dato algebrici, effetti algebrici e \term{handler}
+  \item Un cuore funzionale composto da pochi costrutti quanto più generali e componibili possibile: funzioni di prima classe, \ac{ADT}, effetti algebrici, e \term{handler}
   \item Uso del metodo Perceus~\cite{cit:perceus-garbage-free-reference-counting-with-reuse} per gestire automaticamente la memoria tramite \term{reference counting}. Questa tecnica elimina il bisogno di avere un \term{garbage collector} o un \term{runtime system} ottenendo ottime prestazioni. Inoltre, l'uso di Perceus rende possibile programmare secondo uno stile che i suoi autori definiscono \emph{Functional But In Place}: grazie all'analisi del \term{reference counter} è possibile ottimizzare algoritmi puramente funzionali -- che utilizzano strutture dati immutabili -- in modo tale da eseguire mutazioni \term{in place} in maniera trasparente al programmatore~\cite{cit:koka-benchmarks}
 \end{itemize}
 
@@ -96,7 +96,7 @@ fun main()
 \end{lstlisting}
 
 \subsection{Tipi di dato algebrici e pattern matching}
-Koka permette di definire tipi di dato algebrici\footnote{D'ora in avanti abbreviato come ADT}, l'equivalente delle enumerazioni Scala, tramite la parola chiave \lstinline{type} e separando i diversi costruttori su linee differenti:
+Koka permette di definire \ac{ADT}, l'equivalente delle enumerazioni Scala, tramite la parola chiave \lstinline{type} e separando i diversi costruttori su linee differenti:
 \begin{lstlisting}[language=koka]
 type color
   Red

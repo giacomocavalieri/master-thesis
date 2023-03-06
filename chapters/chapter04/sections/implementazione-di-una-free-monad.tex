@@ -1,6 +1,6 @@
 \section{Implementazione di una Free Monad}
 
-L'AST descritto tramite una \term{free monad} ha l'obiettivo di catturare la struttura sintattica di una computazione monadica~\cite{cit:programming-monads-operationally-with-unimo}.
+L'\ac{AST} descritto tramite una \term{free monad} ha l'obiettivo di catturare la struttura sintattica di una computazione monadica~\cite{cit:programming-monads-operationally-with-unimo}.
 Come già descritto in precedenza, l'interfaccia delle monadi permette di descrivere una computazione come una sequenza di passi successivi che, una volta terminati, restituiscono un valore.
 
 In seguito verrà formalizzata tale definizione arrivando in maniera graduale alla definizione di una \term{free monad}.
@@ -29,9 +29,9 @@ Un valore di tipo \lstinline{StateDSL[S, A]} rappresenta una singola istruzione 
 
 \subsubsection{Esecuzione di istruzioni in un programma monadico}
 Come descritto all'inizio del capitolo una \term{free monad} cattura in una struttura dati la struttura sintattica di un programma monadico.
-Un tipo di dato che rappresenti l'AST di un programma monadico deve quindi permettere di rappresentare l'esecuzione di una singola istruzione.
+Un tipo di dato che rappresenti l'\ac{AST} di un programma monadico deve quindi permettere di rappresentare l'esecuzione di una singola istruzione.
 
-Per disaccoppiare l'AST dallo specifico tipo di istruzioni eseguite un programma verrà definito in maniera generica rispetto alle istruzioni che può eseguire:
+Per disaccoppiare l'\ac{AST} dallo specifico tipo di istruzioni eseguite un programma verrà definito in maniera generica rispetto alle istruzioni che può eseguire:
 \begin{lstlisting}[language=scala3]
 enum Program[I[_], A]: ...
 \end{lstlisting}
@@ -59,7 +59,7 @@ Chiaramente un programma che esegue una singola istruzione non è di particolare
 
 \subsubsection{Restituzione di un valore puro}
 Un'ulteriore caratteristica di ogni computazione monadica -- espressa dal metodo \lstinline{pure} dell'interfaccia delle monadi -- sta nella possibilità di poter inserire un qualunque valore all'interno della sequenza delle computazioni senza aggiungervi ulteriori side effect.
-Tuttavia, data la definizione attuale di \lstinline{Program}, un programma monadico può limitarsi a permettere l'esecuzione di una singola istruzione appartenente al set \lstinline{I} specificato. Dunque l'AST di \lstinline{Program} deve essere esteso per permettere di ritornare un valore senza eseguire istruzioni:
+Tuttavia, data la definizione attuale di \lstinline{Program}, un programma monadico può limitarsi a permettere l'esecuzione di una singola istruzione appartenente al set \lstinline{I} specificato. Dunque l'\ac{AST} di \lstinline{Program} deve essere esteso per permettere di ritornare un valore senza eseguire istruzioni:
 \begin{lstlisting}[language=scala3]
 enum Program[I[_], A]:
   case Instruction[I[_], A](instruction: I[A])
@@ -80,7 +80,7 @@ Restituisce il valore \lstinline{"result"} senza modificare lo stato mutabile tr
 
 \subsubsection{Messa in sequenza di programmi}
 L'aspetto più importante di una monade sta nella possibilità di mettere in sequenza operazioni tramite l'uso di \lstinline{flatMap}.
-Anche l'AST di \lstinline{Program} deve esprimere questo concetto per poter catturare la struttura inerentemente sequenziale di un programma monadico. Per questo motivo viene definito un ultimo costruttore:
+Anche l'\ac{AST} di \lstinline{Program} deve esprimere questo concetto per poter catturare la struttura inerentemente sequenziale di un programma monadico. Per questo motivo viene definito un ultimo costruttore:
 \scalaFromFile{9}{16}{monads/free/lib/Free.scala}
 Il costruttore \lstinline{Then} permette di catturare la messa in sequenza di operazioni monadiche: il primo argomento è il primo programma da eseguire che produrrà un valore di tipo \lstinline{A}; il secondo argomento è una continuazione che, preso il valore prodotto dal primo programma, restituisce un secondo programma da eseguire.
 

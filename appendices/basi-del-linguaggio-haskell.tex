@@ -45,8 +45,8 @@ invokeSum =
 Le due invocazioni daranno lo stesso risultato. La sintassi \lstinline{let ... in ...} serve a definire dei valori locali al corpo di una funzione.
 Il risultato di un blocco \emph{let-in} è il valore indicato dopo la parola chiave \lstinline{in}; in questo caso sarà la tupla \lstinline{(result1, result2)}.
 
-\section{ADT e pattern matching}
-Haskell permette di definire ADT tramite la parola chiave \lstinline{data}; in maniera analoga alle enumerazioni Scala, un ADT può essere generico e i suoi costruttori avere campi differenti:
+\section{Tipi di dato algebrici e pattern matching}
+Haskell permette di definire \ac{ADT} tramite la parola chiave \lstinline{data}; in maniera analoga alle enumerazioni Scala, un ADT può essere generico e i suoi costruttori avere campi differenti:
 \begin{lstlisting}[language=haskell]
 data Option a
   = Some a

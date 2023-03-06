@@ -5,7 +5,7 @@ Nell'implementare un'istanza di monade per un \term{parser} si potrà osservare 
 
 \subsection{Parsing monadico}
 \label{sec:parsing-monadico}
-Un \term{parser} può essere modellato come una funzione che consuma una stringa (o una sua porzione) producendo un risultato come un AST. Nel caso in cui la stringa non sia conforme al linguaggio descritto dal \term{parser} questo processo potrebbe fallire senza produrre alcun valore.
+Un \term{parser} può essere modellato come una funzione che consuma una stringa (o una sua porzione) producendo un risultato come un \ac{AST}. Nel caso in cui la stringa non sia conforme al linguaggio descritto dal \term{parser} questo processo potrebbe fallire senza produrre alcun valore.
 Chiaramente la modellazione riportata è una semplificazione che cattura solamente l'essenza di un \term{parser} tralasciando altri aspetti come la possibilità di restituire più risultati -- nel caso in cui la grammatica del \term{parser} sia ambigua -- o di indicare la posizione nella stringa dove si è verificato un errore.
 
 Nella definizione riportata, per quanto semplice, è possibile individuare due tipologie di side effect già incontrate in precedenza: la stringa su cui opera il \term{parser} è uno stato mutabile e l'operazione di \term{parsing} potrebbe fallire.

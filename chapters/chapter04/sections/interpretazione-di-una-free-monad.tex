@@ -1,7 +1,7 @@
 \section{Interpretazione di una free monad}
 
 \subsection{Interpretazione delle istruzioni di un programma}
-I valori di tipo \lstinline{Program} mostrati fino ad ora non sono altro che degli AST che rappresentano sotto forma di struttura dati un programma monadico.
+I valori di tipo \lstinline{Program} mostrati fino ad ora non sono altro che degli \ac{AST} che rappresentano sotto forma di struttura dati un programma monadico.
 Questa struttura dati può essere attraversata e interpretata per assegnare una semantica alle istruzioni di cui si compone.
 Prima di poter definire come interpretare un programma monadico è necessario definire come interpretarne le singole istruzioni; perciò si introduce il concetto di interprete\footnote{Questo concetto è noto in letteratura come trasformazione naturale\cite{cit:monad-transformers-and-modular-algebraic-effects}. Nella trattazione si preferisce utilizzare il termine ``interprete''  in quanto rende in maniera efficace il suo utilizzo nell'interpretazione delle operazioni di una \term{free monad}.}:
 \scalaFromFile{4}{7}{monads/free/lib/Interpreter.scala}
@@ -25,7 +25,7 @@ L'unico accorgimento necessario è che l'interprete traduca ciascuna istruzione 
 
 \subsection{Ispezione dell'AST di una free monad}
 Il metodo mostrato nella sezione precedente permette di dare semantica al programma stabilendo come ciascuna delle istruzioni debba essere interpretata.
-Tuttavia, il vantaggio dato dalla rappresentazione della computazione come AST sta nella possibilità di poter ispezionare il programma per avere un controllo più fine sulla sua interpretazione.
+Tuttavia, il vantaggio dato dalla rappresentazione della computazione come \ac{AST} sta nella possibilità di poter ispezionare il programma per avere un controllo più fine sulla sua interpretazione.
 
 È infatti possibile estrarre dal programma la prima istruzione che questo deve eseguire e la continuazione che determina come l'esecuzione deve procedere. Per fare ciò è possibile definire la seguente struttura:
 \scalaFromFile{19}{24}{monads/free/lib/Free.scala}
@@ -65,7 +65,7 @@ La funzione ottiene la prima istruzione da eseguire e nel caso in cui sia una \l
 
 \subsubsection{A poor man’s concurrency (free) monad}
 \label{sec:poor-man}
-È possibile sfruttare la possibilità di ispezionare l'AST di un programma descritto in questo modo per realizzare interpreti più complessi.
+È possibile sfruttare la possibilità di ispezionare l'\ac{AST} di un programma descritto in questo modo per realizzare interpreti più complessi.
 
 Questa sezione riprende l'eccellente esempio mostrato in~\cite{cit:a-poor-mans-concurrency-monad} e illustra come sia possibile implementare una \emph{``poor man's concurrency monad''} utilizzando la \term{free monad} appena mostrata.
 In particolare, la possibilità di accedere alla continuazione che determina come deve procedere la computazione rende piuttosto semplice l'implementazione di una forma di concorrenza in \emph{user space}.
