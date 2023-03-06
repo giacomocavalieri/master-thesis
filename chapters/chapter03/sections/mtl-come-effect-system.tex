@@ -29,7 +29,7 @@ Tale funzione è definita in astratto per un qualunque tipo \lstinline{M[_]} che
 
 \subsubsection{Interpretazione in un ambiente di produzione}
 Il vantaggio dato dall'\term{encoding} \ac{MTL} delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
-Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo \term{stack} utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga la connessione al database:
+Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo \term{stack} utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di I/O e gestire uno stato che contenga la connessione al database:
 \scalaFromFile{54}{55}{monads/mtl/Design.scala}
 In questo caso l'interprete adottato per un ambiente di produzione può manipolare uno stato -- nell'esempio chiamato \lstinline{Runtime} -- che contiene la connessione al database.
 

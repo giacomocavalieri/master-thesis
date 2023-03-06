@@ -34,8 +34,8 @@ Come forse si sarà potuto intuire dall'esempio riportato in precedenza l'ordine
 \scalaFromFile{42}{43}{monads/transformers/Transformer.scala}
 In \lstinline{Program2} è stato invertito l'ordine con cui sono stati applicati i due transformer. I due \term{stack} possono essere visualizzati come mostrato in \Cref{fig:transformers_stacks}:
 \begin{itemize}
-  \item \lstinline{Program1} rappresenta un programma che può effettuare IO e potrebbe fallire. Nel caso in cui non fallisca la computazione può modificare uno stato mutabile; nel caso in cui invece la computazione fallisca allora sicuramente non potrà aver modificato lo stato globale
-  \item \lstinline{Program2} rappresenta un programma che può effettuare IO e modificare uno stato mutabile; il programma potrebbe non produrre alcun risultato fallendo ma avrebbe modificato in ogni caso lo stato globale
+  \item \lstinline{Program1} rappresenta un programma che può effettuare I/O e potrebbe fallire. Nel caso in cui non fallisca la computazione può modificare uno stato mutabile; nel caso in cui invece la computazione fallisca allora sicuramente non potrà aver modificato lo stato globale
+  \item \lstinline{Program2} rappresenta un programma che può effettuare I/O e modificare uno stato mutabile; il programma potrebbe non produrre alcun risultato fallendo ma avrebbe modificato in ogni caso lo stato globale
 \end{itemize}
 
 \input{chapters/chapter02/figures/program1_program2}
