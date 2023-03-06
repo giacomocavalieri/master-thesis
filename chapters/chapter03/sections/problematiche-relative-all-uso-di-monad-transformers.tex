@@ -1,7 +1,4 @@
 \section{Problemi nell'uso dei monad transformers}
-
-Per quanto i \term{transformer} possano essere uno strumento efficace per modellare la presenza di diversi side effect, il loro utilizzo è generalmente associato a una serie di problematiche che possono rendere il codice poco leggibile e difficile da mantenere.
-
 \subsection{Lifting manuale delle operazioni}
 Come mostrato negli esempi riportati al capitolo precedente, perché un \term{transformer} possa sfruttare gli effetti della monade che va ad arricchire deve ricorrere all'operazione di \term{lifting}. Questa operazione permette di portare all'interno del \term{transformer} un valore dalla monade base senza aggiungere ulteriori side effect.
 Dunque, scrivendo codice monadico all'interno di un \term{transformer} il programmatore si troverà spesso a dover ricorrere all'operazione di \term{lifting}:
