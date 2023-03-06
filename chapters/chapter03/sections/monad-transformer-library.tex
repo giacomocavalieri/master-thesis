@@ -3,7 +3,7 @@
 \acf{MTL} è una libreria Haskell nata con l'obiettivo di semplificare la gestione di \term{stack} di monad transformer~\cite{cit:mtl} permettendo di comporre in maniera modulare computazioni che modellano la presenza di side effect.
 Questa libreria è diventata nel tempo uno standard \emph{de facto} per la realizzazione di sistemi complessi nell'ecosistema di Haskell: circa il 30\% dei pacchetti presenti su Hackage\footnote{Hackage è l'archivio di software open source della comunità Haskell utilizzato per pubblicare librerie e programmi.} ne dipendono direttamente~\cite{cit:which-monads-haskell-developers-use-an-exploratory-study} ed è il sesto pacchetto più utilizzato su Stackage\footnote{Stackage è un'infrastruttura utilizzata per mantenere degli \term{snapshot} di pacchetti Hackage compatibili fra loro per ottenere delle \term{build} stabili.}~\cite{cit:evolution-of-a-haskell-repository-and-its-use-of-monads-an-exploratory-study-of-stackage}.
 
-L'approccio di \ac{MTL} è stato poi adottato anche in altri linguaggi; per esempio in Scala nell'ecosistema di Typelevel è stata realizzata la libreria Cats MTL~\cite{cit:cats-mtl}.
+L'approccio di \ac{MTL} è stato poi adottato anche in altri linguaggi; per esempio in Scala nell'ecosistema di Typelevel è stata realizzata la libreria \emph{Cats MTL}~\cite{cit:cats-mtl}.
 
 \subsection{Idea alla base di MTL}
 L'obiettivo di \ac{MTL} è di permettere la descrizione di computazioni con side effect in maniera flessibile, modulare e facilmente componibile, con la possibilità di cambiare senza difficoltà l'implementazione sottostante utilizzata per gestire i side effect.

@@ -1,0 +1,13 @@
+\section*{Obiettivi della tesi}
+Seguire buone pratiche di programmazione può limitare le problematiche associate alla presenza di side effect. Tuttavia, è interessante osservare come gli stessi linguaggi di programmazione possano aiutare il programmatore a rendere espliciti gli effetti delle funzioni.
+
+Questa rassegna è diretta al programmatore che voglia approfondire il tema della gestione esplicita dei side effect e non abbia particolari conoscenze pregresse; l'unico prerequisito necessario è una certa familiarità con il linguaggio Scala, necessaria a comprendere gli esempi riportati.
+
+La seguente rassegna affronta i diversi approcci che possono essere adottati per modellare gli effetti delle funzioni; partendo da una descrizione del concetto di monade e dei suoi impieghi, sono poi analizzati meccanismi più sofisticati come \ac{MTL} e \term{free monad}.
+
+Queste tecniche sono ormai ampiamente diffuse nell'ambito dei linguaggi di programmazione funzionali puri -- come Haskell -- e stanno iniziando a guadagnare terreno anche in linguaggi di programmazione più diffusi fra cui Python e TypeScript~\cite{cit:pyro,cit:ts-effect,cit:wasmfx}.
+In particolare, uno dei campi applicativi di maggior rilievo in cui queste tecniche possono essere adottate con successo è quello della concorrenza strutturata: framework come \emph{ts-effect}~\cite{cit:ts-effect} e \emph{ZIO}~\cite{cit:zio} sono prominenti esempi di come un approccio funzionale puro possa permettere di affrontare la realizzazione di sistemi concorrenti complessi in maniera modulare, componibile ed espressiva.
+
+La trattazione si conclude con l'analisi di un approccio emergente basato su effetti algebrici, mostrando come questo possa risolvere diversi problemi legati all'adozione delle tecniche monadiche e semplificare la diffusione della gestione esplicita degli effetti nel mainstream~\cite{cit:algebraic-effect-handlers-go-mainstream}.
+
+Sicuramente l'adozione di un approccio basato sulla programmazione funzionale pura e la gestione esplicita dei side effect rappresenta un forte cambiamento rispetto alla più diffusa programmazione ad oggetti. Questo nuovo paradigma potrebbe richiedere tempo prima di essere recepito o influenzare il mainstream; rimane evidente il fatto che quello verso cui sembra puntare la ricerca da ormai diverso tempo è un futuro ``orientato agli effetti''. In conclusione, l'obiettivo del seguente elaborato è quello di fornire una visione d'insieme delle tecniche che, con grande probabilità, influenzeranno maggiormente l'evoluzione dei linguaggi nei prossimi anni.

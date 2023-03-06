@@ -52,15 +52,3 @@ Due esempi di \term{interleaving} che portano a risultati differenti dei test so
 Quest'ultimo esempio fornisce anche un ottimo spunto per riflettere sull'ulteriore difficoltà nella possibilità di parallelizzare codice che presenta side effect.
 Poiché i side effect introducono dipendenze temporali nascoste, non è possibile garantire che l'esecuzione di funzioni impure in parallelo -- e quindi con ordini di esecuzione che potrebbero variare a seconda dell'\term{interleaving} dei processi -- dia sempre lo stesso risultato.
 Quindi non potranno essere parallelizzate in maniera automatica; sarà invece necessario ricorrere a euristiche~\cite{cit:safe-automated-refactoring-for-intelligent-parallelization-of-java-8-streams} o estensioni del linguaggio~\cite{cit:pure-functions-in-c-a-small-keyword-for-automatic-parallelization} per poter capire se una funzione è pura o meno e poter sfruttare automaticamente i vantaggi offerti dai moderni processori multi-core senza dover intervenire sulla struttura del programma originale.
-
-\section*{Obiettivi della tesi}
-Nonostante buone pratiche di programmazione possano limitare le problematiche associate alla presenza di side effect, è interessante osservare come gli stessi linguaggi di programmazione possano aiutare il programmatore a rendere espliciti gli effetti delle funzioni.
-
-L'obiettivo di questa tesi è effettuare una rassegna dei più diffusi approcci che possono essere adottati per modellare e tracciare la presenza di side effect nelle funzioni.
-Partendo da uno degli approcci più noti, quello delle monadi, se ne evidenziano le limitazioni per arrivare ad analizzare meccanismi più sofisticati: \ac{MTL} e \term{free monad}.
-Inoltre, verrà mostrato come queste tecniche possano essere implementate utilizzando Scala come linguaggio di riferimento.
-
-Infine, verrà mostrato un ultimo approccio basato sugli effetti algebrici; questa tecnica, seppur meno diffusa rispetto all'uso delle monadi, rappresenta un'interessante evoluzione nell'ambito dei linguaggi di programmazione puri con l'obiettivo di semplificare la gestione degli effetti delle funzioni.
-In questo caso il linguaggio di riferimento utilizzato sarà Koka.
-
-Ogni approccio sarà introdotto in maniera graduale, modellando inizialmente semplici side effect -- come il fallimento di una computazione -- fino a mostrare come ciascun meccanismo possa essere utilizzato per modellare classi di effetti arbitrari.
