@@ -1,13 +1,13 @@
 \section{MTL come effect system}
 
-MTL può essere visto come un primo esempio di \term{effect system}: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
+\ac{MTL} può essere visto come un primo esempio di \term{effect system}: un sistema formale che permette di descrivere in maniera concisa i side effect di una computazione, le sue azioni osservabili dall'esterno~\cite[p.~943]{cit:design-concepts-in-programming-languages}.
 
 Per esempio, il meccanismo delle eccezioni di Java rappresenta un rudimentale \term{effect system} che permette di tracciare una sola tipologia di side effect: il lancio di un'eccezione~\cite[p.~985]{cit:design-concepts-in-programming-languages}.
 Anche in Scala, tramite l'uso delle \term{capability}~\cite{cit:scala-3-reference-canthrow}, è stato definito un sistema di effetti che permette di verificare staticamente la presenza di eccezioni~\cite{cit:safer-exceptions-for-scala}. Attualmente è possibile abilitare questo meccanismo di cattura delle eccezioni come feature sperimentale; tuttavia, diverse ricerche sono attualmente in atto per permettere l'utilizzo delle \term{capability} per gestire qualunque tipologia di effetto~\cite{cit:effects-capabilities-and-boxes-from-scope-based-reasoning-to-type-based-reasoning-and-back,cit:caprese}.
 
-La versione originale della libreria MTL include diverse classi per trattare un'ampia gamma di side effect comuni: il fallimento di una computazione, la lettura di uno stato immutabile, la modifica di uno stato mutabile, ecc.
+La versione originale della libreria \ac{MTL} include diverse classi per trattare un'ampia gamma di side effect comuni: il fallimento di una computazione, la lettura di uno stato immutabile, la modifica di uno stato mutabile, ecc.
 
-Tuttavia, l'approccio MTL è molto generale e permette di definire in \term{user space} quali sono gli effetti rilevanti per un determinato dominio applicativo, lasciando ampia libertà al programmatore di scegliere il livello di astrazione più adatto.
+Tuttavia, l'approccio \ac{MTL} è molto generale e permette di definire in \term{user space} quali sono gli effetti rilevanti per un determinato dominio applicativo, lasciando ampia libertà al programmatore di scegliere il livello di astrazione più adatto.
 Un \term{effect system} può diventare quindi uno strumento di design per la realizzazione di sistemi orientati agli effetti.
 
 \subsection{Definizione di effetti arbitrari}
@@ -20,7 +20,7 @@ Le operazioni che si vogliono implementare sono il recupero di un utente in base
 Sicuramente tali operazioni potrebbero essere descritte direttamente all'interno della monade \lstinline{IO}, stabilendo una connessione con il database ed eseguendo le query SQL corrispondenti. Tuttavia, tale approccio rende più difficile la realizzazione di test unitari: nell'esecuzione delle query queste cercheranno di stabilire una connessione con il database e potrebbero alterarne lo stato se non opportunamente gestite. Una soluzione comunemente adottata consiste nell'attuare \term{dependency injection} simulando il comportamento del database senza effettivamente stabilire una connessione, oppure connettendo i test a un database di test separato da quello in produzione.
 
 \subsubsection{Definizione degli effetti}
-Secondo lo stile MTL vengono innanzitutto definite le operazioni rilevanti per il dominio: primitive astratte che definiscono le operazioni che si possono eseguire sul database. La codifica mostrata in precedenza per gli effetti del fallimento e dello stato mutabile può essere utilizzata anche in questo caso:
+Secondo lo stile \ac{MTL} vengono innanzitutto definite le operazioni rilevanti per il dominio: primitive astratte che definiscono le operazioni che si possono eseguire sul database. La codifica mostrata in precedenza per gli effetti del fallimento e dello stato mutabile può essere utilizzata anche in questo caso:
 \scalaFromFile{14}{17}{monads/mtl/Design.scala}
 L'interfaccia definisce un insieme minimale e ortogonale di operazioni di base che si vuole poter compiere nell'interazione con il database contenente gli utenti. Queste operazioni possono poi essere composte per ottenere logiche più complesse:
 \scalaFromFile{29}{40}{monads/mtl/Design.scala}
@@ -28,7 +28,7 @@ Lo scopo di \lstinline{updateOrDelete} è di permettere di aggiornare un utente 
 Tale funzione è definita in astratto per un qualunque tipo \lstinline{M[_]} che permetta di ottenere le operazioni di \lstinline{UserStore}.
 
 \subsubsection{Interpretazione in un ambiente di produzione}
-Il vantaggio dato dall'\term{encoding} MTL delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
+Il vantaggio dato dall'\term{encoding} \ac{MTL} delle operazioni sta nella possibilità di modificare come queste vengono interpretate in base alla necessità.
 Per esempio le operazioni possono essere interpretate in un ambiente di produzione dove viene effettivamente stabilita una connessione con una database. In questo caso, lo \term{stack} utilizzato per interpretare la computazione dovrà sicuramente poter permettere l'esecuzione di IO e gestire uno stato che contenga la connessione al database:
 \scalaFromFile{54}{55}{monads/mtl/Design.scala}
 In questo caso l'interprete adottato per un ambiente di produzione può manipolare uno stato -- nell'esempio chiamato \lstinline{Runtime} -- che contiene la connessione al database.

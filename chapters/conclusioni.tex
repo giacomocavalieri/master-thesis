@@ -8,7 +8,7 @@ Successivamente, osservando alcune limitazioni di questo approccio, è stato int
 Un innegabile beneficio introdotto da questo approccio sta nella possibilità di riutilizzare il codice delle monadi di base per poterle assemblare in monadi più complesse.
 
 Uno svantaggio dell'approccio dei \term{monad transformer} sta nel fatto che la loro adozione lega fortemente il codice ad una specifica implementazione dei side effect rendendo più difficile il testare porzioni di codice con side effect.
-Per questo motivo sono stati analizzati gli approcci più sofisticati di MTL e delle \term{free monad}.
+Per questo motivo sono stati analizzati gli approcci più sofisticati di \ac{MTL} e delle \term{free monad}.
 Entrambi permettono di definire in maniera astratta e modulare gli effetti che una computazione può avere per poi stabilirne l'implementazione in un secondo momento.
 
 Potendo definire effetti arbitrari, diventa facile scegliere il livello di astrazione più adatto a descrivere in maniera efficace la logica applicativa.
@@ -17,7 +17,7 @@ Inoltre, grazie a queste tecniche, è possibile separare nettamente la dichiaraz
 
 Infine, è stato mostrato l'approccio degli effetti algebrici come alternativa a quello monadico per la rappresentazione esplicita dei side effect delle funzioni.
 Questo approccio, basato su solide basi teoriche, concentra la propria attenzione sulla definizione di operazioni -- che definiscono in astratto come un effetto può avere luogo -- e \term{handler} -- che vengono utilizzati per dare semantica alle singole operazioni.
-Questa netta distinzione fra operazioni e loro interpretazione, in maniera analoga al caso di MTL e delle \term{free monad}, rende più facile testare codice che presenta side effect definendo interpreti ad hoc in base alla necessità.
+Questa netta distinzione fra operazioni e loro interpretazione, in maniera analoga al caso di \ac{MTL} e delle \term{free monad}, rende più facile testare codice che presenta side effect definendo interpreti ad hoc in base alla necessità.
 
 Gli effetti algebrici, oltre a prestarsi bene a modellare i side effect delle funzioni, sono un potente meccanismo che generalizza diversi costrutti di controllo di flusso complessi come eccezioni, iteratori e concorrenza strutturata tramite \emph{async-await}.
 Sebbene i linguaggi che supportano gli effetti algebrici siano ancora principalmente solo linguaggi di ricerca, l'approccio sembra essere molto promettente e sta ricevendo crescente attenzione. Infatti coniuga i benefici dati dalla possibilità di tracciare esplicitamente gli effetti delle funzioni con la semplicità di scrittura di codice imperativo, senza dover ricorrere al più complesso stile monadico.

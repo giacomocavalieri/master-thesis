@@ -1,16 +1,16 @@
 \section{L'approccio MTL}
 
-\emph{Monad Transformer Library}\footnote{D'ora in avanti abbreviato in MTL} è una libreria Haskell nata con l'obiettivo di semplificare la gestione di \term{stack} di monad transformer~\cite{cit:mtl} permettendo di comporre in maniera modulare computazioni che modellano la presenza di side effect.
+\acf{MTL} è una libreria Haskell nata con l'obiettivo di semplificare la gestione di \term{stack} di monad transformer~\cite{cit:mtl} permettendo di comporre in maniera modulare computazioni che modellano la presenza di side effect.
 Questa libreria è diventata nel tempo uno standard \emph{de facto} per la realizzazione di sistemi complessi nell'ecosistema di Haskell: circa il 30\% dei pacchetti presenti su Hackage\footnote{Hackage è l'archivio di software open source della comunità Haskell utilizzato per pubblicare librerie e programmi.} ne dipendono direttamente~\cite{cit:which-monads-haskell-developers-use-an-exploratory-study} ed è il sesto pacchetto più utilizzato su Stackage\footnote{Stackage è un'infrastruttura utilizzata per mantenere degli \term{snapshot} di pacchetti Hackage compatibili fra loro per ottenere delle \term{build} stabili.}~\cite{cit:evolution-of-a-haskell-repository-and-its-use-of-monads-an-exploratory-study-of-stackage}.
 
-L'approccio di MTL è stato poi adottato anche in altri linguaggi; per esempio in Scala nell'ecosistema di Typelevel è stata realizzata la libreria Cats MTL~\cite{cit:cats-mtl}.
+L'approccio di \ac{MTL} è stato poi adottato anche in altri linguaggi; per esempio in Scala nell'ecosistema di Typelevel è stata realizzata la libreria Cats MTL~\cite{cit:cats-mtl}.
 
 \subsection{Idea alla base di MTL}
-L'obiettivo di MTL è di permettere la descrizione di computazioni con side effect in maniera flessibile, modulare e facilmente componibile, con la possibilità di cambiare senza difficoltà l'implementazione sottostante utilizzata per gestire i side effect.
+L'obiettivo di \ac{MTL} è di permettere la descrizione di computazioni con side effect in maniera flessibile, modulare e facilmente componibile, con la possibilità di cambiare senza difficoltà l'implementazione sottostante utilizzata per gestire i side effect.
 Questo obiettivo può essere raggiunto sfruttando nuovamente il meccanismo delle \term{type class} per definire \emph{famiglie} di effetti, ciascuna delle quali è caratterizzata da una serie di primitive che permettono di esprimere le operazioni che possono essere effettuate~\cite{cit:functional-programming-with-overloading-and-higher-order-polymorphism}.
 
 \subsubsection{Modifica di uno stato mutabile}
-Nello stile di MTL il side effect del cambiamento di uno stato mutabile può essere catturato dalla seguente interfaccia:
+Nello stile \ac{MTL} il side effect del cambiamento di uno stato mutabile può essere catturato dalla seguente interfaccia:
 \scalaFromFile{7}{9}{monads/mtl/State.scala}
 L'interfaccia descrive, per un generico costruttore di tipi \lstinline{M[_]}, le operazioni che questo deve fornire per permettere di gestire uno stato mutabile.
 Sfruttando il meccanismo dei parametri impliciti di Scala è possibile definire una funzione che accetta come parametro il contesto \lstinline{M[_]} che implementa l'interfaccia \lstinline{State}:
@@ -54,7 +54,7 @@ Si possono osservare alcuni aspetti interessanti:
 Inoltre viene eliminata la rigidità data dai \term{monad transformer} nel comporre operazioni con tipi differenti: in un contesto \lstinline{M[_]} è possibile eseguire operazioni che richiedono entrambi gli effetti, solo uno di essi o nessuno di essi. Nell'esempio precedente viene utilizzata la funzione \lstinline{divide} che richiede solo la capacità di fallire; ciò è possibile dato che è uno degli effetti forniti nel contesto della funzione \lstinline{effect}. Non è necessario applicare operazioni di \term{lifting} nè modificare artificialmente il tipo di ritorno delle funzioni per semplificarne la composizione come veniva fatto nel caso dei \term{transformer}.
 
 \subsection{Interpretazione della computazione}
-Una computazione descritta secondo lo stile MTL definisce in astratto quali sono le operazioni che dovranno essere eseguite; quindi, per poterla interpretare è necessario fornire un tipo concreto che implementi tutte le operazioni richieste.
+Una computazione descritta secondo lo stile \ac{MTL} definisce in astratto quali sono le operazioni che dovranno essere eseguite; quindi, per poterla interpretare è necessario fornire un tipo concreto che implementi tutte le operazioni richieste.
 L'implementazione viene sempre fornita come istanza di una \term{type class} in maniera analoga a quanto fatto per le monadi.
 Per esempio il \term{transformer} \lstinline{OptionT} può essere usato come meccanismo concreto per interpretare computazioni che possono fallire:
 \scalaFromFile{14}{15}{monads/mtl/Fail.scala}

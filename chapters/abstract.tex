@@ -6,11 +6,11 @@ Per questo motivo, sono state sviluppate diverse tecniche che possono essere ado
 L'approccio che ad oggi ha ottenuto maggior successo consiste nel modellare la presenza di \term{side effect} utilizzando le monadi.
 Questo meccanismo, inizialmente impiegato da Haskell per gestire input e output, è stato adottato in diversi linguaggi.
 
-Inoltre, è possibile individuare approcci più sofisticati, come MTL e \term{free monad}, per sopperire ad alcuni problemi legati all'uso delle semplici monadi.
+Inoltre, è possibile individuare approcci più sofisticati, come \ac{MTL} e \term{free monad}, per sopperire ad alcuni problemi legati all'uso delle semplici monadi.
 Questi sistemi non solo permettono di tracciare la presenza di side effect ma, rendendo possibile definire cosa si intende per ``effetto'', diventano veri e propri strumenti di design e organizzazione del software.
 
 L'approccio monadico non è l'unico che possa essere adottato per la modellazione degli effetti. In particolare, gli effetti algebrici stanno ricevendo sempre maggior attenzione come possibile alternativa.
 Questi non solo permettono di modellare e tracciare effetti arbitrari, sono anche un meccanismo in grado di generalizzare diversi costrutti di controllo di flusso come eccezioni, generatori e concorrenza strutturata tramite \term{async-await}.
 
-L'obiettivo di questa tesi è effettuare una rassegna degli approcci sopra elencati: partendo da una descrizione del concetto di monade verrà mostrato come sia possibile implementare MTL e \term{free monad} nel linguaggio di programmazione Scala.
+L'obiettivo di questa tesi è effettuare una rassegna degli approcci sopra elencati: partendo da una descrizione del concetto di monade verrà mostrato come sia possibile implementare \ac{MTL} e \term{free monad} nel linguaggio di programmazione Scala.
 Infine, utilizzando il linguaggio Koka, sarà mostrato l'approccio basato su effetti algebrici. Inoltre, la trattazione sarà accompagnata da numerosi esempi che mostrano come ciascun approccio si presti ad essere utilizzato per tracciare e modellare i side effect delle funzioni.
