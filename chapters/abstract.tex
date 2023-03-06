@@ -4,7 +4,7 @@ Nel corso degli anni i linguaggi di programmazione imperativi ``mainstream'' -- 
 
 Un approccio che ad oggi rimane prettamente confinato al mondo della programmazione funzionale pura è quello che consiste nel modellare esplicitamente gli effetti delle funzioni, separando in maniera netta -- grazie al supporto automatico del \term{type system} -- codice puro da quello che può presentare side effect.
 
-In linguaggi di programmazione imperativi che non supportano nativamente questi meccanismi, è possibile ottenere una separazione analoga utilizzando architetture come quella esagonale. Tuttavia, il rispetto di queste buone pratiche di programmazione è lasciato interamente all'autodisciplina del programmatore e non è imposto automaticamente dal compilatore.
+In linguaggi di programmazione imperativi che non supportano nativamente questi meccanismi, è possibile ottenere una separazione analoga utilizzando architetture come quella ``esagonale''. Tuttavia, il rispetto di queste buone pratiche di programmazione è lasciato interamente all'autodisciplina del programmatore e non è imposto automaticamente dal compilatore.
 La risultante presenza incontrollata di side effect ha l'effetto di creare reti di dipendenze invisibili che rendono complesso ragionare sulle proprietà del codice, testarlo o effettuare \term{refactoring}.
 
 L'obiettivo di questa tesi è fornire una visione complessiva delle principali tecniche che possono essere adottate per modellare e rendere esplicita la presenza dei side effect nelle funzioni: \ac{MTL} e \term{free monad}.
