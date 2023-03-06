@@ -48,11 +48,29 @@ instance Monad Maybe where
 Interpretando la \term{type class} come un predicato, definire un'istanza consiste nel provare che lo specifico tipo -- in questo caso \lstinline{Maybe} -- soddisfa tale predicato e viene fornita come dimostrazione l'implementazione delle funzioni \lstinline{return} e \lstinline{>>=}.
 
 \subsubsection{Encoding in Scala}
-In Scala è possibile codificare una \term{type class} sfruttando il passaggio implicito di parametri~\cite{cit:type-classes-as-objects-and-implicits}. La definizione di una \term{type class} si riduce quindi a indicare un'interfaccia:
+In Scala è possibile codificare una \term{type class} sfruttando il passaggio implicito di parametri~\cite{cit:type-classes-as-objects-and-implicits}, i \term{context bound}~\cite{cit:context-bounds} e il supporto agli \term{higher-kinded type}.
+
+Per definire una \term{type class} è innanzitutto necessario indicarne i metodi utilizzando un'interfaccia; nel caso della \term{type class} per le monadi:
 \scalaFromFile{8}{10}{monads/Monad.scala}
 
-Potrà essere istanziata per uno specifico costruttore di tipi fornendo un'implementazione come istanza implicita~\cite{cit:scala-book-type-classes}:
+Il \term{trait} deve essere generico su un costruttore di tipi \lstinline{M[_]}, quindi è necessario che il linguaggio supporti gli \term{higher-kinded type}: vale a dire, dev'essere possibile poter indicare -- com'è stato fatto in questo caso con \lstinline{M} -- costruttori di tipi generici come parametri di tipo.
+
+Per istanziare una \term{type class} è necessario implementare un'istanza dell'interfaccia per uno specifico costruttore di tipi. In Scala è possibile fare ciò fornendo un'implementazione come istanza implicita~\cite{cit:scala-book-type-classes}:
 \scalaFromFile{15}{21}{monads/Monad.scala}
+
+Infine è possibile sfruttare il passaggio implicito di parametri per poter specificare che una porzione di codice necessita di utilizzare i metodi di una certa \term{type class}:
+\begin{lstlisting}[language=scala3]
+def useMonadInstance[M[_]](using instance: Monad[M]) =
+  instance.pure("Hello, World!")
+\end{lstlisting}
+In questo caso la funzione richiede che le venga passata l'implementazione della \term{type class} di monade per il generico tipo \lstinline{M} in modo da poterne utilizzare il metodo \lstinline{pure}.
+Scala offre anche zucchero sintattico per poter esprimere in maniera concisa questo genere di argomenti impliciti: i \term{context bound}.
+Un \term{context bound} permette di specificare la necessità di avere un parametro implicito passato come argomento della funzione senza assegnargli un nome; il codice appena mostrato può essere riscritto come segue:
+\begin{lstlisting}[language=scala3]
+def useMonadInstance[M[_]: Monad] =
+  summon[Monad[M]].pure("Hello, World!")
+\end{lstlisting}
+La notazione \lstinline{M[_]: Monad} può quindi essere letta come \emph{``Dato un generico costruttore di tipi \lstinline{M} che sia una monade''}.
 
 \subsection{Esempi di monadi}
 Gli esempi mostrati alla \Cref{svantaggi-della-modellazione-esplicita} presentano una struttura comune: si definisce una struttura dati che descrive il risultato di un'operazione con il possibile side effect e si definisce poi una funzione -- negli esempi chiamata \lstinline{andThen} -- che permette di combinare in sequenza passaggi intermedi.

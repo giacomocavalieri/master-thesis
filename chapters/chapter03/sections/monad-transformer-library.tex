@@ -18,7 +18,7 @@ Sfruttando il meccanismo dei parametri impliciti di Scala è possibile definire 
 
 Inoltre, è possibile modificare la funzione per rendere in maniera più ``dichiarativa'' i side effect che \lstinline{M[_]} deve avere. Innanzitutto, è necessario definire il seguente \term{type alias}:
 \scalaFromFile{6}{6}{monads/mtl/State.scala}
-In questo modo, sfruttando lo zucchero sintattico che Scala offre per definire \term{context bound}~\cite{cit:context-bounds}, è possibile modificare la firma della funzione precedente:
+In questo modo, sfruttando lo zucchero sintattico che Scala offre per definire \term{context bound}, è possibile modificare la firma della funzione precedente:
 \begin{lstlisting}[language=scala3]
 def update[S, M[_]: Monad: HasState[S]](f: S => S): M[Unit] = ???
 \end{lstlisting}
