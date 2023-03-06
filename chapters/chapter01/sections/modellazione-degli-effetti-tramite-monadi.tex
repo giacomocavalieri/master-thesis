@@ -190,7 +190,7 @@ def double(n: Int): Int = ...
 \end{lstlisting}
 Senza bisogno di conoscerne le implementazioni si può capire che la prima funzione può modificare uno stato mutabile di tipo intero e che la seconda funzione può fallire non producendo alcun valore. Inoltre è possibile capire che la terza funzione non ha side effect: non potrà fallire, modificare uno stato globale o effettuare operazioni di input o output; il suo output sarà determinato unicamente dal valore dei suoi parametri\footnote{In realtà, dato che in Scala è comunque possibile scrivere codice impuro la funzione \lstinline{double} potrebbe avere side effect; quanto detto vale sotto l'assunzione che il programmatore stia modellando esplicitamente i side effect tramite l'approccio descritto. In altri linguaggi come Haskell, invece, è il compilatore stesso a fare in modo che questa regola venga rispettata rendendo impossibile lo scrivere funzioni che non siano pure. Perciò, si avrebbe la certezza che una funzione come \lstinline{double} non possa avere side effect.}.
 
-\subsubsection{Side effect come cittadini di prima classe del linguaggio}
+\subsubsection{Side effect come entità di prima classe del linguaggio}
 Utilizzare il concetto di monade come astrazione unificante delle diverse tipologie di side effect ha un ulteriore vantaggio: le azioni con side effect sono valori di prima classe che possono essere combinati in maniera modulare e astraendo dallo specifico tipo di effetti.
 
 È possibile definire l'equivalente di strutture di controllo imperative tramite funzioni generiche; per poter ripetere più volte gli effetti di un'azione è possibile implementare una funzione come segue:
